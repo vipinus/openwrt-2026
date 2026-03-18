@@ -753,34 +753,73 @@ local i18n = {
     }
 }
 
-local countries = {
-    {code = "cn", name = "China", flag = "🇨🇳"},
-    {code = "jp", name = "Japan", flag = "🇯🇵"},
-    {code = "us", name = "United States", flag = "🇺🇸"},
-    {code = "kr", name = "South Korea", flag = "🇰🇷"},
-    {code = "hk", name = "Hong Kong", flag = "🇭🇰"},
-    {code = "tw", name = "Taiwan", flag = "🇹🇼"},
-    {code = "sg", name = "Singapore", flag = "🇸🇬"},
-    {code = "my", name = "Malaysia", flag = "🇲🇾"},
-    {code = "th", name = "Thailand", flag = "🇹🇭"},
-    {code = "vn", name = "Vietnam", flag = "🇻🇳"},
-    {code = "id", name = "Indonesia", flag = "🇮🇩"},
-    {code = "ph", name = "Philippines", flag = "🇵🇭"},
-    {code = "in", name = "India", flag = "🇮🇳"},
-    {code = "pk", name = "Pakistan", flag = "🇵🇰"},
-    {code = "bd", name = "Bangladesh", flag = "🇧🇩"},
-    {code = "ae", name = "UAE", flag = "🇦🇪"},
-    {code = "sa", name = "Saudi Arabia", flag = "🇸🇦"},
-    {code = "tr", name = "Turkey", flag = "🇹🇷"},
-    {code = "ru", name = "Russia", flag = "🇷🇺"},
-    {code = "de", name = "Germany", flag = "🇩🇪"},
-    {code = "gb", name = "United Kingdom", flag = "🇬🇧"},
-    {code = "fr", name = "France", flag = "🇫🇷"},
-    {code = "nl", name = "Netherlands", flag = "🇳🇱"},
-    {code = "au", name = "Australia", flag = "🇦🇺"},
-    {code = "ca", name = "Canada", flag = "🇨🇦"},
-    {code = "br", name = "Brazil", flag = "🇧🇷"}
-}
+    local countries = {
+        {code = "cn", name = "China", flag = "🇨🇳"},
+        {code = "jp", name = "Japan", flag = "🇯🇵"},
+        {code = "us", name = "United States", flag = "🇺🇸"},
+        {code = "kr", name = "South Korea", flag = "🇰🇷"},
+        {code = "hk", name = "Hong Kong", flag = "🇭🇰"},
+        {code = "tw", name = "Taiwan", flag = "🇹🇼"},
+        {code = "sg", name = "Singapore", flag = "🇸🇬"},
+        {code = "my", name = "Malaysia", flag = "🇲🇾"},
+        {code = "th", name = "Thailand", flag = "🇹🇭"},
+        {code = "vn", name = "Vietnam", flag = "🇻🇳"},
+        {code = "id", name = "Indonesia", flag = "🇮🇩"},
+        {code = "ph", name = "Philippines", flag = "🇵🇭"},
+        {code = "in", name = "India", flag = "🇮🇳"},
+        {code = "pk", name = "Pakistan", flag = "🇵🇰"},
+        {code = "bd", name = "Bangladesh", flag = "🇧🇩"},
+        {code = "ae", name = "UAE", flag = "🇦🇪"},
+        {code = "sa", name = "Saudi Arabia", flag = "🇸🇦"},
+        {code = "tr", name = "Turkey", flag = "🇹🇷"},
+        {code = "ru", name = "Russia", flag = "🇷🇺"},
+        {code = "de", name = "Germany", flag = "🇩🇪"},
+        {code = "gb", name = "United Kingdom", flag = "🇬🇧"},
+        {code = "fr", name = "France", flag = "🇫🇷"},
+        {code = "nl", name = "Netherlands", flag = "🇳🇱"},
+        {code = "au", name = "Australia", flag = "🇦🇺"},
+        {code = "ca", name = "Canada", flag = "🇨🇦"},
+        {code = "br", name = "Brazil", flag = "🇧🇷"}
+    }
+
+    local i18n_extra = {
+        en = {
+            detecting = "Detecting location...",
+            detected = "Detected",
+            your_ip = "Your IP",
+            your_country = "Your Country",
+            auto_detect = "Auto-detect",
+            detected_success = "Location detected: %s (%s)",
+            detection_failed = "Failed to detect location",
+            real_ip = "Real IP (before VPN)",
+            vpn_ip = "VPN IP (after connect)",
+            location = "Location"
+        },
+        ["zh-CN"] = {
+            detecting = "正在检测位置...",
+            detected = "已检测",
+            your_ip = "您的IP",
+            your_country = "您的国家",
+            auto_detect = "自动检测",
+            detected_success = "已检测位置：%s（%s）",
+            detection_failed = "检测位置失败",
+            real_ip = "真实IP（VPN前）",
+            vpn_ip = "VPN IP（连接后）",
+            location = "位置"
+        },
+        ["zh-TW"] = {
+            detecting = "正在偵測位置...",
+            detected = "已偵測",
+            your_ip = "您的IP",
+            your_country = "您的國家",
+            auto_detect = "自動偵測",
+            detected_success = "已偵測位置：%s（%s）",
+            detection_failed = "偵測位置失敗",
+            real_ip = "真實IP（VPN前）",
+            vpn_ip = "VPN IP（連線後）",
+            location = "位置"
+        }
+    }
 
 function get_lang()
     local lang = nixio.fs.readfile("/etc/vipin_lang")
@@ -814,7 +853,7 @@ function index()
     entry({"admin", "network", "vpn", "api"}, call("api_get_vpn_status"), nil, 20)
     entry({"admin", "network", "vpn", "api_connect"}, call("api_connect"), nil, 21)
     entry({"admin", "network", "vpn", "api_set_split"}, call("api_set_split_tunnel"), nil, 22)
-    entry({"admin", "network", "vpn", "api_set_country"}, call("api_set_country"), nil, 23)
+    entry({"admin", "network", "vpn", "api_detect"}, call("api_auto_detect"), nil, 23)
     entry({"admin", "network", "vpn", "api_update_ips"}, call("api_update_ips"), nil, 24)
 end
 
@@ -829,6 +868,64 @@ function api_get_vpn_status()
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "0"
     local vpn_connected = util.exec("pgrep -x easytier >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
     
+    local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
+    local detected = false
+    local detected_ip = ""
+    local detected_country = ""
+    local detect_time = ""
+    
+    if detect_info and detect_info ~= "" then
+        detected_ip = string.match(detect_info, '"ip":"([^"]*)"') or ""
+        detected_country = string.match(detect_info, '"country":"([^"]*)"') or ""
+        detect_time = string.match(detect_info, '"detect_time":"([^"]*)"') or ""
+        detected = string.match(detect_info, '"detected":true') ~= nil
+    end
+    
+    if detected_country == "" then
+        detected_country = current_country
+    end
+    
+    local lang_key = get_lang()
+    local extra_i18n = {
+        en = {
+            detecting = "Detecting location...",
+            detected = "Detected",
+            your_ip = "Your IP",
+            your_country = "Your Country",
+            auto_detect = "Auto-detect",
+            detected_success = "Location detected",
+            detection_failed = "Failed to detect",
+            real_ip = "Real IP",
+            vpn_ip = "VPN IP",
+            location = "Location"
+        },
+        ["zh-CN"] = {
+            detecting = "正在检测位置...",
+            detected = "已检测",
+            your_ip = "您的IP",
+            your_country = "您的国家",
+            auto_detect = "自动检测",
+            detected_success = "位置已检测",
+            detection_failed = "检测失败",
+            real_ip = "真实IP",
+            vpn_ip = "VPN IP",
+            location = "位置"
+        },
+        ["zh-TW"] = {
+            detecting = "正在偵測位置...",
+            detected = "已偵測",
+            your_ip = "您的IP",
+            your_country = "您的國家",
+            auto_detect = "自動偵測",
+            detected_success = "位置已偵測",
+            detection_failed = "偵測失敗",
+            real_ip = "真實IP",
+            vpn_ip = "VPN IP",
+            location = "位置"
+        }
+    }
+    local extra = extra_i18n[lang_key] or extra_i18n["en"]
+    
     local status = {
         vpn_enabled = (vpn_enabled == "1"),
         vpn_connected = (vpn_connected == "1"),
@@ -838,7 +935,14 @@ function api_get_vpn_status()
         current_country_flag = get_country_flag(current_country),
         ip_count = tonumber(ip_count) or 0,
         countries = countries,
-        translations = i18n[get_lang()] or i18n["en"]
+        detected = detected,
+        detected_ip = detected_ip,
+        detected_country = detected_country,
+        detected_country_name = get_country_name(detected_country),
+        detected_country_flag = get_country_flag(detected_country),
+        detect_time = detect_time,
+        translations = i18n[get_lang()] or i18n["en"],
+        extra = extra
     }
     
     http.prepare_content("application/json")
@@ -889,21 +993,33 @@ function api_set_split_tunnel()
     http.write(json.encode(result))
 end
 
-function api_set_country()
+function api_auto_detect()
     local http = require("luci.http")
     local json = require("luci.json")
     local util = require("luci.util")
     
-    local country = luci.http.formvalue("country") or "cn"
-    local result = {success = false, message = ""}
+    local output = util.exec("/usr/sbin/vipin-detect auto 2>&1")
     
-    util.exec("/usr/sbin/vipin-country-ips set-country " .. country .. " 2>&1")
-    util.exec("/usr/sbin/vipin-vpn-routing reload 2>&1")
+    local success = string.match(output, '"success":true') ~= nil
+    local detected_ip = string.match(output, '"ip":"([^"]*)"') or ""
+    local country_code = string.match(output, '"country_code":"([^"]*)"') or ""
+    local country = string.match(output, '"country":"([^"]*)"') or ""
+    local ip_count = tonumber(string.match(output, '"ip_count":([0-9]+)')) or 0
     
-    result.success = true
-    result.country = country
-    result.country_name = get_country_name(country)
-    result.country_flag = get_country_flag(country)
+    local result = {
+        success = success,
+        detected_ip = detected_ip,
+        country_code = country_code,
+        country = country,
+        country_name = get_country_name(country),
+        country_flag = get_country_flag(country),
+        ip_count = ip_count,
+        message = success and "Detection successful" or "Detection failed"
+    }
+    
+    if success then
+        util.exec("/usr/sbin/vipin-vpn-routing reload 2>&1")
+    end
     
     http.prepare_content("application/json")
     http.write(json.encode(result))

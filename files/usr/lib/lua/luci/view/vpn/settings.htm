@@ -22,13 +22,7 @@ local i18n = {
         disconnected = "Disconnected",
         split_tunnel = "Split Tunneling",
         split_tunnel_desc = "Route domestic traffic directly, foreign traffic via VPN",
-        domestic_ip = "Domestic IPs",
-        domestic_ip_desc = "Select country for domestic IP ranges",
-        domestic_country = "Domestic Country",
-        current_country = "Current Country",
-        ip_ranges_loaded = "IP ranges loaded",
         vpn_server = "VPN Server",
-        select_server = "Select Server",
         connect = "Connect",
         disconnect = "Disconnect",
         reconnect = "Reconnect",
@@ -46,7 +40,6 @@ local i18n = {
         no_servers = "No servers available",
         server_list = "Server List",
         latency = "Latency",
-        select_country = "Select Country",
         update_ip_ranges = "Update IP Ranges",
         last_updated = "Last updated",
         never = "Never",
@@ -56,7 +49,19 @@ local i18n = {
         domestic_traffic = "Domestic Traffic",
         foreign_traffic = "Foreign Traffic",
         vpn_exit = "VPN Exit",
-        update_now = "Update Now"
+        update_now = "Update Now",
+        detecting = "Detecting location...",
+        detected = "Detected",
+        your_ip = "Your IP",
+        your_country = "Your Country",
+        auto_detect = "Auto-detect",
+        detected_success = "Location detected",
+        detection_failed = "Detection failed",
+        real_ip = "Real IP (before VPN)",
+        vpn_ip = "VPN IP",
+        location = "Location",
+        ip_ranges_loaded = "IP ranges loaded",
+        retry = "Retry"
     },
     ["zh-CN"] = {
         title = "VPN 设置",
@@ -70,13 +75,7 @@ local i18n = {
         disconnected = "未连接",
         split_tunnel = "智能分流",
         split_tunnel_desc = "国内IP直连，海外IP走VPN",
-        domestic_ip = "国内IP段",
-        domestic_ip_desc = "选择国内IP所属国家",
-        domestic_country = "国内归属地",
-        current_country = "当前国家",
-        ip_ranges_loaded = "已加载IP段",
         vpn_server = "VPN服务器",
-        select_server = "选择服务器",
         connect = "连接",
         disconnect = "断开",
         reconnect = "重连",
@@ -94,7 +93,6 @@ local i18n = {
         no_servers = "暂无可用服务器",
         server_list = "服务器列表",
         latency = "延迟",
-        select_country = "选择国家",
         update_ip_ranges = "更新IP段",
         last_updated = "上次更新",
         never = "从未",
@@ -104,7 +102,19 @@ local i18n = {
         domestic_traffic = "国内流量",
         foreign_traffic = "海外流量",
         vpn_exit = "VPN出口",
-        update_now = "立即更新"
+        update_now = "立即更新",
+        detecting = "正在检测位置...",
+        detected = "已检测",
+        your_ip = "您的IP",
+        your_country = "您的国家",
+        auto_detect = "自动检测",
+        detected_success = "位置已检测",
+        detection_failed = "检测失败",
+        real_ip = "真实IP（VPN前）",
+        vpn_ip = "VPN IP",
+        location = "位置",
+        ip_ranges_loaded = "已加载IP段",
+        retry = "重试"
     },
     ["zh-TW"] = {
         title = "VPN 設定",
@@ -118,13 +128,7 @@ local i18n = {
         disconnected = "未連線",
         split_tunnel = "智慧分流",
         split_tunnel_desc = "國內IP直連，海外IP走VPN",
-        domestic_ip = "國內IP段",
-        domestic_ip_desc = "選擇國內IP所屬國家",
-        domestic_country = "國內歸屬地",
-        current_country = "目前國家",
-        ip_ranges_loaded = "已載入IP段",
         vpn_server = "VPN伺服器",
-        select_server = "選擇伺服器",
         connect = "連線",
         disconnect = "斷線",
         reconnect = "重連",
@@ -142,7 +146,6 @@ local i18n = {
         no_servers = "暫無可用伺服器",
         server_list = "伺服器列表",
         latency = "延遲",
-        select_country = "選擇國家",
         update_ip_ranges = "更新IP段",
         last_updated = "上次更新",
         never = "從未",
@@ -152,7 +155,19 @@ local i18n = {
         domestic_traffic = "國內流量",
         foreign_traffic = "海外流量",
         vpn_exit = "VPN出口",
-        update_now = "立即更新"
+        update_now = "立即更新",
+        detecting = "正在偵測位置...",
+        detected = "已偵測",
+        your_ip = "您的IP",
+        your_country = "您的國家",
+        auto_detect = "自動偵測",
+        detected_success = "位置已偵測",
+        detection_failed = "偵測失敗",
+        real_ip = "真實IP（VPN前）",
+        vpn_ip = "VPN IP",
+        location = "位置",
+        ip_ranges_loaded = "已載入IP段",
+        retry = "重試"
     },
     ja = {
         title = "VPN 設定",
@@ -166,13 +181,7 @@ local i18n = {
         disconnected = "未接続",
         split_tunnel = "スプリットトンネリング",
         split_tunnel_desc = "国内IPは直接、海外IPはVPN経由",
-        domestic_ip = "国内IP",
-        domestic_ip_desc = "国内IPの所属国を選択",
-        domestic_country = "国内所在地",
-        current_country = "現在の国",
-        ip_ranges_loaded = "読み込み済みIP",
         vpn_server = "VPNサーバー",
-        select_server = "サーバー選択",
         connect = "接続",
         disconnect = "切断",
         reconnect = "再接続",
@@ -190,7 +199,6 @@ local i18n = {
         no_servers = "利用可能なサーバーなし",
         server_list = "サーバー一覧",
         latency = "遅延",
-        select_country = "国を選択",
         update_ip_ranges = "IP更新",
         last_updated = "最終更新",
         never = "なし",
@@ -200,7 +208,19 @@ local i18n = {
         domestic_traffic = "国内トラフィック",
         foreign_traffic = "海外トラフィック",
         vpn_exit = "VPN出口",
-        update_now = "今すぐ更新"
+        update_now = "今すぐ更新",
+        detecting = "位置を検出中...",
+        detected = "検出済み",
+        your_ip = "あなたのIP",
+        your_country = "あなたの国",
+        auto_detect = "自動検出",
+        detected_success = "位置を検出しました",
+        detection_failed = "検出に失敗しました",
+        real_ip = "実際のIP",
+        vpn_ip = "VPN IP",
+        location = "位置",
+        ip_ranges_loaded = "IP読み込み済み",
+        retry = "再試行"
     },
     ko = {
         title = "VPN 설정",
@@ -214,13 +234,7 @@ local i18n = {
         disconnected = "연결 안됨",
         split_tunnel = "스플릿 터널링",
         split_tunnel_desc = "국내 IP는 직접, 해외 IP는 VPN 경유",
-        domestic_ip = "국내 IP",
-        domestic_ip_desc = "국내 IP 국가 선택",
-        domestic_country = "국내 위치",
-        current_country = "현재 국가",
-        ip_ranges_loaded = "로드된 IP",
         vpn_server = "VPN 서버",
-        select_server = "서버 선택",
         connect = "연결",
         disconnect = "연결 해제",
         reconnect = "재연결",
@@ -238,7 +252,6 @@ local i18n = {
         no_servers = "사용 가능한 서버 없음",
         server_list = "서버 목록",
         latency = "지연",
-        select_country = "국가 선택",
         update_ip_ranges = "IP 업데이트",
         last_updated = "마지막 업데이트",
         never = "없음",
@@ -248,7 +261,19 @@ local i18n = {
         domestic_traffic = "국내 트래픽",
         foreign_traffic = "해외 트래픽",
         vpn_exit = "VPN 출구",
-        update_now = "지금 업데이트"
+        update_now = "지금 업데이트",
+        detecting = "위치 감지 중...",
+        detected = "감지됨",
+        your_ip = "내 IP",
+        your_country = "내 국가",
+        auto_detect = "자동 감지",
+        detected_success = "위치 감지됨",
+        detection_failed = "감지 실패",
+        real_ip = "실제 IP",
+        vpn_ip = "VPN IP",
+        location = "위치",
+        ip_ranges_loaded = "IP 로드됨",
+        retry = "다시 시도"
     },
     ru = {
         title = "Настройки VPN",
@@ -262,13 +287,7 @@ local i18n = {
         disconnected = "Отключено",
         split_tunnel = "Раздельное туннелирование",
         split_tunnel_desc = "Локальный трафик напрямую, зарубежный через VPN",
-        domestic_ip = "Локальные IP",
-        domestic_ip_desc = "Выберите страну для локальных IP",
-        domestic_country = "Локальная страна",
-        current_country = "Текущая страна",
-        ip_ranges_loaded = "Загружено IP",
         vpn_server = "VPN сервер",
-        select_server = "Выбрать сервер",
         connect = "Подключить",
         disconnect = "Отключить",
         reconnect = "Переподключить",
@@ -286,7 +305,6 @@ local i18n = {
         no_servers = "Нет доступных серверов",
         server_list = "Список серверов",
         latency = "Задержка",
-        select_country = "Выберите страну",
         update_ip_ranges = "Обновить IP",
         last_updated = "Последнее обновление",
         never = "Никогда",
@@ -296,7 +314,19 @@ local i18n = {
         domestic_traffic = "Местный трафик",
         foreign_traffic = "Зарубежный трафик",
         vpn_exit = "VPN выход",
-        update_now = "Обновить сейчас"
+        update_now = "Обновить сейчас",
+        detecting = "Определение местоположения...",
+        detected = "Определено",
+        your_ip = "Ваш IP",
+        your_country = "Ваша страна",
+        auto_detect = "Автоопределение",
+        detected_success = "Местоположение определено",
+        detection_failed = "Не удалось определить",
+        real_ip = "Реальный IP",
+        vpn_ip = "VPN IP",
+        location = "Местоположение",
+        ip_ranges_loaded = "IP загружены",
+        retry = "Повторить"
     },
     es = {
         title = "Configuración VPN",
@@ -310,13 +340,7 @@ local i18n = {
         disconnected = "Desconectado",
         split_tunnel = "Túnel dividido",
         split_tunnel_desc = "Tráfico nacional directo, extranjero por VPN",
-        domestic_ip = "IPs nacionales",
-        domestic_ip_desc = "Seleccionar país para IPs nacionales",
-        domestic_country = "País nacional",
-        current_country = "País actual",
-        ip_ranges_loaded = "IPs cargadas",
         vpn_server = "Servidor VPN",
-        select_server = "Seleccionar servidor",
         connect = "Conectar",
         disconnect = "Desconectar",
         reconnect = "Reconectar",
@@ -334,7 +358,6 @@ local i18n = {
         no_servers = "Sin servidores disponibles",
         server_list = "Lista de servidores",
         latency = "Latencia",
-        select_country = "Seleccionar país",
         update_ip_ranges = "Actualizar IPs",
         last_updated = "Última actualización",
         never = "Nunca",
@@ -344,7 +367,19 @@ local i18n = {
         domestic_traffic = "Tráfico nacional",
         foreign_traffic = "Tráfico extranjero",
         vpn_exit = "Salida VPN",
-        update_now = "Actualizar ahora"
+        update_now = "Actualizar ahora",
+        detecting = "Detectando ubicación...",
+        detected = "Detectado",
+        your_ip = "Tu IP",
+        your_country = "Tu país",
+        auto_detect = "Auto-detectar",
+        detected_success = "Ubicación detectada",
+        detection_failed = "Detección fallida",
+        real_ip = "IP real",
+        vpn_ip = "IP VPN",
+        location = "Ubicación",
+        ip_ranges_loaded = "IPs cargadas",
+        retry = "Reintentar"
     },
     de = {
         title = "VPN Einstellungen",
@@ -358,13 +393,7 @@ local i18n = {
         disconnected = "Getrennt",
         split_tunnel = "Split-Tunneling",
         split_tunnel_desc = "Inlandsverkehr direkt, Auslandsverkehr über VPN",
-        domestic_ip = "Inlands IPs",
-        domestic_ip_desc = "Land für Inlands IPs auswählen",
-        domestic_country = "Inlandsland",
-        current_country = "Aktuelles Land",
-        ip_ranges_loaded = "IPs geladen",
         vpn_server = "VPN Server",
-        select_server = "Server auswählen",
         connect = "Verbinden",
         disconnect = "Trennen",
         reconnect = "Neu verbinden",
@@ -382,7 +411,6 @@ local i18n = {
         no_servers = "Keine Server verfügbar",
         server_list = "Serverliste",
         latency = "Latenz",
-        select_country = "Land auswählen",
         update_ip_ranges = "IPs aktualisieren",
         last_updated = "Zuletzt aktualisiert",
         never = "Nie",
@@ -392,7 +420,19 @@ local i18n = {
         domestic_traffic = "Inlandsverkehr",
         foreign_traffic = "Auslandsverkehr",
         vpn_exit = "VPN Ausgang",
-        update_now = "Jetzt aktualisieren"
+        update_now = "Jetzt aktualisieren",
+        detecting = "Standort wird ermittelt...",
+        detected = "Ermittelt",
+        your_ip = "Ihre IP",
+        your_country = "Ihr Land",
+        auto_detect = "Auto-Erkennung",
+        detected_success = "Standort erkannt",
+        detection_failed = "Erkennung fehlgeschlagen",
+        real_ip = "Echte IP",
+        vpn_ip = "VPN IP",
+        location = "Standort",
+        ip_ranges_loaded = "IPs geladen",
+        retry = "Wiederholen"
     },
     fr = {
         title = "Paramètres VPN",
@@ -406,13 +446,7 @@ local i18n = {
         disconnected = "Déconnecté",
         split_tunnel = "Tunneling séparé",
         split_tunnel_desc = "Trafic domestique direct, étranger via VPN",
-        domestic_ip = "IPs domestiques",
-        domestic_ip_desc = "Sélectionner le pays pour IPs domestiques",
-        domestic_country = "Pays domestique",
-        current_country = "Pays actuel",
-        ip_ranges_loaded = "IPs chargées",
         vpn_server = "Serveur VPN",
-        select_server = "Sélectionner serveur",
         connect = "Connecter",
         disconnect = "Déconnecter",
         reconnect = "Reconnecter",
@@ -430,7 +464,6 @@ local i18n = {
         no_servers = "Aucun serveur disponible",
         server_list = "Liste des serveurs",
         latency = "Latence",
-        select_country = "Sélectionner pays",
         update_ip_ranges = "Mettre à jour IPs",
         last_updated = "Dernière mise à jour",
         never = "Jamais",
@@ -440,7 +473,19 @@ local i18n = {
         domestic_traffic = "Trafic domestique",
         foreign_traffic = "Trafic étranger",
         vpn_exit = "Sortie VPN",
-        update_now = "Mettre à jour maintenant"
+        update_now = "Mettre à jour maintenant",
+        detecting = "Détection de l'emplacement...",
+        detected = "Détecté",
+        your_ip = "Votre IP",
+        your_country = "Votre pays",
+        auto_detect = "Auto-détection",
+        detected_success = "Emplacement détecté",
+        detection_failed = "Échec de la détection",
+        real_ip = "IP réelle",
+        vpn_ip = "IP VPN",
+        location = "Emplacement",
+        ip_ranges_loaded = "IPs chargées",
+        retry = "Réessayer"
     },
     pt = {
         title = "Configurações VPN",
@@ -454,13 +499,7 @@ local i18n = {
         disconnected = "Desconectado",
         split_tunnel = "Túnel dividido",
         split_tunnel_desc = "Tráfego doméstico direto, estrangeiro via VPN",
-        domestic_ip = "IPs domésticas",
-        domestic_ip_desc = "Selecionar país para IPs domésticas",
-        domestic_country = "País doméstico",
-        current_country = "País atual",
-        ip_ranges_loaded = "IPs carregadas",
         vpn_server = "Servidor VPN",
-        select_server = "Selecionar servidor",
         connect = "Conectar",
         disconnect = "Desconectar",
         reconnect = "Reconectar",
@@ -478,7 +517,6 @@ local i18n = {
         no_servers = "Sem servidores disponíveis",
         server_list = "Lista de servidores",
         latency = "Latência",
-        select_country = "Selecionar país",
         update_ip_ranges = "Atualizar IPs",
         last_updated = "Última atualização",
         never = "Nunca",
@@ -488,7 +526,19 @@ local i18n = {
         domestic_traffic = "Tráfego doméstico",
         foreign_traffic = "Tráfego estrangeiro",
         vpn_exit = "Saída VPN",
-        update_now = "Atualizar agora"
+        update_now = "Atualizar agora",
+        detecting = "Detectando localização...",
+        detected = "Detectado",
+        your_ip = "Seu IP",
+        your_country = "Seu país",
+        auto_detect = "Auto-detectar",
+        detected_success = "Localização detectada",
+        detection_failed = "Falha na detecção",
+        real_ip = "IP real",
+        vpn_ip = "IP VPN",
+        location = "Localização",
+        ip_ranges_loaded = "IPs carregadas",
+        retry = "Tentar novamente"
     },
     vi = {
         title = "Cài đặt VPN",
@@ -502,13 +552,7 @@ local i18n = {
         disconnected = "Chưa kết nối",
         split_tunnel = "Chia tách đường hầm",
         split_tunnel_desc = "Lưu lượng trong nước trực tiếp, nước ngoài qua VPN",
-        domestic_ip = "IP trong nước",
-        domestic_ip_desc = "Chọn quốc gia cho IP trong nước",
-        domestic_country = "Quốc gia trong nước",
-        current_country = "Quốc gia hiện tại",
-        ip_ranges_loaded = "Đã tải IP",
         vpn_server = "Máy chủ VPN",
-        select_server = "Chọn máy chủ",
         connect = "Kết nối",
         disconnect = "Ngắt kết nối",
         reconnect = "Kết nối lại",
@@ -526,7 +570,6 @@ local i18n = {
         no_servers = "Không có máy chủ khả dụng",
         server_list = "Danh sách máy chủ",
         latency = "Độ trễ",
-        select_country = "Chọn quốc gia",
         update_ip_ranges = "Cập nhật IP",
         last_updated = "Cập nhật lần cuối",
         never = "Chưa bao giờ",
@@ -536,7 +579,19 @@ local i18n = {
         domestic_traffic = "Lưu lượng trong nước",
         foreign_traffic = "Lưu lượng nước ngoài",
         vpn_exit = "Đầu ra VPN",
-        update_now = "Cập nhật ngay"
+        update_now = "Cập nhật ngay",
+        detecting = "Đang phát hiện vị trí...",
+        detected = "Đã phát hiện",
+        your_ip = "IP của bạn",
+        your_country = "Quốc gia của bạn",
+        auto_detect = "Tự động phát hiện",
+        detected_success = "Vị trí được phát hiện",
+        detection_failed = "Phát hiện thất bại",
+        real_ip = "IP thực",
+        vpn_ip = "IP VPN",
+        location = "Vị trí",
+        ip_ranges_loaded = "IP đã tải",
+        retry = "Thử lại"
     },
     th = {
         title = "การตั้งค่า VPN",
@@ -550,13 +605,7 @@ local i18n = {
         disconnected = "ยังไม่เชื่อมต่อ",
         split_tunnel = "แยกทาง",
         split_tunnel_desc = " трафик ในประเทศตรง, ต่างประเทศผ่าน VPN",
-        domestic_ip = "IP ในประเทศ",
-        domestic_ip_desc = "เลือกประเทศสำหรับ IP ในประเทศ",
-        domestic_country = "ประเทศในประเทศ",
-        current_country = "ประเทศปัจจุบัน",
-        ip_ranges_loaded = "IP ที่โหลดแล้ว",
         vpn_server = "เซิร์ฟเวอร์ VPN",
-        select_server = "เลือกเซิร์ฟเวอร์",
         connect = "เชื่อมต่อ",
         disconnect = "ตัดการเชื่อมต่อ",
         reconnect = "เชื่อมต่อใหม่",
@@ -574,7 +623,6 @@ local i18n = {
         no_servers = "ไม่มีเซิร์ฟเวอร์ที่ใช้ได้",
         server_list = "รายการเซิร์ฟเวอร์",
         latency = "เวลาแฝง",
-        select_country = "เลือกประเทศ",
         update_ip_ranges = "อัปเดต IP",
         last_updated = "อัปเดตล่าสุด",
         never = "ไม่เคย",
@@ -584,7 +632,19 @@ local i18n = {
         domestic_traffic = " трафикในประเทศ",
         foreign_traffic = " трафикต่างประเทศ",
         vpn_exit = "ทางออก VPN",
-        update_now = "อัปเดตเลย"
+        update_now = "อัปเดตเลย",
+        detecting = "กำลังตรวจจับตำแหน่ง...",
+        detected = "ตรวจพบแล้ว",
+        your_ip = "IP ของคุณ",
+        your_country = "ประเทศของคุณ",
+        auto_detect = "ตรวจจับอัตโนมัติ",
+        detected_success = "ตำแหน่งถูกตรวจพบ",
+        detection_failed = "การตรวจจับล้มเหลว",
+        real_ip = "IP จริง",
+        vpn_ip = "IP VPN",
+        location = "ตำแหน่ง",
+        ip_ranges_loaded = "IP โหลดแล้ว",
+        retry = "ลองอีกครั้ง"
     },
     id = {
         title = "Pengaturan VPN",
@@ -598,13 +658,7 @@ local i18n = {
         disconnected = "Terputus",
         split_tunnel = "Terowongan Terpisah",
         split_tunnel_desc = "Lalu lintas dalam negeri langsung, luar negeri via VPN",
-        domestic_ip = "IP Dalam Negeri",
-        domestic_ip_desc = "Pilih negara untuk IP dalam negeri",
-        domestic_country = "Negara Dalam Negeri",
-        current_country = "Negara Saat Ini",
-        ip_ranges_loaded = "IP dimuat",
         vpn_server = "Server VPN",
-        select_server = "Pilih Server",
         connect = "Sambungkan",
         disconnect = "Putuskan",
         reconnect = "Sambungkan Ulang",
@@ -622,7 +676,6 @@ local i18n = {
         no_servers = "Tidak ada server tersedia",
         server_list = "Daftar Server",
         latency = "Latensi",
-        select_country = "Pilih Negara",
         update_ip_ranges = "Perbarui IP",
         last_updated = "Terakhir diperbarui",
         never = "Tidak pernah",
@@ -632,7 +685,19 @@ local i18n = {
         domestic_traffic = "Lalu lintas dalam negeri",
         foreign_traffic = "Lalu lintas luar negeri",
         vpn_exit = "Exit VPN",
-        update_now = "Perbarui sekarang"
+        update_now = "Perbarui sekarang",
+        detecting = "Mendeteksi lokasi...",
+        detected = "Terdeteksi",
+        your_ip = "IP Anda",
+        your_country = "Negara Anda",
+        auto_detect = "Deteksi otomatis",
+        detected_success = "Lokasi terdeteksi",
+        detection_failed = "Deteksi gagal",
+        real_ip = "IP nyata",
+        vpn_ip = "IP VPN",
+        location = "Lokasi",
+        ip_ranges_loaded = "IP dimuat",
+        retry = "Coba lagi"
     },
     ar = {
         title = "إعدادات VPN",
@@ -646,13 +711,7 @@ local i18n = {
         disconnected = "غير متصل",
         split_tunnel = "نفق منفصل",
         split_tunnel_desc = "حركة المرور المحلية مباشرة، الأجنبية عبر VPN",
-        domestic_ip = "IPs المحلية",
-        domestic_ip_desc = "اختر الدولة لـ IPs المحلية",
-        domestic_country = "الدولة المحلية",
-        current_country = "الدولة الحالية",
-        ip_ranges_loaded = "تم تحميل IPs",
         vpn_server = "خادم VPN",
-        select_server = "اختر الخادم",
         connect = "اتصال",
         disconnect = "قطع الاتصال",
         reconnect = "إعادة الاتصال",
@@ -670,7 +729,6 @@ local i18n = {
         no_servers = "لا توجد خوادم متاحة",
         server_list = "قائمة الخوادم",
         latency = "زمن الاستجابة",
-        select_country = "اختر الدولة",
         update_ip_ranges = "تحديث IPs",
         last_updated = "آخر تحديث",
         never = "أبداً",
@@ -680,7 +738,19 @@ local i18n = {
         domestic_traffic = "حركة المرور المحلية",
         foreign_traffic = "حركة المرور الأجنبية",
         vpn_exit = "خروج VPN",
-        update_now = "التحديث الآن"
+        update_now = "التحديث الآن",
+        detecting = "جارٍ تحديد الموقع...",
+        detected = "تم تحديده",
+        your_ip = "IP الخاص بك",
+        your_country = "دولتك",
+        auto_detect = "تحديد تلقائي",
+        detected_success = "تم تحديد الموقع",
+        detection_failed = "فشل التحديد",
+        real_ip = "IP الحقيقي",
+        vpn_ip = "IP VPN",
+        location = "الموقع",
+        ip_ranges_loaded = "تم تحميل IPs",
+        retry = "إعادة المحاولة"
     },
     fa = {
         title = "تنظیمات VPN",
@@ -694,13 +764,7 @@ local i18n = {
         disconnected = "قطع",
         split_tunnel = "تونل جدا",
         split_tunnel_desc = "ترافیک داخلی مستقیم، خارجی از طریق VPN",
-        domestic_ip = "IP های داخلی",
-        domestic_ip_desc = "کشور را برای IP های داخلی انتخاب کنید",
-        domestic_country = "کشور داخلی",
-        current_country = "کشور فعلی",
-        ip_ranges_loaded = "IP ها بارگذاری شده",
         vpn_server = "سرور VPN",
-        select_server = "انتخاب سرور",
         connect = "اتصال",
         disconnect = "قطع اتصال",
         reconnect = "اتصال مجدد",
@@ -718,7 +782,6 @@ local i18n = {
         no_servers = "سروری موجود نیست",
         server_list = "لیست سرورها",
         latency = "تأخیر",
-        select_country = "انتخاب کشور",
         update_ip_ranges = "به‌روزرسانی IP ها",
         last_updated = "آخرین به‌روزرسانی",
         never = "هرگز",
@@ -728,7 +791,19 @@ local i18n = {
         domestic_traffic = "ترافیک داخلی",
         foreign_traffic = "ترافیک خارجی",
         vpn_exit = "خروج VPN",
-        update_now = "به‌روزرسانی حالا"
+        update_now = "به‌روزرسانی حالا",
+        detecting = "در حال تشخیص موقعیت...",
+        detected = "تشخیص داده شد",
+        your_ip = "IP شما",
+        your_country = "کشور شما",
+        auto_detect = "تشخیص خودکار",
+        detected_success = "موقعیت تشخیص داده شد",
+        detection_failed = "تشخیص ناموفق",
+        real_ip = "IP واقعی",
+        vpn_ip = "IP VPN",
+        location = "موقعیت",
+        ip_ranges_loaded = "IP ها بارگذاری شده",
+        retry = "تلاش مجدد"
     },
     hi = {
         title = "VPN सेटिंग्स",
@@ -742,13 +817,7 @@ local i18n = {
         disconnected = "डिस्कनेक्टेड",
         split_tunnel = "स्प्लिट टनलिंग",
         split_tunnel_desc = "घरेलू ट्रैफिक सीधे, विदेशी VPN से",
-        domestic_ip = "घरेलू IP",
-        domestic_ip_desc = "घरेलू IP के लिए देश चुनें",
-        domestic_country = "घरेलू देश",
-        current_country = "वर्तमान देश",
-        ip_ranges_loaded = "IP लोडेड",
         vpn_server = "VPN सर्वर",
-        select_server = "सर्वर चुनें",
         connect = "कनेक्ट",
         disconnect = "डिस्कनेक्ट",
         reconnect = "पुनः कनेक्ट",
@@ -766,7 +835,6 @@ local i18n = {
         no_servers = "कोई सर्वर उपलब्ध नहीं",
         server_list = "सर्वर सूची",
         latency = "विलंब",
-        select_country = "देश चुनें",
         update_ip_ranges = "IP अपडेट करें",
         last_updated = "अंतिम अपडेट",
         never = "कभी नहीं",
@@ -776,7 +844,19 @@ local i18n = {
         domestic_traffic = "घरेलू ट्रैफिक",
         foreign_traffic = "विदेशी ट्रैफिक",
         vpn_exit = "VPN निकास",
-        update_now = "अभी अपडेट करें"
+        update_now = "अभी अपडेट करें",
+        detecting = "स्थान का पता लगा रहा है...",
+        detected = "पता चला",
+        your_ip = "आपका IP",
+        your_country = "आपका देश",
+        auto_detect = "स्वचालित पता लगाना",
+        detected_success = "स्थान का पता चला",
+        detection_failed = "पता लगाना विफल",
+        real_ip = "वास्तविक IP",
+        vpn_ip = "VPN IP",
+        location = "स्थान",
+        ip_ranges_loaded = "IP लोडेड",
+        retry = "पुनः प्रयास करें"
     },
     tr = {
         title = "VPN Ayarları",
@@ -790,13 +870,7 @@ local i18n = {
         disconnected = "Bağlı değil",
         split_tunnel = "Bölünmüş Tünel",
         split_tunnel_desc = "Yerel trafik doğrudan, yabancı trafik VPN üzerinden",
-        domestic_ip = "Yerel IP",
-        domestic_ip_desc = "Yerel IP için ülke seçin",
-        domestic_country = "Yerel Ülke",
-        current_country = "Mevcut Ülke",
-        ip_ranges_loaded = "IP yüklendi",
         vpn_server = "VPN Sunucusu",
-        select_server = "Sunucu seçin",
         connect = "Bağlan",
         disconnect = "Bağlantıyı kes",
         reconnect = "Yeniden bağlan",
@@ -814,7 +888,6 @@ local i18n = {
         no_servers = "Kullanılabilir sunucu yok",
         server_list = "Sunucu Listesi",
         latency = "Gecikme",
-        select_country = "Ülke seçin",
         update_ip_ranges = "IP'leri güncelle",
         last_updated = "Son güncelleme",
         never = "Hiç",
@@ -824,40 +897,23 @@ local i18n = {
         domestic_traffic = "Yerel trafik",
         foreign_traffic = "Yabancı trafik",
         vpn_exit = "VPN Çıkışı",
-        update_now = "Şimdi güncelle"
+        update_now = "Şimdi güncelle",
+        detecting = "Konum tespit ediliyor...",
+        detected = "Tespit edildi",
+        your_ip = "IP Adresiniz",
+        your_country = "Ülkeniz",
+        auto_detect = "Otomatik tespit",
+        detected_success = "Konum tespit edildi",
+        detection_failed = "Tespit başarısız",
+        real_ip = "Gerçek IP",
+        vpn_ip = "VPN IP",
+        location = "Konum",
+        ip_ranges_loaded = "IP yüklendi",
+        retry = "Yeniden dene"
     }
 }
 
 local t = i18n[lang] or i18n["en"]
-
-local countries = {
-    {code = "cn", name = "China", flag = "🇨🇳"},
-    {code = "jp", name = "Japan", flag = "🇯🇵"},
-    {code = "us", name = "United States", flag = "🇺🇸"},
-    {code = "kr", name = "South Korea", flag = "🇰🇷"},
-    {code = "hk", name = "Hong Kong", flag = "🇭🇰"},
-    {code = "tw", name = "Taiwan", flag = "🇹🇼"},
-    {code = "sg", name = "Singapore", flag = "🇸🇬"},
-    {code = "my", name = "Malaysia", flag = "🇲🇾"},
-    {code = "th", name = "Thailand", flag = "🇹🇭"},
-    {code = "vn", name = "Vietnam", flag = "🇻🇳"},
-    {code = "id", name = "Indonesia", flag = "🇮🇩"},
-    {code = "ph", name = "Philippines", flag = "🇵🇭"},
-    {code = "in", name = "India", flag = "🇮🇳"},
-    {code = "pk", name = "Pakistan", flag = "🇵🇰"},
-    {code = "bd", name = "Bangladesh", flag = "🇧🇩"},
-    {code = "ae", name = "UAE", flag = "🇦🇪"},
-    {code = "sa", name = "Saudi Arabia", flag = "🇸🇦"},
-    {code = "tr", name = "Turkey", flag = "🇹🇷"},
-    {code = "ru", name = "Russia", flag = "🇷🇺"},
-    {code = "de", name = "Germany", flag = "🇩🇪"},
-    {code = "gb", name = "United Kingdom", flag = "🇬🇧"},
-    {code = "fr", name = "France", flag = "🇫🇷"},
-    {code = "nl", name = "Netherlands", flag = "🇳🇱"},
-    {code = "au", name = "Australia", flag = "🇦🇺"},
-    {code = "ca", name = "Canada", flag = "🇨🇦"},
-    {code = "br", name = "Brazil", flag = "🇧🇷"}
-}
 %>
 
 <style>
@@ -1015,88 +1071,60 @@ local countries = {
 .vpn-toggle input:checked + .vpn-toggle-slider:before {
     transform: translateX(28px);
 }
-.vpn-country-selector {
+.vpn-detection-box {
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 15px;
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    margin-top: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border-radius: 12px;
+    color: white;
+    margin: 15px 0;
 }
-.vpn-country-flag {
-    font-size: 32px;
+.vpn-detection-box.detecting {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
-.vpn-country-info {
+.vpn-detection-box.failed {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+}
+.vpn-detection-flag {
+    font-size: 48px;
+}
+.vpn-detection-info {
     flex: 1;
 }
-.vpn-country-info h4 {
-    margin: 0 0 3px 0;
-    font-size: 15px;
+.vpn-detection-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
 }
-.vpn-country-info p {
+.vpn-detection-info p {
     margin: 0;
-    font-size: 13px;
-    color: #666;
-}
-.vpn-country-select {
-    padding: 10px 15px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
     font-size: 14px;
-    cursor: pointer;
-    min-width: 180px;
+    opacity: 0.9;
 }
-.vpn-country-select:focus {
-    outline: none;
-    border-color: #667eea;
+.vpn-detection-ip {
+    font-family: monospace;
+    font-size: 16px;
+    font-weight: 600;
 }
-.vpn-ip-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    background: #e8f5e9;
-    color: #2e7d32;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-}
-.vpn-update-btn {
-    padding: 8px 16px;
+.vpn-detect-btn {
+    padding: 10px 20px;
     border-radius: 6px;
-    border: 1px solid #667eea;
+    border: 2px solid white;
     background: transparent;
-    color: #667eea;
-    font-size: 13px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
 }
-.vpn-update-btn:hover {
-    background: #667eea;
-    color: white;
+.vpn-detect-btn:hover {
+    background: white;
+    color: #11998e;
 }
-.vpn-info-box {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-top: 20px;
-}
-.vpn-info-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-}
-.vpn-info-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
-}
-.vpn-info-value {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
+.vpn-detect-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 .vpn-flow-diagram {
     display: flex;
@@ -1126,6 +1154,53 @@ local countries = {
     color: #999;
     font-size: 18px;
 }
+.vpn-country-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 15px;
+}
+.vpn-country-badge .flag {
+    font-size: 20px;
+}
+.vpn-info-box {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+.vpn-info-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+.vpn-info-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+.vpn-info-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+.vpn-ip-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
 </style>
 
 <div class="vpn-container">
@@ -1150,6 +1225,33 @@ local countries = {
     
     <div class="vpn-card">
         <div class="vpn-card-header">
+            <%= t.auto_detect %> <%= t.your_country %>
+        </div>
+        <div class="vpn-card-body">
+            <div class="vpn-detection-box" id="detection-box">
+                <div class="vpn-detection-flag" id="detection-flag">🌐</div>
+                <div class="vpn-detection-info">
+                    <h4 id="detection-title"><%= t.detecting %></h4>
+                    <p id="detection-desc"><%= t.your_ip %>: <span class="vpn-detection-ip" id="detection-ip">-</span></p>
+                </div>
+                <button class="vpn-detect-btn" id="btn-detect" onclick="auto_detect()">
+                    <%= t.auto_detect %>
+                </button>
+            </div>
+            
+            <div class="vpn-country-badge" id="country-badge" style="display:none;">
+                <span class="flag" id="badge-flag">🌐</span>
+                <span id="badge-name">-</span>
+                <span> - </span>
+                <span id="badge-routes">0</span>
+                <span><%= t.routes_count %></span>
+                <span><%= t.ip_ranges_loaded %></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="vpn-card">
+        <div class="vpn-card-header">
             <%= t.split_tunnel %>
         </div>
         <div class="vpn-card-body">
@@ -1166,53 +1268,32 @@ local countries = {
             
             <div class="vpn-flow-diagram">
                 <div class="vpn-flow-item vpn-flow-direct">
-                    <span id="flow-domestic">🌐 <%= t.domestic_traffic %></span>
+                    <span>🌐 <%= t.domestic_traffic %></span>
                 </div>
                 <span class="vpn-flow-arrow">→</span>
                 <div class="vpn-flow-item vpn-flow-direct">
-                    <span id="flow-direct-text">Direct</span>
+                    <span>Direct</span>
                 </div>
                 <span class="vpn-flow-arrow">|</span>
                 <div class="vpn-flow-item vpn-flow-vpn">
-                    <span id="flow-foreign">🌍 <%= t.foreign_traffic %></span>
+                    <span>🌍 <%= t.foreign_traffic %></span>
                 </div>
                 <span class="vpn-flow-arrow">→</span>
                 <div class="vpn-flow-item vpn-flow-vpn">
-                    <span id="flow-vpn-text">VPN</span>
+                    <span>VPN</span>
                 </div>
-            </div>
-            
-            <div class="vpn-country-selector" id="country-section">
-                <div class="vpn-country-flag" id="current-flag">🌐</div>
-                <div class="vpn-country-info">
-                    <h4><%= t.domestic_country %></h4>
-                    <p><%= t.domestic_ip_desc %></p>
-                </div>
-                <select class="vpn-country-select" id="country-select" onchange="change_country(this.value)">
-                    <% for _, c in ipairs(countries) do %>
-                    <option value="<%= c.code %>"><%= c.flag %> <%= c.name %></option>
-                    <% end %>
-                </select>
-                <button class="vpn-update-btn" onclick="update_ips()">
-                    <%= t.update_now %>
-                </button>
-            </div>
-            
-            <div class="vpn-ip-count" id="ip-count-box" style="margin-top: 15px;">
-                <span>📊</span>
-                <span id="ip-count">0</span> <%= t.routes_count %> <%= t.ip_ranges_loaded %>
             </div>
         </div>
     </div>
     
     <div class="vpn-card">
         <div class="vpn-card-header">
-            <%= t.vpn_exit %> <span id="exit-country-badge" style="background:#667eea;color:white;padding:2px 8px;border-radius:10px;font-size:12px;"></span>
+            <%= t.vpn_exit %>
         </div>
         <div class="vpn-card-body">
             <div class="vpn-info-box">
                 <div class="vpn-info-item">
-                    <div class="vpn-info-label"><%= t.current_country %></div>
+                    <div class="vpn-info-label"><%= t.your_country %></div>
                     <div class="vpn-info-value" id="info-country">-</div>
                 </div>
                 <div class="vpn-info-item">
@@ -1229,19 +1310,16 @@ var vpnData = {
     connected: false,
     splitEnabled: false,
     currentCountry: 'cn',
+    currentCountryName: 'China',
+    currentCountryFlag: '🇨🇳',
     ipCount: 0,
-    countries: <%= util.serialize_json(countries) %>,
+    detected: false,
+    detectedIp: '',
+    detectedCountry: '',
+    detectedCountryName: '',
+    detectedCountryFlag: '',
     t: <%= util.serialize_json(t) %>
 };
-
-function getCountryInfo(code) {
-    for (var i = 0; i < vpnData.countries.length; i++) {
-        if (vpnData.countries[i].code === code) {
-            return vpnData.countries[i];
-        }
-    }
-    return {code: code, name: code, flag: '🌐'};
-}
 
 function updateUI() {
     var indicator = document.getElementById('vpn-indicator');
@@ -1266,13 +1344,19 @@ function updateUI() {
     
     splitToggle.checked = vpnData.splitEnabled;
     
-    var country = getCountryInfo(vpnData.currentCountry);
-    document.getElementById('current-flag').textContent = country.flag;
-    document.getElementById('country-select').value = vpnData.currentCountry;
-    document.getElementById('ip-count').textContent = vpnData.ipCount;
-    document.getElementById('info-country').textContent = country.flag + ' ' + country.name;
+    var countryName = vpnData.detected ? vpnData.detectedCountryName : vpnData.currentCountryName;
+    var countryFlag = vpnData.detected ? vpnData.detectedCountryFlag : vpnData.currentCountryFlag;
+    var country = vpnData.detected ? vpnData.detectedCountry : vpnData.currentCountry;
+    
+    document.getElementById('info-country').textContent = countryFlag + ' ' + countryName;
     document.getElementById('info-count').textContent = vpnData.ipCount + ' ' + vpnData.t.routes_count;
-    document.getElementById('exit-country-badge').textContent = country.flag + ' ' + country.name;
+    document.getElementById('badge-flag').textContent = countryFlag;
+    document.getElementById('badge-name').textContent = countryName;
+    document.getElementById('badge-routes').textContent = vpnData.ipCount;
+    
+    if (vpnData.detected || vpnData.ipCount > 0) {
+        document.getElementById('country-badge').style.display = 'inline-flex';
+    }
 }
 
 function vpn_toggle() {
@@ -1313,48 +1397,63 @@ function toggle_split(el) {
     xhr.send('enabled=' + enabled);
 }
 
-function change_country(code) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_set_country', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        try {
-            var response = JSON.parse(xhr.responseText);
-            if (response.success) {
-                vpnData.currentCountry = response.country;
-                vpnData.ipCount = response.ip_count || vpnData.ipCount;
-                updateUI();
-            }
-        } catch (e) {
-            console.error('Error:', e);
-        }
-    };
-    xhr.send('country=' + code);
-}
-
-function update_ips() {
-    var btn = document.querySelector('.vpn-update-btn');
-    btn.textContent = vpnData.t.loading;
+function auto_detect() {
+    var btn = document.getElementById('btn-detect');
+    var box = document.getElementById('detection-box');
+    var flag = document.getElementById('detection-flag');
+    var title = document.getElementById('detection-title');
+    var ip = document.getElementById('detection-ip');
+    
     btn.disabled = true;
+    btn.textContent = vpnData.t.detecting;
+    box.className = 'vpn-detection-box detecting';
+    flag.textContent = '🔄';
+    title.textContent = vpnData.t.detecting;
+    ip.textContent = '-';
     
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_update_ips', true);
+    xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_detect', true);
     xhr.onload = function() {
-        btn.textContent = vpnData.t.update_now;
         btn.disabled = false;
+        btn.textContent = vpnData.t.retry;
+        
         try {
             var response = JSON.parse(xhr.responseText);
+            
             if (response.success) {
-                vpnData.ipCount = response.ip_count;
-                updateUI();
+                vpnData.detected = true;
+                vpnData.detectedIp = response.detected_ip || response.ip || '';
+                vpnData.detectedCountry = response.country || '';
+                vpnData.detectedCountryName = response.country_name || '';
+                vpnData.detectedCountryFlag = response.country_flag || '🌐';
+                vpnData.ipCount = response.ip_count || 0;
+                vpnData.currentCountry = response.country || vpnData.currentCountry;
+                
+                box.className = 'vpn-detection-box';
+                flag.textContent = vpnData.detectedCountryFlag;
+                title.textContent = vpnData.t.detected + ': ' + vpnData.detectedCountryName;
+                ip.textContent = vpnData.detectedIp;
+            } else {
+                box.className = 'vpn-detection-box failed';
+                flag.textContent = '❌';
+                title.textContent = vpnData.t.detection_failed;
+                ip.textContent = '-';
             }
         } catch (e) {
+            box.className = 'vpn-detection-box failed';
+            flag.textContent = '❌';
+            title.textContent = vpnData.t.detection_failed;
             console.error('Error:', e);
         }
+        
+        updateUI();
     };
     xhr.onerror = function() {
-        btn.textContent = vpnData.t.update_now;
         btn.disabled = false;
+        btn.textContent = vpnData.t.retry;
+        box.className = 'vpn-detection-box failed';
+        flag.textContent = '❌';
+        title.textContent = vpnData.t.detection_failed;
     };
     xhr.send();
 }
@@ -1368,7 +1467,27 @@ function loadStatus() {
             vpnData.connected = response.vpn_connected;
             vpnData.splitEnabled = response.split_tunnel;
             vpnData.currentCountry = response.current_country || 'cn';
+            vpnData.currentCountryName = response.current_country_name || 'China';
+            vpnData.currentCountryFlag = response.current_country_flag || '🇨🇳';
             vpnData.ipCount = response.ip_count || 0;
+            vpnData.detected = response.detected || false;
+            vpnData.detectedIp = response.detected_ip || '';
+            vpnData.detectedCountry = response.detected_country || '';
+            vpnData.detectedCountryName = response.detected_country_name || '';
+            vpnData.detectedCountryFlag = response.detected_country_flag || '🌐';
+            
+            if (vpnData.detected) {
+                var box = document.getElementById('detection-box');
+                var flag = document.getElementById('detection-flag');
+                var title = document.getElementById('detection-title');
+                var ip = document.getElementById('detection-ip');
+                
+                box.className = 'vpn-detection-box';
+                flag.textContent = vpnData.detectedCountryFlag;
+                title.textContent = vpnData.t.detected + ': ' + vpnData.detectedCountryName;
+                ip.textContent = vpnData.detectedIp;
+            }
+            
             updateUI();
         } catch (e) {
             console.error('Error:', e);
@@ -1377,5 +1496,8 @@ function loadStatus() {
     xhr.send();
 }
 
-window.addEventListener('DOMContentLoaded', loadStatus);
+window.addEventListener('DOMContentLoaded', function() {
+    loadStatus();
+    setTimeout(auto_detect, 1000);
+});
 </script>

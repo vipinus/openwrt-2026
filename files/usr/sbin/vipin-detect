@@ -1,0 +1,252 @@
+#!/bin/sh
+# Auto-detect user's real public IP and country
+# Must be called BEFORE VPN connects to get accurate local IP
+
+CONF_DIR="/etc/vipin/country-ips"
+DETECT_LOG="/var/log/vipin-detect.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DETECT_LOG"
+}
+
+get_public_ip() {
+    local ip=""
+    
+    for url in \
+        "https://api.ipify.org" \
+        "https://icanhazip.com" \
+        "https://ifconfig.me/ip" \
+        "https://checkip.amazonaws.com" \
+        "https://ipinfo.io/ip" \
+        "https://myip.dnsomatic.com"; do
+        
+        ip=$(curl -s --max-time 5 "$url" 2>/dev/null | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+        if [ -n "$ip" ]; then
+            break
+        fi
+    done
+    
+    echo "$ip"
+}
+
+get_country_by_ip() {
+    local ip=$1
+    local country=""
+    
+    for url in \
+        "https://ip-api.com/json/$ip?fields=countryCode,country" \
+        "https://ipinfo.io/$ip/json"; do
+        
+        local response=$(curl -s --max-time 5 "$url" 2>/dev/null)
+        if [ -n "$response" ]; then
+            country=$(echo "$response" | grep -o '"country_code":"[^"]*"' | cut -d'"' -f4)
+            [ -z "$country" ] && country=$(echo "$response" | grep -o '"countryCode":"[^"]*"' | cut -d'"' -f4)
+            [ -z "$country" ] && country=$(echo "$response" | grep -o '"country":"[^"]*"' | cut -d'"' -f4 | head -c 2 | tr '[:lower:]' '[:upper:]')
+            
+            if [ -n "$country" ] && [ ${#country} -eq 2 ]; then
+                break
+            fi
+        fi
+    done
+    
+    echo "$country"
+}
+
+map_country_code() {
+    local code=$(echo "$1" | tr '[:lower:]' '[:upper:]')
+    
+    case "$code" in
+        CN|CN) echo "cn" ;;
+        JP|JP) echo "jp" ;;
+        US|USA) echo "us" ;;
+        KR|KOR) echo "kr" ;;
+        HK|HKG) echo "hk" ;;
+        TW|TWN) echo "tw" ;;
+        SG|SGP) echo "sg" ;;
+        MY|MYS) echo "my" ;;
+        TH|THA) echo "th" ;;
+        VN|VNM) echo "vn" ;;
+        ID|IDN) echo "id" ;;
+        PH|PHL) echo "ph" ;;
+        IN|IND) echo "in" ;;
+        PK|PAK) echo "pk" ;;
+        BD|BGD) echo "bd" ;;
+        AE|ARE) echo "ae" ;;
+        SA|SAU) echo "sa" ;;
+        TR|TUR) echo "tr" ;;
+        RU|RUS) echo "ru" ;;
+        UA|UKR) echo "ua" ;;
+        KZ|KAZ) echo "kz" ;;
+        MM|MMR) echo "mm" ;;
+        KH|KHM) echo "kh" ;;
+        LA|LAO) echo "la" ;;
+        NP|NPL) echo "np" ;;
+        BT|BTN) echo "bt" ;;
+        DE|DE) echo "de" ;;
+        GB|UK|GBR) echo "gb" ;;
+        FR|FRA) echo "fr" ;;
+        NL|NLD) echo "nl" ;;
+        AU|AUS) echo "au" ;;
+        CA|CAN) echo "ca" ;;
+        BR|BRA) echo "br" ;;
+        MX|MEX) echo "mx" ;;
+        AR|ARG) echo "ar" ;;
+        CL|CHL) echo "cl" ;;
+        CO|COL) echo "co" ;;
+        IT|ITA) echo "it" ;;
+        ES|ESP) echo "es" ;;
+        PL|POL) echo "pl" ;;
+        SE|SWE) echo "se" ;;
+        NO|NOR) echo "no" ;;
+        FI|FIN) echo "fi" ;;
+        DK|DNK) echo "dk" ;;
+        CZ|CZE) echo "cz" ;;
+        AT|AUT) echo "at" ;;
+        CH|CHE) echo "ch" ;;
+        IE|IRL) echo "ie" ;;
+        PT|PRT) echo "pt" ;;
+        BE|BEL) echo "be" ;;
+        GR|GRC) echo "gr" ;;
+        HU|HUN) echo "hu" ;;
+        RO|ROU) echo "ro" ;;
+        BG|BGR) echo "bg" ;;
+        HR|HRV) echo "hr" ;;
+        SK|SVK) echo "sk" ;;
+        *) echo "$code" ;;
+    esac
+}
+
+auto_detect() {
+    mkdir -p "$CONF_DIR"
+    
+    local real_ip=$(get_public_ip)
+    
+    if [ -z "$real_ip" ]; then
+        log "Failed to detect public IP"
+        echo "{\"success\": false, \"error\": \"Failed to detect public IP\"}"
+        return 1
+    fi
+    
+    log "Detected public IP: $real_ip"
+    
+    local country_code=$(get_country_by_ip "$real_ip")
+    
+    if [ -z "$country_code" ]; then
+        log "Failed to detect country for IP: $real_ip"
+        echo "{\"success\": false, \"error\": \"Failed to detect country\", \"ip\": \"$real_ip\"}"
+        return 1
+    fi
+    
+    local country=$(map_country_code "$country_code")
+    
+    log "Detected country: $country ($country_code) from IP: $real_ip"
+    
+    echo "$country" > "$CONF_DIR/current_country"
+    echo "$real_ip" > "$CONF_DIR/detected_ip"
+    echo "$(date '+%Y-%m-%d %H:%M:%S')" > "$CONF_DIR/detect_time"
+    
+    /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
+    
+    local ip_count=$(/usr/sbin/vipin-country-ips count "$country" 2>/dev/null || echo "0")
+    
+    echo "{\"success\": true, \"ip\": \"$real_ip\", \"country_code\": \"$country_code\", \"country\": \"$country\", \"ip_count\": $ip_count}"
+}
+
+get_detected_info() {
+    mkdir -p "$CONF_DIR"
+    
+    local country=$(cat "$CONF_DIR/current_country" 2>/dev/null || echo "")
+    local detected_ip=$(cat "$CONF_DIR/detected_ip" 2>/dev/null || echo "")
+    local detect_time=$(cat "$CONF_DIR/detect_time" 2>/dev/null || echo "")
+    local ip_count=$(/usr/sbin/vipin-country-ips count "$country" 2>/dev/null || echo "0")
+    
+    if [ -z "$country" ]; then
+        echo "{\"detected\": false}"
+    else
+        echo "{\"detected\": true, \"ip\": \"$detected_ip\", \"country\": \"$country\", \"detect_time\": \"$detect_time\", \"ip_count\": $ip_count}"
+    fi
+}
+
+get_country_name() {
+    local code=$1
+    case "$code" in
+        cn) echo "China" ;;
+        jp) echo "Japan" ;;
+        us) echo "United States" ;;
+        kr) echo "South Korea" ;;
+        hk) echo "Hong Kong" ;;
+        tw) echo "Taiwan" ;;
+        sg) echo "Singapore" ;;
+        my) echo "Malaysia" ;;
+        th) echo "Thailand" ;;
+        vn) echo "Vietnam" ;;
+        id) echo "Indonesia" ;;
+        ph) echo "Philippines" ;;
+        in) echo "India" ;;
+        pk) echo "Pakistan" ;;
+        bd) echo "Bangladesh" ;;
+        ae) echo "UAE" ;;
+        sa) echo "Saudi Arabia" ;;
+        tr) echo "Turkey" ;;
+        ru) echo "Russia" ;;
+        de) echo "Germany" ;;
+        gb) echo "United Kingdom" ;;
+        fr) echo "France" ;;
+        nl) echo "Netherlands" ;;
+        au) echo "Australia" ;;
+        ca) echo "Canada" ;;
+        br) echo "Brazil" ;;
+        *) echo "$code" ;;
+    esac
+}
+
+get_country_flag() {
+    local code=$1
+    case "$code" in
+        cn) echo "🇨🇳" ;;
+        jp) echo "🇯🇵" ;;
+        us) echo "🇺🇸" ;;
+        kr) echo "🇰🇷" ;;
+        hk) echo "🇭🇰" ;;
+        tw) echo "🇹🇼" ;;
+        sg) echo "🇸🇬" ;;
+        my) echo "🇲🇾" ;;
+        th) echo "🇹🇭" ;;
+        vn) echo "🇻🇳" ;;
+        id) echo "🇮🇩" ;;
+        ph) echo "🇵🇭" ;;
+        in) echo "🇮🇳" ;;
+        pk) echo "🇵🇰" ;;
+        bd) echo "🇧🇩" ;;
+        ae) echo "🇦🇪" ;;
+        sa) echo "🇸🇦" ;;
+        tr) echo "🇹🇷" ;;
+        ru) echo "🇷🇺" ;;
+        de) echo "🇩🇪" ;;
+        gb) echo "🇬🇧" ;;
+        fr) echo "🇫🇷" ;;
+        nl) echo "🇳🇱" ;;
+        au) echo "🇦🇺" ;;
+        ca) echo "🇨🇦" ;;
+        br) echo "🇧🇷" ;;
+        *) echo "🌐" ;;
+    esac
+}
+
+case "$1" in
+    detect|auto)
+        auto_detect
+        ;;
+    info)
+        get_detected_info
+        ;;
+    country-name)
+        get_country_name "$2"
+        ;;
+    country-flag)
+        get_country_flag "$2"
+        ;;
+    *)
+        echo "Usage: $0 {detect|info|country-name|country-flag} [country_code]"
+        ;;
+esac
