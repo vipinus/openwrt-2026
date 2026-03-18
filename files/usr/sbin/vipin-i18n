@@ -1,15 +1,19 @@
 #!/bin/sh
 
-API_URL="https://www.anyfq.com/api/v1/router/version"
-LOG_FILE="/tmp/vipin_update.log"
 LANG_FILE="/etc/vipin_lang"
+DEFAULT_LANG="en"
 
 get_language() {
     if [ -f "$LANG_FILE" ]; then
         cat "$LANG_FILE"
     else
-        echo "en"
+        echo "$DEFAULT_LANG"
     fi
+}
+
+set_language() {
+    local lang="$1"
+    echo "$lang" > "$LANG_FILE"
 }
 
 get_translation() {
@@ -243,108 +247,3 @@ get_translation() {
             ;;
     esac
 }
-
-get_version() {
-    local model="$1"
-    curl -s "${API_URL}/${model}" 2>/dev/null
-}
-
-check_update() {
-    local current_version current_model latest_version
-    local api_response needs_update
-    local lang
-    
-    lang=$(get_language)
-    
-    current_version=$(cat /etc/vipin_version 2>/dev/null || echo "0")
-    current_model=$(cat /etc/vipin_model 2>/dev/null || echo "Unknown")
-    
-    echo "$(date): $(get_translation $lang 'checking')" >> "$LOG_FILE"
-    
-    api_response=$(get_version "$current_model")
-    if [ -z "$api_response" ]; then
-        echo "$(date): $(get_translation $lang 'check_failed')" >> "$LOG_FILE"
-        return 1
-    fi
-    
-    latest_version=$(echo "$api_response" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
-    
-    if [ -z "$latest_version" ]; then
-        echo "$(date): $(get_translation $lang 'check_failed')" >> "$LOG_FILE"
-        return 1
-    fi
-    
-    echo "$(date): $(get_translation $lang 'current_version'): $current_version, $(get_translation $lang 'latest_version'): $latest_version" >> "$LOG_FILE"
-    
-    if [ "$latest_version" != "$current_version" ]; then
-        echo "$(date): $(get_translation $lang 'update_available')! $current_version -> $latest_version" >> "$LOG_FILE"
-        
-        uci set system.@system[0].custom=1
-        uci set system.@system[0].vipin_update="$latest_version"
-        uci set system.@system[0].vipin_update_url="$api_response"
-        uci commit system
-        
-        return 0
-    fi
-    
-    echo "$(date): $(get_translation $lang 'up_to_date')" >> "$LOG_FILE"
-    
-    uci del_list system.@system[0].custom=1 2>/dev/null
-    uci del_list system.@system[0].vipin_update 2>/dev/null
-    uci commit system
-    
-    return 1
-}
-
-set_language() {
-    local lang="$1"
-    echo "$lang" > "$LANG_FILE"
-}
-
-show_status() {
-    local lang="${1:-$(get_language)}"
-    local current_version latest_version
-    
-    current_version=$(cat /etc/vipin_version 2>/dev/null || echo "0")
-    latest_version=$(uci get system.@system[0].vipin_update 2>/dev/null || echo "")
-    
-    echo "=========================================="
-    echo "  ViPiN $(get_translation $lang 'firmware_update')"
-    echo "=========================================="
-    echo ""
-    echo "$(get_translation $lang 'current_version'): $current_version"
-    
-    if [ -n "$latest_version" ] && [ "$latest_version" != "$current_version" ]; then
-        echo "$(get_translation $lang 'new_version'): $latest_version"
-        echo ""
-        echo "[$(get_translation $lang 'update_available')]"
-    else
-        echo "$(get_translation $lang 'latest_version'): $current_version"
-        echo ""
-        echo "[$(get_translation $lang 'up_to_date')]"
-    fi
-    echo ""
-}
-
-case "$1" in
-    -f|--foreground)
-        while true; do
-            check_update
-            sleep 86400
-        done
-        ;;
-    -s|--status)
-        show_status "${2:-en}"
-        ;;
-    -l|--lang)
-        if [ -n "$2" ]; then
-            set_language "$2"
-            echo "Language set to: $2"
-        else
-            echo "Current language: $(get_language)"
-        fi
-        ;;
-    *)
-        check_update
-        ;;
-esac
