@@ -1,0 +1,186 @@
+#!/bin/sh
+# VIPIN VPN Split Tunneling - nftables based routing
+# Domestic traffic -> Direct, Foreign traffic -> VPN
+
+NFT_TABLE="vipin_routing"
+NFT_CHAIN_VPN="vpn_forward"
+NFT_CHAIN_DOMESTIC="domestic_forward"
+NFT_CHAIN_MASQ="vpn_masquerade"
+VPN_IFACE="easytier"
+CONF_DIR="/etc/vipin/country-ips"
+
+country_name() {
+    case "$1" in
+        cn) echo "China" ;;
+        jp) echo "Japan" ;;
+        us) echo "United States" ;;
+        kr) echo "South Korea" ;;
+        hk) echo "Hong Kong" ;;
+        tw) echo "Taiwan" ;;
+        sg) echo "Singapore" ;;
+        my) echo "Malaysia" ;;
+        th) echo "Thailand" ;;
+        vn) echo "Vietnam" ;;
+        id) echo "Indonesia" ;;
+        ph) echo "Philippines" ;;
+        in) echo "India" ;;
+        pk) echo "Pakistan" ;;
+        bd) echo "Bangladesh" ;;
+        ae) echo "UAE" ;;
+        sa) echo "Saudi Arabia" ;;
+        tr) echo "Turkey" ;;
+        ru) echo "Russia" ;;
+        ua) echo "Ukraine" ;;
+        kz) echo "Kazakhstan" ;;
+        mm) echo "Myanmar" ;;
+        kh) echo "Cambodia" ;;
+        la) echo "Laos" ;;
+        np) echo "Nepal" ;;
+        bt) echo "Bhutan" ;;
+        de) echo "Germany" ;;
+        gb) echo "United Kingdom" ;;
+        au) echo "Australia" ;;
+        ca) echo "Canada" ;;
+        fr) echo "France" ;;
+        nl) echo "Netherlands" ;;
+        it) echo "Italy" ;;
+        es) echo "Spain" ;;
+        pl) echo "Poland" ;;
+        se) echo "Sweden" ;;
+        no) echo "Norway" ;;
+        fi) echo "Finland" ;;
+        dk) echo "Denmark" ;;
+        br) echo "Brazil" ;;
+        mx) echo "Mexico" ;;
+        ar) echo "Argentina" ;;
+        cl) echo "Chile" ;;
+        co) echo "Colombia" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+load_country_ips() {
+    local country=$1
+    local ip_file="$CONF_DIR/${country}.txt"
+    
+    if [ ! -f "$ip_file" ]; then
+        /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
+    fi
+    
+    if [ -f "$ip_file" ]; then
+        cat "$ip_file"
+    else
+        echo ""
+    fi
+}
+
+setup_nftables() {
+    local enabled=$1
+    local country=$2
+    
+    log "Setting up nftables routing (enabled=$enabled, country=$country)"
+    
+    nft add table inet $NFT_TABLE 2>/dev/null
+    nft flush table inet $NFT_TABLE
+    
+    if [ "$enabled" != "1" ]; then
+        log "VPN routing disabled, clearing rules"
+        nft delete table inet $NFT_TABLE 2>/dev/null
+        uci set firewall.vpn=include
+        uci set firewall.vpn.enabled='0'
+        uci commit firewall
+        /etc/init.d/firewall reload 2>/dev/null
+        return 0
+    fi
+    
+    nft add chain inet $NFT_TABLE $NFT_CHAIN_MASQ { type nat hook postrouting priority srcnat \; }
+    nft add chain inet $NFT_TABLE $NFT_CHAIN_VPN { type route hook forward priority filter \; policy accept \; }
+    nft add chain inet $NFT_TABLE $NFT_CHAIN_DOMESTIC { type route hook forward priority filter \; policy accept \; }
+    
+    nft add rule inet $NFT_TABLE $NFT_CHAIN_MASQ oifname "$VPN_IFACE" counter masquerade
+    
+    local domestic_ips=$(load_country_ips "$country")
+    
+    if [ -n "$domestic_ips" ]; then
+        echo "$domestic_ips" | while read -r cidr; do
+            [ -z "$cidr" ] && continue
+            nft add rule inet $NFT_TABLE $NFT_CHAIN_DOMESTIC ip daddr $cidr counter accept 2>/dev/null
+        done
+    fi
+    
+    nft add rule inet $NFT_TABLE $NFT_CHAIN_DOMESTIC counter drop
+    
+    nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN meta mark set 0x1
+    
+    local vpn_table="100"
+    ip route show table $vpn_table | grep -q "default via" || ip route add default dev $VPN_IFACE table $vpn_table 2>/dev/null
+    
+    nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN meta oifname "$VPN_IFACE" counter return
+    
+    if [ -n "$domestic_ips" ]; then
+        echo "$domestic_ips" | while read -r cidr; do
+            [ -z "$cidr" ] && continue
+            nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN ip daddr $cidr counter accept 2>/dev/null
+        done
+    fi
+    
+    nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN counter
+    
+    uci set firewall.vpn=include
+    uci set firewall.vpn.path='/etc/firewall.vpn.rules'
+    uci set firewall.vpn.enabled='1'
+    uci commit firewall
+    
+    cat > /etc/firewall.vpn.rules << 'FIREWALL_EOF'
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet vipin_routing {
+    chain vpn_forward {
+        type filter hook forward priority filter; policy accept;
+        meta mark set 0x1
+        oifname "easytier" return
+    }
+}
+FIREWALL_EOF
+    
+    /etc/init.d/firewall reload 2>/dev/null
+    
+    log "VPN routing configured for country: $(country_name $country)"
+}
+
+get_current_country() {
+    cat "$CONF_DIR/current_country" 2>/dev/null || echo "cn"
+}
+
+get_routing_status() {
+    local enabled=$(uci get vipin.vpn.enabled 2>/dev/null || echo "0")
+    local country=$(get_current_country)
+    
+    echo "{\"enabled\": $enabled, \"country\": \"$country\", \"country_name\": \"$(country_name $country)\"}"
+}
+
+case "$1" in
+    enable)
+        setup_nftables 1 "${2:-$(get_current_country)}"
+        ;;
+    disable)
+        setup_nftables 0
+        ;;
+    reload)
+        enabled=$(uci get vipin.vpn.enabled 2>/dev/null || echo "0")
+        country=$(get_current_country)
+        setup_nftables "$enabled" "$country"
+        ;;
+    status)
+        get_routing_status
+        ;;
+    country-name)
+        country_name "$2"
+        ;;
+    *)
+        echo "Usage: $0 {enable|disable|reload|status|country-name}"
+        exit 1
+        ;;
+esac

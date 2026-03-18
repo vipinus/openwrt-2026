@@ -1,0 +1,114 @@
+#!/bin/sh
+# Fetch country-specific IP ranges from authoritative sources
+# Sources: APNIC (apnic.net), Team Cymru (cymru.com)
+
+CONF_DIR="/etc/vipin/country-ips"
+COUNTRY_FILE="$CONF_DIR/country.conf"
+LOCK_FILE="/var/lock/vipin-ips.lock"
+LOG_FILE="/var/log/vipin-ips.log"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+mkdir -p "$CONF_DIR"
+
+get_ips_apnic() {
+    local country=$1
+    local url="https://ftp.apnic.net/public/releases/current/legacy-apnic/delegated-apnic-latest"
+    local temp_file="/tmp/apnic-ips.$$"
+    
+    log "Fetching APNIC data for country: $country"
+    
+    if [ -f "$LOCK_FILE" ]; then
+        lock_age=$(($(date +%s) - $(stat -c %Y "$LOCK_FILE" 2>/dev/null || echo 0)))
+        if [ "$lock_age" -lt 300 ]; then
+            log "Another process is running, skipping"
+            return 1
+        fi
+    fi
+    
+    touch "$LOCK_FILE"
+    
+    if ! curl -s --max-time 60 "$url" -o "$temp_file" 2>/dev/null; then
+        log "Failed to download APNIC data"
+        rm -f "$temp_file" "$LOCK_FILE"
+        return 1
+    fi
+    
+    grep "|$country|" "$temp_file" | awk -F'|' '$2 == "ipv4" {print $4 "/" 32-log($5)/log(2)}' > "$CONF_DIR/$country.txt"
+    
+    rm -f "$temp_file" "$LOCK_FILE"
+    
+    count=$(wc -l < "$CONF_DIR/$country.txt" 2>/dev/null || echo 0)
+    log "Downloaded $count IP ranges for $country"
+    return 0
+}
+
+get_ips_ipdeny() {
+    local country=$1
+    local url="https://www.ipdeny.com/ipblocks/data/aggregated/$country-aggregated.zone"
+    local temp_file="/tmp/ipdeny-$country.$$"
+    
+    log "Fetching ipdeny data for country: $country"
+    
+    if ! curl -s --max-time 30 -L "$url" -o "$temp_file" 2>/dev/null; then
+        log "Failed to download ipdeny data for $country"
+        rm -f "$temp_file"
+        return 1
+    fi
+    
+    mv "$temp_file" "$CONF_DIR/$country.txt"
+    
+    count=$(wc -l < "$CONF_DIR/$country.txt" 2>/dev/null || echo 0)
+    log "Downloaded $count IP ranges for $country from ipdeny"
+    return 0
+}
+
+update_country_ips() {
+    local country=$1
+    
+    if ! get_ips_ipdeny "$country"; then
+        get_ips_apnic "$country"
+    fi
+}
+
+save_current_country() {
+    local country=$1
+    echo "$country" > "$CONF_DIR/current_country"
+    log "Set current country to: $country"
+}
+
+get_current_country() {
+    cat "$CONF_DIR/current_country" 2>/dev/null || echo "cn"
+}
+
+case "$1" in
+    update)
+        country="${2:-$(get_current_country)}"
+        update_country_ips "$country"
+        ;;
+    set-country)
+        if [ -z "$2" ]; then
+            echo "Usage: $0 set-country <country_code>"
+            echo "Country codes: cn, jp, us, kr, hk, tw, sg, my, th, vn, id, ph, in, pk, bd, ae, sa, tr, ru, ua, kz, mm, kh, la, np, bt"
+            exit 1
+        fi
+        save_current_country "$2"
+        update_country_ips "$2"
+        ;;
+    get-country)
+        get_current_country
+        ;;
+    list)
+        ls -la "$CONF_DIR"/*.txt 2>/dev/null | awk '{print $9, $5}'
+        ;;
+    count)
+        country="${2:-$(get_current_country)}"
+        wc -l < "$CONF_DIR/$country.txt" 2>/dev/null || echo "0"
+        ;;
+    *)
+        echo "Usage: $0 {update|set-country|get-country|list|count} [country_code]"
+        exit 1
+        ;;
+esac

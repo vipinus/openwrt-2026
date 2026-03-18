@@ -1,0 +1,7 @@
+config vipin 'vpn'
+    option enabled '0'
+    option split_tunnel '1'
+    option server ''
+    option port '3000'
+    option auth_token ''
+    option country 'cn'
