@@ -40,7 +40,6 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-hours: 6
     
     steps:
       - name: Checkout Repository
