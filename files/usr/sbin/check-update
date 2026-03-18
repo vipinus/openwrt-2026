@@ -1,0 +1,57 @@
+#!/bin/sh
+
+API_URL="https://www.anyfq.com/api/v1/router/version"
+LOG_FILE="/tmp/vipin_update.log"
+
+get_version() {
+    local model="$1"
+    curl -s "${API_URL}/${model}" 2>/dev/null
+}
+
+check_update() {
+    local current_version current_model latest_version
+    local api_response needs_update
+    
+    current_version=$(cat /etc/vipin_version 2>/dev/null || echo "0")
+    current_model=$(cat /etc/vipin_model 2>/dev/null || echo "Unknown")
+    
+    echo "$(date): Checking for updates..." >> "$LOG_FILE"
+    
+    api_response=$(get_version "$current_model")
+    if [ -z "$api_response" ]; then
+        echo "$(date): Failed to get version info" >> "$LOG_FILE"
+        return 1
+    fi
+    
+    latest_version=$(echo "$api_response" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
+    
+    if [ -z "$latest_version" ]; then
+        echo "$(date): No version found in response" >> "$LOG_FILE"
+        return 1
+    fi
+    
+    echo "Current: $current_version, Latest: $latest_version" >> "$LOG_FILE"
+    
+    if [ "$latest_version" != "$current_version" ]; then
+        echo "$(date): Update available! $current_version -> $latest_version" >> "$LOG_FILE"
+        uci set system.@system[0].custom=1
+        uci set system.@system[0].vipin_update="$latest_version"
+        uci commit system
+        return 0
+    fi
+    
+    echo "$(date): Firmware is up to date" >> "$LOG_FILE"
+    return 1
+}
+
+case "$1" in
+    -f|--foreground)
+        while true; do
+            check_update
+            sleep 86400
+        done
+        ;;
+    *)
+        check_update
+        ;;
+esac

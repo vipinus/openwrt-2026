@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=10
+
+USE_PROCD=1
+PROG=/usr/sbin/check-update
+VIPIN_UPDATE_URL="https://www.anyfq.com/api/v1/router/version"
+
+start_service() {
+    procd_open_instance
+    procd_set_param command "$PROG" -f
+    procd_set_param respawn
+    procd_close_instance
+}
+
+boot() {
+    sleep 30
+    start_service
+}
+
+restart_service() {
+    stop
+    start
+}

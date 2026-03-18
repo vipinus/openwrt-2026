@@ -1,0 +1,187 @@
+name: Build OpenWRT Firmware
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target Router Model'
+        required: true
+        default: 'X86_64'
+        type: string
+      version:
+        description: 'Firmware Version (YYYYMMDD)'
+        required: false
+        default: '20260405'
+        type: string
+      release:
+        description: 'Create Release'
+        required: false
+        default: 'false'
+        type: boolean
+      build_id:
+        description: 'Build ID (internal)'
+        required: false
+        default: ''
+        type: string
+      callback_url:
+        description: 'Webhook callback URL'
+        required: false
+        default: ''
+        type: string
+
+  repository_dispatch:
+    types: [build-firmware]
+    branches: [main]
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+  OPENWRT_VERSION: "24.10.4"
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-hours: 6
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set TARGET from event
+        id: set_target
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "TARGET=${{ github.event.client_payload.router_model }}" >> $GITHUB_ENV
+            echo "BUILD_ID=${{ github.event.client_payload.build_id }}" >> $GITHUB_ENV
+            echo "CALLBACK_URL=${{ github.event.client_payload.callback_url }}" >> $GITHUB_ENV
+            echo "VERSION=${{ github.event.client_payload.version }}" >> $GITHUB_ENV
+          else
+            echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
+            echo "BUILD_ID=${{ inputs.build_id }}" >> $GITHUB_ENV
+            echo "CALLBACK_URL=${{ inputs.callback_url }}" >> $GITHUB_ENV
+            echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          fi
+
+      - name: Prepare Build Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential ccache flex bison g++ gcc libc-dev \
+            python3 python3-pip python3-setuptools python3-wheel \
+            libncurses-dev libssl-dev zlib1g-dev libelf-dev autoconf \
+            automake libtool pkg-config unzip rsync wget git curl \
+            subversion bc findutils tar bzip2 gzip
+
+      - name: Clone OpenWRT
+        run: |
+          cd /tmp
+          if [ ! -d "openwrt" ]; then
+            git clone --depth 1 --branch ${{ env.OPENWRT_VERSION }} https://github.com/openwrt/openwrt.git openwrt
+          fi
+          cd openwrt
+
+      - name: Setup Custom Files
+        run: |
+          cd /tmp/openwrt
+          rm -rf files
+          mkdir -p files/etc/init.d files/usr/sbin
+          
+          # Write version and model files
+          echo "${VERSION:-20260405}" > files/etc/vipin_version
+          echo "${TARGET:-Unknown}" > files/etc/vipin_model
+          
+          # Copy custom files from repo
+          if [ -d "${{ github.workspace }}/files" ]; then
+            cp -r "${{ github.workspace }}/files/"* files/
+          fi
+
+      - name: Update Feeds
+        run: |
+          cd /tmp/openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Copy Configuration
+        run: |
+          cd /tmp/openwrt
+          if [ -f "${{ github.workspace }}/configs/${{ env.TARGET }}.config" ]; then
+            cp "${{ github.workspace }}/configs/${{ env.TARGET }}.config" .config
+          else
+            echo "Config file not found for ${{ env.TARGET }}"
+            exit 1
+          fi
+
+      - name: Configure
+        run: |
+          cd /tmp/openwrt
+          make defconfig
+
+      - name: Download Sources
+        run: |
+          cd /tmp/openwrt
+          make download -j$(nproc)
+          find . -name "*.download" -delete
+
+      - name: Build Firmware
+        run: |
+          cd /tmp/openwrt
+          make -j$(nproc) V=s 2>&1 | tee build.log
+
+      - name: Collect Artifacts
+        run: |
+          cd /tmp/openwrt
+          mkdir -p artifacts
+          find . -name "*.bin" -o -name "*.img" -o -name "*.tar" | grep -v "build" | head -20 | xargs -I {} cp {} artifacts/ 2>/dev/null || true
+          cp build.log artifacts/ 2>/dev/null || true
+          ls -la artifacts/
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-${{ env.TARGET }}-firmware
+          path: |
+            /tmp/openwrt/artifacts/*.bin
+            /tmp/openwrt/artifacts/*.img
+            /tmp/openwrt/artifacts/*.tar
+            /tmp/openwrt/artifacts/build.log
+          retention-days: 7
+
+      - name: Upload to Release
+        if: inputs.release == true
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            /tmp/openwrt/artifacts/*.bin
+            /tmp/openwrt/artifacts/*.img
+            /tmp/openwrt/artifacts/*.tar
+          draft: true
+          name: OpenWRT ${{ env.OPENWRT_VERSION }} - ${{ env.TARGET }}
+          body: |
+            Auto-built firmware for ${{ env.TARGET }}
+            Build Date: ${{ github.run_timestamp }}
+            OpenWRT Version: ${{ env.OPENWRT_VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send Webhook Callback
+        if: env.CALLBACK_URL != ''
+        run: |
+          if [ -n "${{ env.BUILD_ID }}" ] && [ -n "${{ env.CALLBACK_URL }}" ]; then
+            if [ "${{ job.status }}" = "success" ]; then
+              STATUS="completed"
+              DOWNLOAD_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            else
+              STATUS="failed"
+              DOWNLOAD_URL=""
+            fi
+            
+            curl -X POST "${{ env.CALLBACK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"build_id\": \"${{ env.BUILD_ID }}\",
+                \"status\": \"$STATUS\",
+                \"router_model\": \"${{ env.TARGET }}\",
+                \"version\": \"${{ env.VERSION }}\",
+                \"github_run_id\": \"${{ github.run_id }}\",
+                \"download_url\": \"$DOWNLOAD_URL\"
+              }"
+          fi
