@@ -1,0 +1,51 @@
+#!/bin/sh
+# VIPIN Authentication Check - Runs every 5 minutes
+# Auto-connect VPN if user is VIP and valid
+# Auto-disconnect if user is expired or not VIP
+
+LOG_FILE="/var/log/vipin-auth-check.log"
+CHECK_INTERVAL=300
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+check_and_manage_vpn() {
+    local status=$(/usr/sbin/vipin-auth status 2>/dev/null)
+    
+    local logged_in=$(echo "$status" | grep -o '"logged_in":true' | head -1)
+    local reason=$(echo "$status" | grep -o '"reason":"[^"]*"' | cut -d'"' -f4)
+    
+    local vpn_running=$(pgrep -x easytier >/dev/null && echo "1" || echo "0")
+    
+    if [ -n "$logged_in" ]; then
+        if [ "$vpn_running" = "0" ]; then
+            log "User is valid VIP, starting VPN..."
+            /etc/init.d/vipin-vpn start 2>/dev/null
+            sleep 2
+            
+            if pgrep -x easytier >/dev/null; then
+                log "VPN started successfully"
+            else
+                log "Failed to start VPN"
+            fi
+        else
+            log "VPN already running, user is valid"
+        fi
+    else
+        if [ "$vpn_running" = "1" ]; then
+            log "User not valid (reason: $reason), stopping VPN..."
+            /etc/init.d/vipin-vpn stop 2>/dev/null
+            log "VPN stopped"
+        else
+            log "User not valid (reason: $reason), VPN already stopped"
+        fi
+    fi
+}
+
+log "=== VIPIN Authentication Check Started ==="
+
+while true; do
+    check_and_manage_vpn
+    sleep $CHECK_INTERVAL
+done

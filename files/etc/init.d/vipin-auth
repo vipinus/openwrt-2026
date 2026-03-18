@@ -1,0 +1,43 @@
+#!/bin/sh /etc/rc.common
+
+START=95
+STOP=5
+USE_PROCD=1
+
+NAME=vipin-auth
+PROG=/usr/sbin/vipin-auth-check
+
+get_config() {
+    config_load vipin
+    config_get_bool enabled auth enabled 1
+    config_get check_interval auth check_interval 300
+}
+
+start_service() {
+    get_config
+    
+    [ "$enabled" = "0" ] && return 1
+    
+    mkdir -p /var/log
+    
+    procd_open_instance
+    procd_set_param command $PROG
+    procd_set_param respawn
+    procd_set_param respawn_threshold 10
+    procd_set_param respawn_timeout 5
+    procd_set_param respawn_retry 3
+    procd_close_instance
+    
+    logger -t $NAME "User authentication monitor started (interval: ${check_interval}s)"
+}
+
+stop_service() {
+    killall vipin-auth-check 2>/dev/null
+    logger -t $NAME "User authentication monitor stopped"
+}
+
+reload_service() {
+    stop_service
+    sleep 1
+    start_service
+}

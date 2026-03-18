@@ -1,0 +1,229 @@
+#!/bin/sh
+# VIPIN User Authentication - Check user validity against RADIUS database
+# Returns user status: valid, expired, invalid, not_vip
+
+CONF_DIR="/etc/vipin"
+AUTH_FILE="$CONF_DIR/auth.conf"
+LOG_FILE="/var/log/vipin-auth.log"
+DB_HOST="localhost"
+DB_USER="root"
+DB_PASS="e4b3k7y8"
+DB_NAME="radius"
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+mysql_query() {
+    mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASS" -D "$DB_NAME" -s -N -e "$1" 2>/dev/null
+}
+
+parse_date() {
+    local date_str="$1"
+    date -d "$date_str" +%s 2>/dev/null || echo "0"
+}
+
+get_password() {
+    local username="$1"
+    mysql_query "SELECT value FROM radcheck WHERE username='$username' AND attribute='Cleartext-Password' LIMIT 1;"
+}
+
+get_expiration() {
+    local username="$1"
+    local exp=$(mysql_query "SELECT value FROM radcheck WHERE username='$username' AND attribute='Expiration' LIMIT 1;")
+    [ -z "$exp" ] && exp=$(mysql_query "SELECT value FROM raduser WHERE username='$username' AND attribute='PayDate' LIMIT 1;")
+    echo "$exp"
+}
+
+get_user_type() {
+    local username="$1"
+    mysql_query "SELECT value FROM raduser WHERE username='$username' AND attribute='Type' LIMIT 1;"
+}
+
+check_password() {
+    local username="$1"
+    local password="$2"
+    
+    local stored_pass=$(get_password "$username")
+    
+    if [ -z "$stored_pass" ]; then
+        return 1
+    fi
+    
+    [ "$password" = "$stored_pass" ] && return 0 || return 1
+}
+
+is_vip() {
+    local username="$1"
+    local user_type=$(get_user_type "$username")
+    
+    [ -z "$user_type" ] && return 1
+    [ "$user_type" = "normal" ] && return 1
+    
+    return 0
+}
+
+is_expired() {
+    local username="$1"
+    local expiration=$(get_expiration "$username")
+    
+    if [ -z "$expiration" ] || [ "$expiration" = "" ]; then
+        return 1
+    fi
+    
+    local exp_timestamp=$(parse_date "$expiration")
+    local now=$(date +%s)
+    
+    [ "$exp_timestamp" -lt "$now" ] && return 0 || return 1
+}
+
+authenticate() {
+    local username="$1"
+    local password="$2"
+    
+    log "Authenticating user: $username"
+    
+    if ! check_password "$username" "$password"; then
+        log "Authentication failed for: $username"
+        echo "{\"status\": \"invalid\", \"message\": \"Invalid username or password\"}"
+        return 1
+    fi
+    
+    if is_expired "$username"; then
+        log "Account expired for: $username"
+        echo "{\"status\": \"expired\", \"message\": \"Account has expired\"}"
+        return 1
+    fi
+    
+    if ! is_vip "$username"; then
+        log "User is not VIP: $username"
+        echo "{\"status\": \"not_vip\", \"message\": \"Not a VIP user\"}"
+        return 1
+    fi
+    
+    local user_type=$(get_user_type "$username")
+    local expiration=$(get_expiration "$username")
+    
+    log "Authentication successful for VIP user: $username ($user_type)"
+    echo "{\"status\": \"valid\", \"message\": \"Authentication successful\", \"username\": \"$username\", \"type\": \"$user_type\", \"expiration\": \"$expiration\"}"
+    return 0
+}
+
+save_auth() {
+    local username="$1"
+    local password="$2"
+    local user_type="$3"
+    local expiration="$4"
+    
+    mkdir -p "$CONF_DIR"
+    
+    cat > "$AUTH_FILE" << EOF
+username="$username"
+password="$password"
+type="$user_type"
+expiration="$expiration"
+auth_time="$(date '+%Y-%m-%d %H:%M:%S')"
+EOF
+    chmod 600 "$AUTH_FILE"
+}
+
+load_auth() {
+    if [ -f "$AUTH_FILE" ]; then
+        cat "$AUTH_FILE"
+    else
+        echo ""
+    fi
+}
+
+clear_auth() {
+    rm -f "$AUTH_FILE"
+}
+
+get_status() {
+    local auth_info=$(load_auth)
+    
+    if [ -z "$auth_info" ]; then
+        echo "{\"logged_in\": false}"
+        return
+    fi
+    
+    local username=$(echo "$auth_info" | grep "^username=" | cut -d'"' -f2)
+    local user_type=$(echo "$auth_info" | grep "^type=" | cut -d'"' -f2)
+    local expiration=$(echo "$auth_info" | grep "^expiration=" | cut -d'"' -f2)
+    local auth_time=$(echo "$auth_info" | grep "^auth_time=" | cut -d'"' -f2)
+    
+    if [ -z "$username" ]; then
+        echo "{\"logged_in\": false}"
+        return
+    fi
+    
+    if is_expired "$username"; then
+        clear_auth
+        echo "{\"logged_in\": false, \"reason\": \"expired\"}"
+        return
+    fi
+    
+    if ! is_vip "$username"; then
+        clear_auth
+        echo "{\"logged_in\": false, \"reason\": \"not_vip\"}"
+        return
+    fi
+    
+    echo "{\"logged_in\": true, \"username\": \"$username\", \"type\": \"$user_type\", \"expiration\": \"$expiration\", \"auth_time\": \"$auth_time\"}"
+}
+
+case "$1" in
+    login)
+        if [ -z "$2" ] || [ -z "$3" ]; then
+            echo "{\"status\": \"error\", \"message\": \"Usage: $0 login <username> <password>\"}"
+            exit 1
+        fi
+        
+        result=$(authenticate "$2" "$3")
+        
+        if echo "$result" | grep -q '"status": "valid"'; then
+            user_type=$(echo "$result" | grep -o '"type":"[^"]*"' | cut -d'"' -f4)
+            expiration=$(echo "$result" | grep -o '"expiration":"[^"]*"' | cut -d'"' -f4)
+            save_auth "$2" "$3" "$user_type" "$expiration"
+        fi
+        
+        echo "$result"
+        ;;
+    logout)
+        clear_auth
+        echo "{\"status\": \"success\", \"message\": \"Logged out\"}"
+        ;;
+    status)
+        get_status
+        ;;
+    check)
+        if [ -z "$2" ]; then
+            username=$(echo "$(load_auth)" | grep "^username=" | cut -d'"' -f2)
+        else
+            username="$2"
+        fi
+        
+        if [ -z "$username" ]; then
+            echo "{\"valid\": false, \"reason\": \"not_logged_in\"}"
+            exit 0
+        fi
+        
+        if is_expired "$username"; then
+            clear_auth
+            echo "{\"valid\": false, \"reason\": \"expired\", \"username\": \"$username\"}"
+            exit 1
+        fi
+        
+        if ! is_vip "$username"; then
+            clear_auth
+            echo "{\"valid\": false, \"reason\": \"not_vip\", \"username\": \"$username\"}"
+            exit 1
+        fi
+        
+        echo "{\"valid\": true, \"username\": \"$username\", \"type\": \"$(get_user_type $username)\"}"
+        ;;
+    *)
+        echo "Usage: $0 {login|logout|status|check} [username] [password]"
+        exit 1
+        ;;
+esac

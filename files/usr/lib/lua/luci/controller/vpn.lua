@@ -15,13 +15,7 @@ local i18n = {
         disconnected = "Disconnected",
         split_tunnel = "Split Tunneling",
         split_tunnel_desc = "Route domestic traffic directly, foreign traffic via VPN",
-        domestic_ip = "Domestic IPs",
-        domestic_ip_desc = "Select country for domestic IP ranges",
-        domestic_country = "Domestic Country",
-        current_country = "Current Country",
-        ip_ranges_loaded = "IP ranges loaded",
         vpn_server = "VPN Server",
-        select_server = "Select Server",
         connect = "Connect",
         disconnect = "Disconnect",
         reconnect = "Reconnect",
@@ -39,13 +33,49 @@ local i18n = {
         no_servers = "No servers available",
         server_list = "Server List",
         latency = "Latency",
-        select_country = "Select Country",
         update_ip_ranges = "Update IP Ranges",
         last_updated = "Last updated",
         never = "Never",
         count = "Count",
         routes_updated = "Routes updated",
-        routes_count = "routes"
+        routes_count = "routes",
+        domestic_traffic = "Domestic Traffic",
+        foreign_traffic = "Foreign Traffic",
+        vpn_exit = "VPN Exit",
+        update_now = "Update Now",
+        detecting = "Detecting location...",
+        detected = "Detected",
+        your_ip = "Your IP",
+        your_country = "Your Country",
+        auto_detect = "Auto-detect",
+        detected_success = "Location detected",
+        detection_failed = "Detection failed",
+        real_ip = "Real IP (before VPN)",
+        vpn_ip = "VPN IP",
+        location = "Location",
+        ip_ranges_loaded = "IP ranges loaded",
+        retry = "Retry",
+        login = "Login",
+        logout = "Logout",
+        username = "Username",
+        password = "Password",
+        login_title = "VIP Account Login",
+        login_desc = "Enter your account credentials to connect VPN",
+        login_button = "Login & Connect",
+        logout_button = "Logout & Disconnect",
+        invalid_credentials = "Invalid username or password",
+        account_expired = "Account has expired",
+        not_vip_account = "This account is not a VIP account",
+        logged_in = "Logged In",
+        logged_out = "Not Logged In",
+        expired = "Expired",
+        not_vip = "Not VIP",
+        login_required = "Login Required",
+        user_status = "User Status",
+        vip_user = "VIP User",
+        valid_until = "Valid Until",
+        auto_connect = "Auto-connect when VIP",
+        checking_status = "Checking status..."
     },
     ["zh-CN"] = {
         title = "VPN 设置",
@@ -59,13 +89,7 @@ local i18n = {
         disconnected = "未连接",
         split_tunnel = "智能分流",
         split_tunnel_desc = "国内IP直连，海外IP走VPN",
-        domestic_ip = "国内IP段",
-        domestic_ip_desc = "选择国内IP所属国家",
-        domestic_country = "国内归属地",
-        current_country = "当前国家",
-        ip_ranges_loaded = "已加载IP段",
         vpn_server = "VPN服务器",
-        select_server = "选择服务器",
         connect = "连接",
         disconnect = "断开",
         reconnect = "重连",
@@ -83,13 +107,49 @@ local i18n = {
         no_servers = "暂无可用服务器",
         server_list = "服务器列表",
         latency = "延迟",
-        select_country = "选择国家",
         update_ip_ranges = "更新IP段",
         last_updated = "上次更新",
         never = "从未",
         count = "数量",
         routes_updated = "路由已更新",
-        routes_count = "条路由"
+        routes_count = "条路由",
+        domestic_traffic = "国内流量",
+        foreign_traffic = "海外流量",
+        vpn_exit = "VPN出口",
+        update_now = "立即更新",
+        detecting = "正在检测位置...",
+        detected = "已检测",
+        your_ip = "您的IP",
+        your_country = "您的国家",
+        auto_detect = "自动检测",
+        detected_success = "位置已检测",
+        detection_failed = "检测失败",
+        real_ip = "真实IP（VPN前）",
+        vpn_ip = "VPN IP",
+        location = "位置",
+        ip_ranges_loaded = "已加载IP段",
+        retry = "重试",
+        login = "登录",
+        logout = "退出",
+        username = "用户名",
+        password = "密码",
+        login_title = "VIP账户登录",
+        login_desc = "输入您的账户凭据以连接VPN",
+        login_button = "登录并连接",
+        logout_button = "退出并断开",
+        invalid_credentials = "用户名或密码错误",
+        account_expired = "账户已过期",
+        not_vip_account = "此账户不是VIP账户",
+        logged_in = "已登录",
+        logged_out = "未登录",
+        expired = "已过期",
+        not_vip = "非VIP",
+        login_required = "需要登录",
+        user_status = "用户状态",
+        vip_user = "VIP用户",
+        valid_until = "有效期至",
+        auto_connect = "VIP用户自动连接",
+        checking_status = "检查状态中..."
     },
     ["zh-TW"] = {
         title = "VPN 設定",
@@ -133,7 +193,44 @@ local i18n = {
         never = "從未",
         count = "數量",
         routes_updated = "路由已更新",
-        routes_count = "條路由"
+        routes_count = "條路由",
+        domestic_traffic = "國內流量",
+        foreign_traffic = "海外流量",
+        vpn_exit = "VPN出口",
+        update_now = "立即更新",
+        detecting = "正在偵測位置...",
+        detected = "已偵測",
+        your_ip = "您的IP",
+        your_country = "您的國家",
+        auto_detect = "自動偵測",
+        detected_success = "位置已偵測",
+        detection_failed = "偵測失敗",
+        real_ip = "真實IP（VPN前）",
+        vpn_ip = "VPN IP",
+        location = "位置",
+        ip_ranges_loaded = "已載入IP段",
+        retry = "重試",
+        login = "登入",
+        logout = "登出",
+        username = "用戶名",
+        password = "密碼",
+        login_title = "VIP帳戶登入",
+        login_desc = "輸入您的帳戶憑據以連接VPN",
+        login_button = "登入並連接",
+        logout_button = "登出並斷開",
+        invalid_credentials = "用戶名或密碼錯誤",
+        account_expired = "帳戶已過期",
+        not_vip_account = "此帳戶不是VIP帳戶",
+        logged_in = "已登入",
+        logged_out = "未登入",
+        expired = "已過期",
+        not_vip = "非VIP",
+        login_required = "需要登入",
+        user_status = "用戶狀態",
+        vip_user = "VIP用戶",
+        valid_until = "有效期至",
+        auto_connect = "VIP用戶自動連接",
+        checking_status = "檢查狀態中..."
     },
     ja = {
         title = "VPN 設定",
@@ -177,7 +274,44 @@ local i18n = {
         never = "なし",
         count = "数",
         routes_updated = "ルート更新済み",
-        routes_count = "ルート"
+        routes_count = "ルート",
+        domestic_traffic = "国内トラフィック",
+        foreign_traffic = "海外トラフィック",
+        vpn_exit = "VPN出口",
+        update_now = "今すぐ更新",
+        detecting = "位置を検出中...",
+        detected = "検出済み",
+        your_ip = "あなたのIP",
+        your_country = "あなたの国",
+        auto_detect = "自動検出",
+        detected_success = "位置を検出しました",
+        detection_failed = "検出に失敗しました",
+        real_ip = "実際のIP",
+        vpn_ip = "VPN IP",
+        location = "位置",
+        ip_ranges_loaded = "IP読み込み済み",
+        retry = "再試行",
+        login = "ログイン",
+        logout = "ログアウト",
+        username = "ユーザー名",
+        password = "パスワード",
+        login_title = "VIPアカウントログイン",
+        login_desc = "アカウント資格情報を入力してVPNに接続",
+        login_button = "ログイン＆接続",
+        logout_button = "ログアウト＆切断",
+        invalid_credentials = "ユーザー名またはパスワードが正しくありません",
+        account_expired = "アカウント期限切れ",
+        not_vip_account = "このアカウントはVIPアカウントではありません",
+        logged_in = "ログイン済み",
+        logged_out = "未ログイン",
+        expired = "期限切れ",
+        not_vip = "VIPではない",
+        login_required = "ログイン必要",
+        user_status = "ユーザー状態",
+        vip_user = "VIPユーザー",
+        valid_until = "有効期限",
+        auto_connect = "VIPユーザーは自動接続",
+        checking_status = "状態確認中..."
     },
     ko = {
         title = "VPN 설정",
@@ -221,7 +355,44 @@ local i18n = {
         never = "없음",
         count = "개수",
         routes_updated = "경로 업데이트됨",
-        routes_count = "경로"
+        routes_count = "경로",
+        domestic_traffic = "국내 트래픽",
+        foreign_traffic = "해외 트래픽",
+        vpn_exit = "VPN 출구",
+        update_now = "지금 업데이트",
+        detecting = "위치 감지 중...",
+        detected = "감지됨",
+        your_ip = "내 IP",
+        your_country = "내 국가",
+        auto_detect = "자동 감지",
+        detected_success = "위치 감지됨",
+        detection_failed = "감지 실패",
+        real_ip = "실제 IP",
+        vpn_ip = "VPN IP",
+        location = "위치",
+        ip_ranges_loaded = "IP 로드됨",
+        retry = "다시 시도",
+        login = "로그인",
+        logout = "로그아웃",
+        username = "사용자 이름",
+        password = "비밀번호",
+        login_title = "VIP 계정 로그인",
+        login_desc = "VPN 연결을 위한 계정 자격 증명 입력",
+        login_button = "로그인 및 연결",
+        logout_button = "로그아웃 및 연결 해제",
+        invalid_credentials = "사용자 이름 또는 비밀번호가 올바르지 않습니다",
+        account_expired = "계정이 만료되었습니다",
+        not_vip_account = "이 계정은 VIP 계정이 아닙니다",
+        logged_in = "로그인됨",
+        logged_out = "미로그인",
+        expired = "만료됨",
+        not_vip = "VIP 아님",
+        login_required = "로그인 필요",
+        user_status = "사용자 상태",
+        vip_user = "VIP 사용자",
+        valid_until = "유효 기간",
+        auto_connect = "VIP 사용자 자동 연결",
+        checking_status = "상태 확인 중..."
     },
     ru = {
         title = "Настройки VPN",
@@ -265,7 +436,44 @@ local i18n = {
         never = "Никогда",
         count = "Количество",
         routes_updated = "Маршруты обновлены",
-        routes_count = "маршрутов"
+        routes_count = "маршрутов",
+        domestic_traffic = "Местный трафик",
+        foreign_traffic = "Зарубежный трафик",
+        vpn_exit = "VPN выход",
+        update_now = "Обновить сейчас",
+        detecting = "Определение местоположения...",
+        detected = "Определено",
+        your_ip = "Ваш IP",
+        your_country = "Ваша страна",
+        auto_detect = "Автоопределение",
+        detected_success = "Местоположение определено",
+        detection_failed = "Не удалось определить",
+        real_ip = "Реальный IP",
+        vpn_ip = "VPN IP",
+        location = "Местоположение",
+        ip_ranges_loaded = "IP загружены",
+        retry = "Повторить",
+        login = "Войти",
+        logout = "Выйти",
+        username = "Имя пользователя",
+        password = "Пароль",
+        login_title = "Вход VIP аккаунт",
+        login_desc = "Введите данные аккаунта для подключения VPN",
+        login_button = "Войти и подключить",
+        logout_button = "Выйти и отключить",
+        invalid_credentials = "Неверное имя пользователя или пароль",
+        account_expired = "Аккаунт истёк",
+        not_vip_account = "Этот аккаунт не является VIP",
+        logged_in = "Авторизован",
+        logged_out = "Не авторизован",
+        expired = "Истёк",
+        not_vip = "Не VIP",
+        login_required = "Требуется вход",
+        user_status = "Статус пользователя",
+        vip_user = "VIP пользователь",
+        valid_until = "Действителен до",
+        auto_connect = "VIP автоподключение",
+        checking_status = "Проверка статуса..."
     },
     es = {
         title = "Configuración VPN",
@@ -855,6 +1063,9 @@ function index()
     entry({"admin", "network", "vpn", "api_set_split"}, call("api_set_split_tunnel"), nil, 22)
     entry({"admin", "network", "vpn", "api_detect"}, call("api_auto_detect"), nil, 23)
     entry({"admin", "network", "vpn", "api_update_ips"}, call("api_update_ips"), nil, 24)
+    entry({"admin", "network", "vpn", "api_login"}, call("api_login"), nil, 25)
+    entry({"admin", "network", "vpn", "api_logout"}, call("api_logout"), nil, 26)
+    entry({"admin", "network", "vpn", "api_auth_status"}, call("api_auth_status"), nil, 27)
 end
 
 function api_get_vpn_status()
@@ -1041,6 +1252,91 @@ function api_update_ips()
         country_flag = get_country_flag(country),
         ip_count = tonumber(ip_count) or 0,
         message = output
+    }
+    
+    http.prepare_content("application/json")
+    http.write(json.encode(result))
+end
+
+function api_login()
+    local http = require("luci.http")
+    local json = require("luci.json")
+    local util = require("luci.util")
+    
+    local username = luci.http.formvalue("username") or ""
+    local password = luci.http.formvalue("password") or ""
+    
+    local result_json = util.exec("/usr/sbin/vipin-auth login '" .. username .. "' '" .. password .. "' 2>/dev/null")
+    
+    local success = string.match(result_json, '"status": "valid"') ~= nil
+    local status = string.match(result_json, '"status": "([^"]+)"') or "error"
+    local message = string.match(result_json, '"message": "([^"]+)"') or ""
+    local user_type = string.match(result_json, '"type": "([^"]+)"') or ""
+    local expiration = string.match(result_json, '"expiration": "([^"]+)"') or ""
+    
+    local result = {
+        success = success,
+        status = status,
+        message = message,
+        username = username,
+        type = user_type,
+        expiration = expiration
+    }
+    
+    if success then
+        util.exec("/etc/init.d/vipin-vpn start 2>&1")
+        util.exec("/etc/init.d/vipin-auth start 2>&1")
+    end
+    
+    http.prepare_content("application/json")
+    http.write(json.encode(result))
+end
+
+function api_logout()
+    local http = require("luci.http")
+    local json = require("luci.json")
+    local util = require("luci.util")
+    
+    util.exec("/usr/sbin/vipin-auth logout 2>/dev/null")
+    util.exec("/etc/init.d/vipin-vpn stop 2>&1")
+    
+    local result = {
+        success = true,
+        message = "Logged out successfully"
+    }
+    
+    http.prepare_content("application/json")
+    http.write(json.encode(result))
+end
+
+function api_auth_status()
+    local http = require("luci.http")
+    local json = require("luci.json")
+    local util = require("luci.util")
+    
+    local status_json = util.exec("/usr/sbin/vipin-auth status 2>/dev/null")
+    
+    local logged_in = string.match(status_json, '"logged_in":true') ~= nil
+    local reason = string.match(status_json, '"reason":"([^"]+)"') or ""
+    local username = string.match(status_json, '"username":"([^"]+)"') or ""
+    local user_type = string.match(status_json, '"type":"([^"]+)"') or ""
+    local expiration = string.match(status_json, '"expiration":"([^"]+)"') or ""
+    local auth_time = string.match(status_json, '"auth_time":"([^"]+)"') or ""
+    
+    local result = {
+        logged_in = logged_in,
+        reason = reason,
+        username = username,
+        type = user_type,
+        expiration = expiration,
+        auth_time = auth_time,
+        i18n = {
+            logged_in = i18n[get_lang()].logged_in or "Logged In",
+            logged_out = i18n[get_lang()].logged_out or "Not Logged In",
+            expired = i18n[get_lang()].expired or "Expired",
+            not_vip = i18n[get_lang()].not_vip or "Not VIP",
+            login_required = i18n[get_lang()].login_required or "Login Required"
+        }
     }
     
     http.prepare_content("application/json")

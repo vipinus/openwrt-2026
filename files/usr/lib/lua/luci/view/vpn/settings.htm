@@ -61,7 +61,28 @@ local i18n = {
         vpn_ip = "VPN IP",
         location = "Location",
         ip_ranges_loaded = "IP ranges loaded",
-        retry = "Retry"
+        retry = "Retry",
+        login = "Login",
+        logout = "Logout",
+        username = "Username",
+        password = "Password",
+        login_title = "VIP Account Login",
+        login_desc = "Enter your account credentials to connect VPN",
+        login_button = "Login & Connect",
+        logout_button = "Logout & Disconnect",
+        invalid_credentials = "Invalid username or password",
+        account_expired = "Account has expired",
+        not_vip_account = "This account is not a VIP account",
+        logged_in = "Logged In",
+        logged_out = "Not Logged In",
+        expired = "Expired",
+        not_vip = "Not VIP",
+        login_required = "Login Required",
+        user_status = "User Status",
+        vip_user = "VIP User",
+        valid_until = "Valid Until",
+        auto_connect = "Auto-connect when VIP",
+        checking_status = "Checking status..."
     },
     ["zh-CN"] = {
         title = "VPN 设置",
@@ -114,803 +135,30 @@ local i18n = {
         vpn_ip = "VPN IP",
         location = "位置",
         ip_ranges_loaded = "已加载IP段",
-        retry = "重试"
-    },
-    ["zh-TW"] = {
-        title = "VPN 設定",
-        vpn = "VPN",
-        vpn_settings = "VPN 設定",
-        vpn_status = "VPN 狀態",
-        enabled = "已啟用",
-        disabled = "已停用",
-        connecting = "連線中",
-        connected = "已連線",
-        disconnected = "未連線",
-        split_tunnel = "智慧分流",
-        split_tunnel_desc = "國內IP直連，海外IP走VPN",
-        vpn_server = "VPN伺服器",
-        connect = "連線",
-        disconnect = "斷線",
-        reconnect = "重連",
-        save = "儲存",
-        cancel = "取消",
-        apply = "套用",
-        refresh = "更新",
-        loading = "載入中...",
-        error = "錯誤",
-        success = "成功",
-        connection_failed = "連線失敗",
-        connection_success = "連線成功",
-        please_wait = "請稍候...",
-        checking = "檢查中...",
-        no_servers = "暫無可用伺服器",
-        server_list = "伺服器列表",
-        latency = "延遲",
-        update_ip_ranges = "更新IP段",
-        last_updated = "上次更新",
-        never = "從未",
-        count = "數量",
-        routes_updated = "路由已更新",
-        routes_count = "條路由",
-        domestic_traffic = "國內流量",
-        foreign_traffic = "海外流量",
-        vpn_exit = "VPN出口",
-        update_now = "立即更新",
-        detecting = "正在偵測位置...",
-        detected = "已偵測",
-        your_ip = "您的IP",
-        your_country = "您的國家",
-        auto_detect = "自動偵測",
-        detected_success = "位置已偵測",
-        detection_failed = "偵測失敗",
-        real_ip = "真實IP（VPN前）",
-        vpn_ip = "VPN IP",
-        location = "位置",
-        ip_ranges_loaded = "已載入IP段",
-        retry = "重試"
-    },
-    ja = {
-        title = "VPN 設定",
-        vpn = "VPN",
-        vpn_settings = "VPN 設定",
-        vpn_status = "VPN 状態",
-        enabled = "有効",
-        disabled = "無効",
-        connecting = "接続中",
-        connected = "接続済み",
-        disconnected = "未接続",
-        split_tunnel = "スプリットトンネリング",
-        split_tunnel_desc = "国内IPは直接、海外IPはVPN経由",
-        vpn_server = "VPNサーバー",
-        connect = "接続",
-        disconnect = "切断",
-        reconnect = "再接続",
-        save = "保存",
-        cancel = "キャンセル",
-        apply = "適用",
-        refresh = "更新",
-        loading = "読み込み中...",
-        error = "エラー",
-        success = "成功",
-        connection_failed = "接続失敗",
-        connection_success = "接続成功",
-        please_wait = "お待ちください...",
-        checking = "確認中...",
-        no_servers = "利用可能なサーバーなし",
-        server_list = "サーバー一覧",
-        latency = "遅延",
-        update_ip_ranges = "IP更新",
-        last_updated = "最終更新",
-        never = "なし",
-        count = "数",
-        routes_updated = "ルート更新済み",
-        routes_count = "ルート",
-        domestic_traffic = "国内トラフィック",
-        foreign_traffic = "海外トラフィック",
-        vpn_exit = "VPN出口",
-        update_now = "今すぐ更新",
-        detecting = "位置を検出中...",
-        detected = "検出済み",
-        your_ip = "あなたのIP",
-        your_country = "あなたの国",
-        auto_detect = "自動検出",
-        detected_success = "位置を検出しました",
-        detection_failed = "検出に失敗しました",
-        real_ip = "実際のIP",
-        vpn_ip = "VPN IP",
-        location = "位置",
-        ip_ranges_loaded = "IP読み込み済み",
-        retry = "再試行"
-    },
-    ko = {
-        title = "VPN 설정",
-        vpn = "VPN",
-        vpn_settings = "VPN 설정",
-        vpn_status = "VPN 상태",
-        enabled = "활성화됨",
-        disabled = "비활성화됨",
-        connecting = "연결 중",
-        connected = "연결됨",
-        disconnected = "연결 안됨",
-        split_tunnel = "스플릿 터널링",
-        split_tunnel_desc = "국내 IP는 직접, 해외 IP는 VPN 경유",
-        vpn_server = "VPN 서버",
-        connect = "연결",
-        disconnect = "연결 해제",
-        reconnect = "재연결",
-        save = "저장",
-        cancel = "취소",
-        apply = "적용",
-        refresh = "새로고침",
-        loading = "로딩 중...",
-        error = "오류",
-        success = "성공",
-        connection_failed = "연결 실패",
-        connection_success = "연결 성공",
-        please_wait = "기다려 주세요...",
-        checking = "확인 중...",
-        no_servers = "사용 가능한 서버 없음",
-        server_list = "서버 목록",
-        latency = "지연",
-        update_ip_ranges = "IP 업데이트",
-        last_updated = "마지막 업데이트",
-        never = "없음",
-        count = "개수",
-        routes_updated = "경로 업데이트됨",
-        routes_count = "경로",
-        domestic_traffic = "국내 트래픽",
-        foreign_traffic = "해외 트래픽",
-        vpn_exit = "VPN 출구",
-        update_now = "지금 업데이트",
-        detecting = "위치 감지 중...",
-        detected = "감지됨",
-        your_ip = "내 IP",
-        your_country = "내 국가",
-        auto_detect = "자동 감지",
-        detected_success = "위치 감지됨",
-        detection_failed = "감지 실패",
-        real_ip = "실제 IP",
-        vpn_ip = "VPN IP",
-        location = "위치",
-        ip_ranges_loaded = "IP 로드됨",
-        retry = "다시 시도"
-    },
-    ru = {
-        title = "Настройки VPN",
-        vpn = "VPN",
-        vpn_settings = "Настройки VPN",
-        vpn_status = "Статус VPN",
-        enabled = "Включено",
-        disabled = "Отключено",
-        connecting = "Подключение",
-        connected = "Подключено",
-        disconnected = "Отключено",
-        split_tunnel = "Раздельное туннелирование",
-        split_tunnel_desc = "Локальный трафик напрямую, зарубежный через VPN",
-        vpn_server = "VPN сервер",
-        connect = "Подключить",
-        disconnect = "Отключить",
-        reconnect = "Переподключить",
-        save = "Сохранить",
-        cancel = "Отмена",
-        apply = "Применить",
-        refresh = "Обновить",
-        loading = "Загрузка...",
-        error = "Ошибка",
-        success = "Успех",
-        connection_failed = "Ошибка подключения",
-        connection_success = "Подключено",
-        please_wait = "Пожалуйста, подождите...",
-        checking = "Проверка...",
-        no_servers = "Нет доступных серверов",
-        server_list = "Список серверов",
-        latency = "Задержка",
-        update_ip_ranges = "Обновить IP",
-        last_updated = "Последнее обновление",
-        never = "Никогда",
-        count = "Количество",
-        routes_updated = "Маршруты обновлены",
-        routes_count = "маршрутов",
-        domestic_traffic = "Местный трафик",
-        foreign_traffic = "Зарубежный трафик",
-        vpn_exit = "VPN выход",
-        update_now = "Обновить сейчас",
-        detecting = "Определение местоположения...",
-        detected = "Определено",
-        your_ip = "Ваш IP",
-        your_country = "Ваша страна",
-        auto_detect = "Автоопределение",
-        detected_success = "Местоположение определено",
-        detection_failed = "Не удалось определить",
-        real_ip = "Реальный IP",
-        vpn_ip = "VPN IP",
-        location = "Местоположение",
-        ip_ranges_loaded = "IP загружены",
-        retry = "Повторить"
-    },
-    es = {
-        title = "Configuración VPN",
-        vpn = "VPN",
-        vpn_settings = "Configuración VPN",
-        vpn_status = "Estado VPN",
-        enabled = "Activado",
-        disabled = "Desactivado",
-        connecting = "Conectando",
-        connected = "Conectado",
-        disconnected = "Desconectado",
-        split_tunnel = "Túnel dividido",
-        split_tunnel_desc = "Tráfico nacional directo, extranjero por VPN",
-        vpn_server = "Servidor VPN",
-        connect = "Conectar",
-        disconnect = "Desconectar",
-        reconnect = "Reconectar",
-        save = "Guardar",
-        cancel = "Cancelar",
-        apply = "Aplicar",
-        refresh = "Actualizar",
-        loading = "Cargando...",
-        error = "Error",
-        success = "Éxito",
-        connection_failed = "Conexión fallida",
-        connection_success = "Conexión establecida",
-        please_wait = "Por favor espere...",
-        checking = "Verificando...",
-        no_servers = "Sin servidores disponibles",
-        server_list = "Lista de servidores",
-        latency = "Latencia",
-        update_ip_ranges = "Actualizar IPs",
-        last_updated = "Última actualización",
-        never = "Nunca",
-        count = "Cantidad",
-        routes_updated = "Rutas actualizadas",
-        routes_count = "rutas",
-        domestic_traffic = "Tráfico nacional",
-        foreign_traffic = "Tráfico extranjero",
-        vpn_exit = "Salida VPN",
-        update_now = "Actualizar ahora",
-        detecting = "Detectando ubicación...",
-        detected = "Detectado",
-        your_ip = "Tu IP",
-        your_country = "Tu país",
-        auto_detect = "Auto-detectar",
-        detected_success = "Ubicación detectada",
-        detection_failed = "Detección fallida",
-        real_ip = "IP real",
-        vpn_ip = "IP VPN",
-        location = "Ubicación",
-        ip_ranges_loaded = "IPs cargadas",
-        retry = "Reintentar"
-    },
-    de = {
-        title = "VPN Einstellungen",
-        vpn = "VPN",
-        vpn_settings = "VPN Einstellungen",
-        vpn_status = "VPN Status",
-        enabled = "Aktiviert",
-        disabled = "Deaktiviert",
-        connecting = "Verbinde",
-        connected = "Verbunden",
-        disconnected = "Getrennt",
-        split_tunnel = "Split-Tunneling",
-        split_tunnel_desc = "Inlandsverkehr direkt, Auslandsverkehr über VPN",
-        vpn_server = "VPN Server",
-        connect = "Verbinden",
-        disconnect = "Trennen",
-        reconnect = "Neu verbinden",
-        save = "Speichern",
-        cancel = "Abbrechen",
-        apply = "Anwenden",
-        refresh = "Aktualisieren",
-        loading = "Laden...",
-        error = "Fehler",
-        success = "Erfolg",
-        connection_failed = "Verbindung fehlgeschlagen",
-        connection_success = "Verbindung hergestellt",
-        please_wait = "Bitte warten...",
-        checking = "Prüfen...",
-        no_servers = "Keine Server verfügbar",
-        server_list = "Serverliste",
-        latency = "Latenz",
-        update_ip_ranges = "IPs aktualisieren",
-        last_updated = "Zuletzt aktualisiert",
-        never = "Nie",
-        count = "Anzahl",
-        routes_updated = "Routen aktualisiert",
-        routes_count = "Routen",
-        domestic_traffic = "Inlandsverkehr",
-        foreign_traffic = "Auslandsverkehr",
-        vpn_exit = "VPN Ausgang",
-        update_now = "Jetzt aktualisieren",
-        detecting = "Standort wird ermittelt...",
-        detected = "Ermittelt",
-        your_ip = "Ihre IP",
-        your_country = "Ihr Land",
-        auto_detect = "Auto-Erkennung",
-        detected_success = "Standort erkannt",
-        detection_failed = "Erkennung fehlgeschlagen",
-        real_ip = "Echte IP",
-        vpn_ip = "VPN IP",
-        location = "Standort",
-        ip_ranges_loaded = "IPs geladen",
-        retry = "Wiederholen"
-    },
-    fr = {
-        title = "Paramètres VPN",
-        vpn = "VPN",
-        vpn_settings = "Paramètres VPN",
-        vpn_status = "État du VPN",
-        enabled = "Activé",
-        disabled = "Désactivé",
-        connecting = "Connexion",
-        connected = "Connecté",
-        disconnected = "Déconnecté",
-        split_tunnel = "Tunneling séparé",
-        split_tunnel_desc = "Trafic domestique direct, étranger via VPN",
-        vpn_server = "Serveur VPN",
-        connect = "Connecter",
-        disconnect = "Déconnecter",
-        reconnect = "Reconnecter",
-        save = "Enregistrer",
-        cancel = "Annuler",
-        apply = "Appliquer",
-        refresh = "Actualiser",
-        loading = "Chargement...",
-        error = "Erreur",
-        success = "Succès",
-        connection_failed = "Connexion échouée",
-        connection_success = "Connexion établie",
-        please_wait = "Veuillez patienter...",
-        checking = "Vérification...",
-        no_servers = "Aucun serveur disponible",
-        server_list = "Liste des serveurs",
-        latency = "Latence",
-        update_ip_ranges = "Mettre à jour IPs",
-        last_updated = "Dernière mise à jour",
-        never = "Jamais",
-        count = "Nombre",
-        routes_updated = "Routes mises à jour",
-        routes_count = "routes",
-        domestic_traffic = "Trafic domestique",
-        foreign_traffic = "Trafic étranger",
-        vpn_exit = "Sortie VPN",
-        update_now = "Mettre à jour maintenant",
-        detecting = "Détection de l'emplacement...",
-        detected = "Détecté",
-        your_ip = "Votre IP",
-        your_country = "Votre pays",
-        auto_detect = "Auto-détection",
-        detected_success = "Emplacement détecté",
-        detection_failed = "Échec de la détection",
-        real_ip = "IP réelle",
-        vpn_ip = "IP VPN",
-        location = "Emplacement",
-        ip_ranges_loaded = "IPs chargées",
-        retry = "Réessayer"
-    },
-    pt = {
-        title = "Configurações VPN",
-        vpn = "VPN",
-        vpn_settings = "Configurações VPN",
-        vpn_status = "Status VPN",
-        enabled = "Ativado",
-        disabled = "Desativado",
-        connecting = "Conectando",
-        connected = "Conectado",
-        disconnected = "Desconectado",
-        split_tunnel = "Túnel dividido",
-        split_tunnel_desc = "Tráfego doméstico direto, estrangeiro via VPN",
-        vpn_server = "Servidor VPN",
-        connect = "Conectar",
-        disconnect = "Desconectar",
-        reconnect = "Reconectar",
-        save = "Salvar",
-        cancel = "Cancelar",
-        apply = "Aplicar",
-        refresh = "Atualizar",
-        loading = "Carregando...",
-        error = "Erro",
-        success = "Sucesso",
-        connection_failed = "Conexão falhou",
-        connection_success = "Conexão estabelecida",
-        please_wait = "Por favor aguarde...",
-        checking = "Verificando...",
-        no_servers = "Sem servidores disponíveis",
-        server_list = "Lista de servidores",
-        latency = "Latência",
-        update_ip_ranges = "Atualizar IPs",
-        last_updated = "Última atualização",
-        never = "Nunca",
-        count = "Quantidade",
-        routes_updated = "Rotas atualizadas",
-        routes_count = "rotas",
-        domestic_traffic = "Tráfego doméstico",
-        foreign_traffic = "Tráfego estrangeiro",
-        vpn_exit = "Saída VPN",
-        update_now = "Atualizar agora",
-        detecting = "Detectando localização...",
-        detected = "Detectado",
-        your_ip = "Seu IP",
-        your_country = "Seu país",
-        auto_detect = "Auto-detectar",
-        detected_success = "Localização detectada",
-        detection_failed = "Falha na detecção",
-        real_ip = "IP real",
-        vpn_ip = "IP VPN",
-        location = "Localização",
-        ip_ranges_loaded = "IPs carregadas",
-        retry = "Tentar novamente"
-    },
-    vi = {
-        title = "Cài đặt VPN",
-        vpn = "VPN",
-        vpn_settings = "Cài đặt VPN",
-        vpn_status = "Trạng thái VPN",
-        enabled = "Đã bật",
-        disabled = "Đã tắt",
-        connecting = "Đang kết nối",
-        connected = "Đã kết nối",
-        disconnected = "Chưa kết nối",
-        split_tunnel = "Chia tách đường hầm",
-        split_tunnel_desc = "Lưu lượng trong nước trực tiếp, nước ngoài qua VPN",
-        vpn_server = "Máy chủ VPN",
-        connect = "Kết nối",
-        disconnect = "Ngắt kết nối",
-        reconnect = "Kết nối lại",
-        save = "Lưu",
-        cancel = "Hủy",
-        apply = "Áp dụng",
-        refresh = "Làm mới",
-        loading = "Đang tải...",
-        error = "Lỗi",
-        success = "Thành công",
-        connection_failed = "Kết nối thất bại",
-        connection_success = "Kết nối thành công",
-        please_wait = "Vui lòng đợi...",
-        checking = "Đang kiểm tra...",
-        no_servers = "Không có máy chủ khả dụng",
-        server_list = "Danh sách máy chủ",
-        latency = "Độ trễ",
-        update_ip_ranges = "Cập nhật IP",
-        last_updated = "Cập nhật lần cuối",
-        never = "Chưa bao giờ",
-        count = "Số lượng",
-        routes_updated = "Tuyến đường đã cập nhật",
-        routes_count = "tuyến đường",
-        domestic_traffic = "Lưu lượng trong nước",
-        foreign_traffic = "Lưu lượng nước ngoài",
-        vpn_exit = "Đầu ra VPN",
-        update_now = "Cập nhật ngay",
-        detecting = "Đang phát hiện vị trí...",
-        detected = "Đã phát hiện",
-        your_ip = "IP của bạn",
-        your_country = "Quốc gia của bạn",
-        auto_detect = "Tự động phát hiện",
-        detected_success = "Vị trí được phát hiện",
-        detection_failed = "Phát hiện thất bại",
-        real_ip = "IP thực",
-        vpn_ip = "IP VPN",
-        location = "Vị trí",
-        ip_ranges_loaded = "IP đã tải",
-        retry = "Thử lại"
-    },
-    th = {
-        title = "การตั้งค่า VPN",
-        vpn = "VPN",
-        vpn_settings = "การตั้งค่า VPN",
-        vpn_status = "สถานะ VPN",
-        enabled = "เปิดใช้งาน",
-        disabled = "ปิดใช้งาน",
-        connecting = "กำลังเชื่อมต่อ",
-        connected = "เชื่อมต่อแล้ว",
-        disconnected = "ยังไม่เชื่อมต่อ",
-        split_tunnel = "แยกทาง",
-        split_tunnel_desc = " трафик ในประเทศตรง, ต่างประเทศผ่าน VPN",
-        vpn_server = "เซิร์ฟเวอร์ VPN",
-        connect = "เชื่อมต่อ",
-        disconnect = "ตัดการเชื่อมต่อ",
-        reconnect = "เชื่อมต่อใหม่",
-        save = "บันทึก",
-        cancel = "ยกเลิก",
-        apply = "นำไปใช้",
-        refresh = "รีเฟรช",
-        loading = "กำลังโหลด...",
-        error = "ข้อผิดพลาด",
-        success = "สำเร็จ",
-        connection_failed = "การเชื่อมต่อล้มเหลว",
-        connection_success = "เชื่อมต่อสำเร็จ",
-        please_wait = "โปรดรอ...",
-        checking = "กำลังตรวจสอบ...",
-        no_servers = "ไม่มีเซิร์ฟเวอร์ที่ใช้ได้",
-        server_list = "รายการเซิร์ฟเวอร์",
-        latency = "เวลาแฝง",
-        update_ip_ranges = "อัปเดต IP",
-        last_updated = "อัปเดตล่าสุด",
-        never = "ไม่เคย",
-        count = "จำนวน",
-        routes_updated = "เส้นทางอัปเดตแล้ว",
-        routes_count = "เส้นทาง",
-        domestic_traffic = " трафикในประเทศ",
-        foreign_traffic = " трафикต่างประเทศ",
-        vpn_exit = "ทางออก VPN",
-        update_now = "อัปเดตเลย",
-        detecting = "กำลังตรวจจับตำแหน่ง...",
-        detected = "ตรวจพบแล้ว",
-        your_ip = "IP ของคุณ",
-        your_country = "ประเทศของคุณ",
-        auto_detect = "ตรวจจับอัตโนมัติ",
-        detected_success = "ตำแหน่งถูกตรวจพบ",
-        detection_failed = "การตรวจจับล้มเหลว",
-        real_ip = "IP จริง",
-        vpn_ip = "IP VPN",
-        location = "ตำแหน่ง",
-        ip_ranges_loaded = "IP โหลดแล้ว",
-        retry = "ลองอีกครั้ง"
-    },
-    id = {
-        title = "Pengaturan VPN",
-        vpn = "VPN",
-        vpn_settings = "Pengaturan VPN",
-        vpn_status = "Status VPN",
-        enabled = "Aktif",
-        disabled = "Nonaktif",
-        connecting = "Menghubungkan",
-        connected = "Terhubung",
-        disconnected = "Terputus",
-        split_tunnel = "Terowongan Terpisah",
-        split_tunnel_desc = "Lalu lintas dalam negeri langsung, luar negeri via VPN",
-        vpn_server = "Server VPN",
-        connect = "Sambungkan",
-        disconnect = "Putuskan",
-        reconnect = "Sambungkan Ulang",
-        save = "Simpan",
-        cancel = "Batal",
-        apply = "Terapkan",
-        refresh = "Segarkan",
-        loading = "Memuat...",
-        error = "Kesalahan",
-        success = "Berhasil",
-        connection_failed = "Koneksi gagal",
-        connection_success = "Koneksi berhasil",
-        please_wait = "Silakan tunggu...",
-        checking = "Memeriksa...",
-        no_servers = "Tidak ada server tersedia",
-        server_list = "Daftar Server",
-        latency = "Latensi",
-        update_ip_ranges = "Perbarui IP",
-        last_updated = "Terakhir diperbarui",
-        never = "Tidak pernah",
-        count = "Jumlah",
-        routes_updated = "Rute diperbarui",
-        routes_count = "rute",
-        domestic_traffic = "Lalu lintas dalam negeri",
-        foreign_traffic = "Lalu lintas luar negeri",
-        vpn_exit = "Exit VPN",
-        update_now = "Perbarui sekarang",
-        detecting = "Mendeteksi lokasi...",
-        detected = "Terdeteksi",
-        your_ip = "IP Anda",
-        your_country = "Negara Anda",
-        auto_detect = "Deteksi otomatis",
-        detected_success = "Lokasi terdeteksi",
-        detection_failed = "Deteksi gagal",
-        real_ip = "IP nyata",
-        vpn_ip = "IP VPN",
-        location = "Lokasi",
-        ip_ranges_loaded = "IP dimuat",
-        retry = "Coba lagi"
-    },
-    ar = {
-        title = "إعدادات VPN",
-        vpn = "VPN",
-        vpn_settings = "إعدادات VPN",
-        vpn_status = "حالة VPN",
-        enabled = "مفعل",
-        disabled = "معطل",
-        connecting = "جاري الاتصال",
-        connected = "متصل",
-        disconnected = "غير متصل",
-        split_tunnel = "نفق منفصل",
-        split_tunnel_desc = "حركة المرور المحلية مباشرة، الأجنبية عبر VPN",
-        vpn_server = "خادم VPN",
-        connect = "اتصال",
-        disconnect = "قطع الاتصال",
-        reconnect = "إعادة الاتصال",
-        save = "حفظ",
-        cancel = "إلغاء",
-        apply = "تطبيق",
-        refresh = "تحديث",
-        loading = "جاري التحميل...",
-        error = "خطأ",
-        success = "نجاح",
-        connection_failed = "فشل الاتصال",
-        connection_success = "تم الاتصال بنجاح",
-        please_wait = "الرجاء الانتظار...",
-        checking = "جارٍ الفحص...",
-        no_servers = "لا توجد خوادم متاحة",
-        server_list = "قائمة الخوادم",
-        latency = "زمن الاستجابة",
-        update_ip_ranges = "تحديث IPs",
-        last_updated = "آخر تحديث",
-        never = "أبداً",
-        count = "العدد",
-        routes_updated = "تم تحديث المسارات",
-        routes_count = "مسارات",
-        domestic_traffic = "حركة المرور المحلية",
-        foreign_traffic = "حركة المرور الأجنبية",
-        vpn_exit = "خروج VPN",
-        update_now = "التحديث الآن",
-        detecting = "جارٍ تحديد الموقع...",
-        detected = "تم تحديده",
-        your_ip = "IP الخاص بك",
-        your_country = "دولتك",
-        auto_detect = "تحديد تلقائي",
-        detected_success = "تم تحديد الموقع",
-        detection_failed = "فشل التحديد",
-        real_ip = "IP الحقيقي",
-        vpn_ip = "IP VPN",
-        location = "الموقع",
-        ip_ranges_loaded = "تم تحميل IPs",
-        retry = "إعادة المحاولة"
-    },
-    fa = {
-        title = "تنظیمات VPN",
-        vpn = "VPN",
-        vpn_settings = "تنظیمات VPN",
-        vpn_status = "وضعیت VPN",
-        enabled = "فعال",
-        disabled = "غیرفعال",
-        connecting = "در حال اتصال",
-        connected = "متصل",
-        disconnected = "قطع",
-        split_tunnel = "تونل جدا",
-        split_tunnel_desc = "ترافیک داخلی مستقیم، خارجی از طریق VPN",
-        vpn_server = "سرور VPN",
-        connect = "اتصال",
-        disconnect = "قطع اتصال",
-        reconnect = "اتصال مجدد",
-        save = "ذخیره",
-        cancel = "انصراف",
-        apply = "اعمال",
-        refresh = "تازه کردن",
-        loading = "در حال بارگذاری...",
-        error = "خطا",
-        success = "موفق",
-        connection_failed = "اتصال ناموفق",
-        connection_success = "اتصال موفق",
-        please_wait = "لطفاً صبر کنید...",
-        checking = "در حال بررسی...",
-        no_servers = "سروری موجود نیست",
-        server_list = "لیست سرورها",
-        latency = "تأخیر",
-        update_ip_ranges = "به‌روزرسانی IP ها",
-        last_updated = "آخرین به‌روزرسانی",
-        never = "هرگز",
-        count = "تعداد",
-        routes_updated = "مسیرها به‌روز شد",
-        routes_count = "مسیر",
-        domestic_traffic = "ترافیک داخلی",
-        foreign_traffic = "ترافیک خارجی",
-        vpn_exit = "خروج VPN",
-        update_now = "به‌روزرسانی حالا",
-        detecting = "در حال تشخیص موقعیت...",
-        detected = "تشخیص داده شد",
-        your_ip = "IP شما",
-        your_country = "کشور شما",
-        auto_detect = "تشخیص خودکار",
-        detected_success = "موقعیت تشخیص داده شد",
-        detection_failed = "تشخیص ناموفق",
-        real_ip = "IP واقعی",
-        vpn_ip = "IP VPN",
-        location = "موقعیت",
-        ip_ranges_loaded = "IP ها بارگذاری شده",
-        retry = "تلاش مجدد"
-    },
-    hi = {
-        title = "VPN सेटिंग्स",
-        vpn = "VPN",
-        vpn_settings = "VPN सेटिंग्स",
-        vpn_status = "VPN स्थिति",
-        enabled = "सक्षम",
-        disabled = "अक्षम",
-        connecting = "कनेक्ट हो रहा है",
-        connected = "कनेक्टेड",
-        disconnected = "डिस्कनेक्टेड",
-        split_tunnel = "स्प्लिट टनलिंग",
-        split_tunnel_desc = "घरेलू ट्रैफिक सीधे, विदेशी VPN से",
-        vpn_server = "VPN सर्वर",
-        connect = "कनेक्ट",
-        disconnect = "डिस्कनेक्ट",
-        reconnect = "पुनः कनेक्ट",
-        save = "सहेजें",
-        cancel = "रद्द करें",
-        apply = "लागू करें",
-        refresh = "रिफ्रेश",
-        loading = "लोड हो रहा है...",
-        error = "त्रुटि",
-        success = "सफल",
-        connection_failed = "कनेक्शन विफल",
-        connection_success = "कनेक्शन सफल",
-        please_wait = "कृपया प्रतीक्षा करें...",
-        checking = "जाँच रहा है...",
-        no_servers = "कोई सर्वर उपलब्ध नहीं",
-        server_list = "सर्वर सूची",
-        latency = "विलंब",
-        update_ip_ranges = "IP अपडेट करें",
-        last_updated = "अंतिम अपडेट",
-        never = "कभी नहीं",
-        count = "संख्या",
-        routes_updated = "मार्ग अपडेटेड",
-        routes_count = "मार्ग",
-        domestic_traffic = "घरेलू ट्रैफिक",
-        foreign_traffic = "विदेशी ट्रैफिक",
-        vpn_exit = "VPN निकास",
-        update_now = "अभी अपडेट करें",
-        detecting = "स्थान का पता लगा रहा है...",
-        detected = "पता चला",
-        your_ip = "आपका IP",
-        your_country = "आपका देश",
-        auto_detect = "स्वचालित पता लगाना",
-        detected_success = "स्थान का पता चला",
-        detection_failed = "पता लगाना विफल",
-        real_ip = "वास्तविक IP",
-        vpn_ip = "VPN IP",
-        location = "स्थान",
-        ip_ranges_loaded = "IP लोडेड",
-        retry = "पुनः प्रयास करें"
-    },
-    tr = {
-        title = "VPN Ayarları",
-        vpn = "VPN",
-        vpn_settings = "VPN Ayarları",
-        vpn_status = "VPN Durumu",
-        enabled = "Etkin",
-        disabled = "Devre Dışı",
-        connecting = "Bağlanıyor",
-        connected = "Bağlı",
-        disconnected = "Bağlı değil",
-        split_tunnel = "Bölünmüş Tünel",
-        split_tunnel_desc = "Yerel trafik doğrudan, yabancı trafik VPN üzerinden",
-        vpn_server = "VPN Sunucusu",
-        connect = "Bağlan",
-        disconnect = "Bağlantıyı kes",
-        reconnect = "Yeniden bağlan",
-        save = "Kaydet",
-        cancel = "İptal",
-        apply = "Uygula",
-        refresh = "Yenile",
-        loading = "Yükleniyor...",
-        error = "Hata",
-        success = "Başarılı",
-        connection_failed = "Bağlantı başarısız",
-        connection_success = "Bağlantı başarılı",
-        please_wait = "Lütfen bekleyin...",
-        checking = "Kontrol ediliyor...",
-        no_servers = "Kullanılabilir sunucu yok",
-        server_list = "Sunucu Listesi",
-        latency = "Gecikme",
-        update_ip_ranges = "IP'leri güncelle",
-        last_updated = "Son güncelleme",
-        never = "Hiç",
-        count = "Sayı",
-        routes_updated = "Rotalar güncellendi",
-        routes_count = "rota",
-        domestic_traffic = "Yerel trafik",
-        foreign_traffic = "Yabancı trafik",
-        vpn_exit = "VPN Çıkışı",
-        update_now = "Şimdi güncelle",
-        detecting = "Konum tespit ediliyor...",
-        detected = "Tespit edildi",
-        your_ip = "IP Adresiniz",
-        your_country = "Ülkeniz",
-        auto_detect = "Otomatik tespit",
-        detected_success = "Konum tespit edildi",
-        detection_failed = "Tespit başarısız",
-        real_ip = "Gerçek IP",
-        vpn_ip = "VPN IP",
-        location = "Konum",
-        ip_ranges_loaded = "IP yüklendi",
-        retry = "Yeniden dene"
+        retry = "重试",
+        login = "登录",
+        logout = "退出",
+        username = "用户名",
+        password = "密码",
+        login_title = "VIP账户登录",
+        login_desc = "输入您的账户凭据以连接VPN",
+        login_button = "登录并连接",
+        logout_button = "退出并断开",
+        invalid_credentials = "用户名或密码错误",
+        account_expired = "账户已过期",
+        not_vip_account = "此账户不是VIP账户",
+        logged_in = "已登录",
+        logged_out = "未登录",
+        expired = "已过期",
+        not_vip = "非VIP",
+        login_required = "需要登录",
+        user_status = "用户状态",
+        vip_user = "VIP用户",
+        valid_until = "有效期至",
+        auto_connect = "VIP用户自动连接",
+        checking_status = "检查状态中..."
     }
+}
 }
 
 local t = i18n[lang] or i18n["en"]
@@ -1201,6 +449,18 @@ local t = i18n[lang] or i18n["en"]
     font-size: 13px;
     font-weight: 500;
 }
+.vpn-expired {
+    color: #dc3545 !important;
+}
+.vpn-valid {
+    color: #28a745 !important;
+}
+.vpn-expired-bg {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+}
+.vpn-valid-bg {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+}
 </style>
 
 <div class="vpn-container">
@@ -1216,10 +476,60 @@ local t = i18n[lang] or i18n["en"]
             <h3 id="vpn-status-title"><%= t.loading %></h3>
             <p id="vpn-status-desc"></p>
         </div>
-        <div class="vpn-control-buttons">
-            <button class="vpn-btn vpn-btn-connect" id="btn-connect" onclick="vpn_toggle()">
-                <%= t.connect %>
-            </button>
+    </div>
+    
+    <div class="vpn-card">
+        <div class="vpn-card-header">
+            <%= t.user_status %>
+        </div>
+        <div class="vpn-card-body" id="login-section">
+            <div id="login-form" style="display:none;">
+                <div class="vpn-login-box">
+                    <h4 style="margin:0 0 10px 0;"><%= t.login_title %></h4>
+                    <p style="margin:0 0 15px 0;color:#666;font-size:13px;"><%= t.login_desc %></p>
+                    <div style="margin-bottom:15px;">
+                        <input type="text" id="login-username" placeholder="<%= t.username %>" 
+                               style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <input type="password" id="login-password" placeholder="<%= t.password %>"
+                               style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">
+                    </div>
+                    <button class="vpn-detect-btn" onclick="doLogin()" style="width:100%;padding:12px;font-size:15px;">
+                        <%= t.login_button %>
+                    </button>
+                    <p id="login-error" style="color:#dc3545;margin-top:10px;font-size:13px;display:none;"></p>
+                </div>
+            </div>
+            
+            <div id="user-info" style="display:none;">
+                <div class="vpn-detection-box vpn-valid-bg" id="user-status-box">
+                    <div class="vpn-detection-flag" id="user-status-icon">👤</div>
+                    <div class="vpn-detection-info">
+                        <h4 id="user-status-title"><%= t.logged_in %></h4>
+                        <p><%= t.username %>: <strong id="user-name">-</strong></p>
+                    </div>
+                    <button class="vpn-detect-btn" onclick="doLogout()">
+                        <%= t.logout_button %>
+                    </button>
+                </div>
+                
+                <div class="vpn-info-box" style="margin-top:15px;">
+                    <div class="vpn-info-item">
+                        <div class="vpn-info-label"><%= t.vip_user %></div>
+                        <div class="vpn-info-value" id="user-type">-</div>
+                    </div>
+                    <div class="vpn-info-item">
+                        <div class="vpn-info-label"><%= t.valid_until %></div>
+                        <div class="vpn-info-value" id="user-expiry">-</div>
+                    </div>
+                </div>
+                
+                <div id="expiry-warning" style="display:none;margin-top:15px;padding:12px;background:#fff3cd;border-radius:8px;border:1px solid #ffc107;">
+                    <span style="font-size:20px;">⚠️</span>
+                    <span id="expiry-warning-text" style="margin-left:10px;color:#856404;"></span>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -1318,6 +628,12 @@ var vpnData = {
     detectedCountry: '',
     detectedCountryName: '',
     detectedCountryFlag: '',
+    authLoggedIn: false,
+    authUsername: '',
+    authType: '',
+    authExpiry: '',
+    authReason: '',
+    authTime: '',
     t: <%= util.serialize_json(t) %>
 };
 
@@ -1404,6 +720,8 @@ function auto_detect() {
     var title = document.getElementById('detection-title');
     var ip = document.getElementById('detection-ip');
     
+    if (!btn || !box) return;
+    
     btn.disabled = true;
     btn.textContent = vpnData.t.detecting;
     box.className = 'vpn-detection-box detecting';
@@ -1458,6 +776,130 @@ function auto_detect() {
     xhr.send();
 }
 
+function loadAuthStatus() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_auth_status', true);
+    xhr.onload = function() {
+        try {
+            var response = JSON.parse(xhr.responseText);
+            vpnData.authLoggedIn = response.logged_in;
+            vpnData.authUsername = response.username || '';
+            vpnData.authType = response.type || '';
+            vpnData.authExpiry = response.expiration || '';
+            vpnData.authReason = response.reason || '';
+            vpnData.authTime = response.auth_time || '';
+            updateAuthUI();
+        } catch (e) {
+            console.error('Auth error:', e);
+        }
+    };
+    xhr.send();
+}
+
+function updateAuthUI() {
+    var loginForm = document.getElementById('login-form');
+    var userInfo = document.getElementById('user-info');
+    var statusBox = document.getElementById('user-status-box');
+    var statusIcon = document.getElementById('user-status-icon');
+    var statusTitle = document.getElementById('user-status-title');
+    var userName = document.getElementById('user-name');
+    var userType = document.getElementById('user-type');
+    var userExpiry = document.getElementById('user-expiry');
+    var expiryWarning = document.getElementById('expiry-warning');
+    var expiryText = document.getElementById('expiry-warning-text');
+    
+    if (vpnData.authLoggedIn) {
+        loginForm.style.display = 'none';
+        userInfo.style.display = 'block';
+        
+        statusBox.className = 'vpn-detection-box vpn-valid-bg';
+        statusIcon.textContent = '👤';
+        statusTitle.textContent = vpnData.t.logged_in;
+        userName.textContent = vpnData.authUsername;
+        userType.innerHTML = '<span style="color:#28a745;font-weight:bold;">' + vpnData.authType.toUpperCase() + '</span>';
+        
+        var expiryDate = vpnData.authExpiry;
+        var isExpired = vpnData.authExpiry && new Date(vpnData.authExpiry) < new Date();
+        
+        if (isExpired) {
+            userExpiry.innerHTML = '<span class="vpn-expired">' + expiryDate + ' ⚠️</span>';
+            userExpiry.className = 'vpn-info-value vpn-expired';
+            expiryWarning.style.display = 'block';
+            expiryWarning.style.background = '#f8d7da';
+            expiryWarning.style.borderColor = '#f5c6cb';
+            expiryText.style.color = '#721c24';
+            expiryText.textContent = vpnData.t.expired + ': ' + expiryDate;
+        } else {
+            userExpiry.innerHTML = '<span class="vpn-valid">✓ ' + expiryDate + '</span>';
+            userExpiry.className = 'vpn-info-value vpn-valid';
+            expiryWarning.style.display = 'none';
+        }
+    } else {
+        loginForm.style.display = 'block';
+        userInfo.style.display = 'none';
+    }
+}
+
+function doLogin() {
+    var username = document.getElementById('login-username').value;
+    var password = document.getElementById('login-password').value;
+    var errorEl = document.getElementById('login-error');
+    
+    if (!username || !password) {
+        errorEl.textContent = vpnData.t.invalid_credentials;
+        errorEl.style.display = 'block';
+        return;
+    }
+    
+    errorEl.style.display = 'none';
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_login', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        try {
+            var response = JSON.parse(xhr.responseText);
+            
+            if (response.success) {
+                vpnData.authLoggedIn = true;
+                vpnData.authUsername = response.username || username;
+                vpnData.authType = response.type || '';
+                vpnData.authExpiry = response.expiration || '';
+                updateAuthUI();
+                updateUI();
+            } else {
+                var msg = vpnData.t.invalid_credentials;
+                if (response.status === 'expired') msg = vpnData.t.account_expired;
+                if (response.status === 'not_vip') msg = vpnData.t.not_vip_account;
+                errorEl.textContent = msg;
+                errorEl.style.display = 'block';
+            }
+        } catch (e) {
+            errorEl.textContent = vpnData.t.error;
+            errorEl.style.display = 'block';
+        }
+    };
+    xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
+}
+
+function doLogout() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_logout', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+        vpnData.authLoggedIn = false;
+        vpnData.authUsername = '';
+        vpnData.authType = '';
+        vpnData.authExpiry = '';
+        vpnData.connected = false;
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+        updateAuthUI();
+        updateUI();
+    };
+    xhr.send();
+}
+
 function loadStatus() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api', true);
@@ -1497,6 +939,7 @@ function loadStatus() {
 }
 
 window.addEventListener('DOMContentLoaded', function() {
+    loadAuthStatus();
     loadStatus();
     setTimeout(auto_detect, 1000);
 });
