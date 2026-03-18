@@ -82,7 +82,8 @@ local i18n = {
         vip_user = "VIP User",
         valid_until = "Valid Until",
         auto_connect = "Auto-connect when VIP",
-        checking_status = "Checking status..."
+        checking_status = "Checking status...",
+        renew_now = "Renew Now"
     },
     ["zh-CN"] = {
         title = "VPN 设置",
@@ -156,7 +157,8 @@ local i18n = {
         vip_user = "VIP用户",
         valid_until = "有效期至",
         auto_connect = "VIP用户自动连接",
-        checking_status = "检查状态中..."
+        checking_status = "检查状态中...",
+        renew_now = "立即续费"
     }
 }
 }
@@ -461,6 +463,21 @@ local t = i18n[lang] or i18n["en"]
 .vpn-valid-bg {
     background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
 }
+.vpn-renew-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.vpn-renew-btn:hover {
+    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+    transform: translateY(-1px);
+}
 </style>
 
 <div class="vpn-container">
@@ -528,8 +545,16 @@ local t = i18n[lang] or i18n["en"]
                 <div id="expiry-warning" style="display:none;margin-top:15px;padding:12px;background:#fff3cd;border-radius:8px;border:1px solid #ffc107;">
                     <span style="font-size:20px;">⚠️</span>
                     <span id="expiry-warning-text" style="margin-left:10px;color:#856404;"></span>
+                    <button id="btn-renew-warning" class="vpn-renew-btn" onclick="openRenewalPage()" style="margin-left:15px;">
+                        <%= t.renew_now %>
+                    </button>
                 </div>
-            </div>
+                
+                <div id="renew-section" style="margin-top:15px;">
+                    <button id="btn-renew" class="vpn-renew-btn" onclick="openRenewalPage()" style="width:100%;padding:12px;font-size:14px;">
+                        💳 <%= t.renew_now %>
+                    </button>
+                </div>
         </div>
     </div>
     
@@ -896,6 +921,24 @@ function doLogout() {
         document.getElementById('login-password').value = '';
         updateAuthUI();
         updateUI();
+    };
+    xhr.send();
+}
+
+function openRenewalPage() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_renewal', true);
+    xhr.onload = function() {
+        try {
+            var response = JSON.parse(xhr.responseText);
+            if (response.success && response.url) {
+                window.open(response.url, '_blank');
+            } else {
+                alert('Failed to generate renewal link. Please login first.');
+            }
+        } catch (e) {
+            console.error('Renewal error:', e);
+        }
     };
     xhr.send();
 }

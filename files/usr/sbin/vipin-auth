@@ -5,10 +5,13 @@
 CONF_DIR="/etc/vipin"
 AUTH_FILE="$CONF_DIR/auth.conf"
 LOG_FILE="/var/log/vipin-auth.log"
+TOKEN_FILE="$CONF_DIR/renewal_token"
+RENEWAL_URL="https://www.anyfq.com/renew"
 DB_HOST="localhost"
 DB_USER="root"
 DB_PASS="e4b3k7y8"
 DB_NAME="radius"
+SECRET_KEY="vipin-router-2026-secret-key"
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -172,6 +175,39 @@ get_status() {
     echo "{\"logged_in\": true, \"username\": \"$username\", \"type\": \"$user_type\", \"expiration\": \"$expiration\", \"auth_time\": \"$auth_time\"}"
 }
 
+generate_token() {
+    local username="$1"
+    local timestamp=$(date +%s)
+    local expires=$((timestamp + 3600))
+    local data="${username}:${expires}"
+    local signature=$(echo -n "$data" | openssl dgst -sha256 -hmac "$SECRET_KEY" 2>/dev/null | cut -d' ' -f2)
+    local token=$(echo -n "${username}:${expires}:${signature}" | base64 -w0 2>/dev/null | tr '/+' '_-' | tr -d '=\n')
+    echo "$token"
+}
+
+get_renewal_url() {
+    local auth_info=$(load_auth)
+    
+    if [ -z "$auth_info" ]; then
+        echo "{\"success\": false, \"error\": \"not_logged_in\", \"url\": \"\"}"
+        return
+    fi
+    
+    local username=$(echo "$auth_info" | grep "^username=" | cut -d'"' -f2)
+    
+    if [ -z "$username" ]; then
+        echo "{\"success\": false, \"error\": \"no_username\", \"url\": \"\"}"
+        return
+    fi
+    
+    local token=$(generate_token "$username")
+    local renewal_url="${RENEWAL_URL}?token=${token}&source=router"
+    
+    log "Generated renewal URL for user: $username"
+    
+    echo "{\"success\": true, \"username\": \"$username\", \"token\": \"$token\", \"url\": \"$renewal_url\"}"
+}
+
 case "$1" in
     login)
         if [ -z "$2" ] || [ -z "$3" ]; then
@@ -222,8 +258,11 @@ case "$1" in
         
         echo "{\"valid\": true, \"username\": \"$username\", \"type\": \"$(get_user_type $username)\"}"
         ;;
+    renewal-url)
+        get_renewal_url
+        ;;
     *)
-        echo "Usage: $0 {login|logout|status|check} [username] [password]"
+        echo "Usage: $0 {login|logout|status|check|renewal-url} [username] [password]"
         exit 1
         ;;
 esac

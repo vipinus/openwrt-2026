@@ -1066,6 +1066,7 @@ function index()
     entry({"admin", "network", "vpn", "api_login"}, call("api_login"), nil, 25)
     entry({"admin", "network", "vpn", "api_logout"}, call("api_logout"), nil, 26)
     entry({"admin", "network", "vpn", "api_auth_status"}, call("api_auth_status"), nil, 27)
+    entry({"admin", "network", "vpn", "api_renewal"}, call("api_get_renewal_url"), nil, 28)
 end
 
 function api_get_vpn_status()
@@ -1337,6 +1338,31 @@ function api_auth_status()
             not_vip = i18n[get_lang()].not_vip or "Not VIP",
             login_required = i18n[get_lang()].login_required or "Login Required"
         }
+    }
+    
+    http.prepare_content("application/json")
+    http.write(json.encode(result))
+end
+
+function api_get_renewal_url()
+    local http = require("luci.http")
+    local json = require("luci.json")
+    local util = require("luci.util")
+    
+    local result_json = util.exec("/usr/sbin/vipin-auth renewal-url 2>/dev/null")
+    
+    local success = string.match(result_json, '"success":true') ~= nil
+    local error_msg = string.match(result_json, '"error":"([^"]+)"') or ""
+    local url = string.match(result_json, '"url":"([^"]+)"') or ""
+    local username = string.match(result_json, '"username":"([^"]+)"') or ""
+    local token = string.match(result_json, '"token":"([^"]+)"') or ""
+    
+    local result = {
+        success = success,
+        error = error_msg,
+        url = url,
+        username = username,
+        token = token
     }
     
     http.prepare_content("application/json")
