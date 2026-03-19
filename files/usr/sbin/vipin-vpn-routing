@@ -1,13 +1,87 @@
 #!/bin/sh
-# VIPIN VPN Split Tunneling - nftables based routing
-# Domestic traffic -> Direct, Foreign traffic -> VPN
+VPN_RULES_FILE="/etc/firewall.vpn.rules"
 
-NFT_TABLE="vipin_routing"
-NFT_CHAIN_VPN="vpn_forward"
-NFT_CHAIN_DOMESTIC="domestic_forward"
-NFT_CHAIN_MASQ="vpn_masquerade"
-VPN_IFACE="easytier"
-CONF_DIR="/etc/vipin/country-ips"
+add_rules() {
+    local country="$1"
+    local conf_dir="/etc/vipin/country-ips"
+    local domestic_file="$conf_dir/${country}.txt"
+    
+    nft flush ruleset 2>/dev/null
+    
+    nft add table inet vipin_routing 2>/dev/null
+    
+    nft delete table inet vipin_routing 2>/dev/null
+    nft add table inet vipin_routing
+    
+    nft add chain inet vipin_routing prerouting { type nat hook prerouting priority dstnat \; }
+    nft add chain inet vipin_routing postrouting { type nat hook postrouting priority srcnat \; }
+    
+    nft add chain inet vipin_routing forward { type filter hook forward priority filter \; policy accept \; }
+    nft add chain inet vipin_routing vpn_fwd { type filter hook forward priority filter \; policy accept \; }
+    
+    nft add rule inet vipin_routing postrouting oifname "vpn_vipin" masquerade
+    
+    nft add rule inet vipin_routing vpn_fwd iifname "vpn_vipin" counter accept
+    nft add rule inet vipin_routing vpn_fwd oifname "vpn_vipin" counter accept
+    
+    local domestic_ips=""
+    if [ -f "$domestic_file" ]; then
+        domestic_ips=$(cat "$domestic_file")
+    fi
+    
+    if [ -n "$domestic_ips" ]; then
+        echo "$domestic_ips" | grep -v "^#" | grep -v "^$" | while read -r cidr; do
+            [ -z "$cidr" ] && continue
+            nft add rule inet vipin_routing forward ip daddr "$cidr" counter accept 2>/dev/null
+        done
+    fi
+    
+    nft add rule inet vipin_routing forward counter drop
+    
+    nft add chain inet vipin_routing vpn_mark { type filter hook forward priority mangle \; }
+    nft add rule inet vipin_routing vpn_mark meta mark set 0x1
+    
+    ip route flush table 100 2>/dev/null
+    ip route add default dev vpn_vipin table 100 2>/dev/null
+    
+    ip rule del fwmark 0x1 table 100 2>/dev/null
+    ip rule add fwmark 0x1 table 100 pri 100 2>/dev/null
+    
+    if [ -n "$domestic_ips" ]; then
+        echo "$domestic_ips" | grep -v "^#" | grep -v "^$" | while read -r cidr; do
+            [ -z "$cidr" ] && continue
+            ip route add "$cidr" dev "$(ip route | grep default | awk '{print $5}' | head -1)" table 100 2>/dev/null
+        done
+    fi
+    
+    cat > "$VPN_RULES_FILE" << 'EOF'
+#!/bin/sh
+nft flush ruleset 2>/dev/null
+nft delete table inet vipin_routing 2>/dev/null
+EOF
+    
+    chmod +x "$VPN_RULES_FILE"
+    
+    uci set firewall.vpn=include
+    uci set firewall.vpn.path="$VPN_RULES_FILE"
+    uci set firewall.vpn.reload="1"
+    uci commit firewall
+    /etc/init.d/firewall reload 2>/dev/null
+}
+
+remove_rules() {
+    nft flush ruleset 2>/dev/null
+    nft delete table inet vipin_routing 2>/dev/null
+    
+    ip rule del fwmark 0x1 table 100 2>/dev/null
+    ip route flush table 100 2>/dev/null
+    
+    rm -f "$VPN_RULES_FILE"
+    
+    uci delete firewall.vpn 2>/dev/null
+    uci commit firewall
+    /etc/init.d/firewall reload 2>/dev/null
+}
 
 country_name() {
     case "$1" in
@@ -30,151 +104,44 @@ country_name() {
         sa) echo "Saudi Arabia" ;;
         tr) echo "Turkey" ;;
         ru) echo "Russia" ;;
-        ua) echo "Ukraine" ;;
-        kz) echo "Kazakhstan" ;;
-        mm) echo "Myanmar" ;;
-        kh) echo "Cambodia" ;;
-        la) echo "Laos" ;;
-        np) echo "Nepal" ;;
-        bt) echo "Bhutan" ;;
         de) echo "Germany" ;;
         gb) echo "United Kingdom" ;;
-        au) echo "Australia" ;;
-        ca) echo "Canada" ;;
         fr) echo "France" ;;
         nl) echo "Netherlands" ;;
-        it) echo "Italy" ;;
-        es) echo "Spain" ;;
-        pl) echo "Poland" ;;
-        se) echo "Sweden" ;;
-        no) echo "Norway" ;;
-        fi) echo "Finland" ;;
-        dk) echo "Denmark" ;;
+        au) echo "Australia" ;;
+        ca) echo "Canada" ;;
         br) echo "Brazil" ;;
-        mx) echo "Mexico" ;;
-        ar) echo "Argentina" ;;
-        cl) echo "Chile" ;;
-        co) echo "Colombia" ;;
         *) echo "$1" ;;
     esac
 }
 
-load_country_ips() {
-    local country=$1
-    local ip_file="$CONF_DIR/${country}.txt"
-    
-    if [ ! -f "$ip_file" ]; then
-        /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
-    fi
-    
-    if [ -f "$ip_file" ]; then
-        cat "$ip_file"
-    else
-        echo ""
-    fi
-}
-
-setup_nftables() {
-    local enabled=$1
-    local country=$2
-    
-    log "Setting up nftables routing (enabled=$enabled, country=$country)"
-    
-    nft add table inet $NFT_TABLE 2>/dev/null
-    nft flush table inet $NFT_TABLE
-    
-    if [ "$enabled" != "1" ]; then
-        log "VPN routing disabled, clearing rules"
-        nft delete table inet $NFT_TABLE 2>/dev/null
-        uci set firewall.vpn=include
-        uci set firewall.vpn.enabled='0'
-        uci commit firewall
-        /etc/init.d/firewall reload 2>/dev/null
-        return 0
-    fi
-    
-    nft add chain inet $NFT_TABLE $NFT_CHAIN_MASQ { type nat hook postrouting priority srcnat \; }
-    nft add chain inet $NFT_TABLE $NFT_CHAIN_VPN { type route hook forward priority filter \; policy accept \; }
-    nft add chain inet $NFT_TABLE $NFT_CHAIN_DOMESTIC { type route hook forward priority filter \; policy accept \; }
-    
-    nft add rule inet $NFT_TABLE $NFT_CHAIN_MASQ oifname "$VPN_IFACE" counter masquerade
-    
-    local domestic_ips=$(load_country_ips "$country")
-    
-    if [ -n "$domestic_ips" ]; then
-        echo "$domestic_ips" | while read -r cidr; do
-            [ -z "$cidr" ] && continue
-            nft add rule inet $NFT_TABLE $NFT_CHAIN_DOMESTIC ip daddr $cidr counter accept 2>/dev/null
-        done
-    fi
-    
-    nft add rule inet $NFT_TABLE $NFT_CHAIN_DOMESTIC counter drop
-    
-    nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN meta mark set 0x1
-    
-    local vpn_table="100"
-    ip route show table $vpn_table | grep -q "default via" || ip route add default dev $VPN_IFACE table $vpn_table 2>/dev/null
-    
-    nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN meta oifname "$VPN_IFACE" counter return
-    
-    if [ -n "$domestic_ips" ]; then
-        echo "$domestic_ips" | while read -r cidr; do
-            [ -z "$cidr" ] && continue
-            nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN ip daddr $cidr counter accept 2>/dev/null
-        done
-    fi
-    
-    nft add rule inet $NFT_TABLE $NFT_CHAIN_VPN counter
-    
-    uci set firewall.vpn=include
-    uci set firewall.vpn.path='/etc/firewall.vpn.rules'
-    uci set firewall.vpn.enabled='1'
-    uci commit firewall
-    
-    cat > /etc/firewall.vpn.rules << 'FIREWALL_EOF'
-#!/usr/sbin/nft -f
-
-flush ruleset
-
-table inet vipin_routing {
-    chain vpn_forward {
-        type filter hook forward priority filter; policy accept;
-        meta mark set 0x1
-        oifname "easytier" return
-    }
-}
-FIREWALL_EOF
-    
-    /etc/init.d/firewall reload 2>/dev/null
-    
-    log "VPN routing configured for country: $(country_name $country)"
-}
-
 get_current_country() {
-    cat "$CONF_DIR/current_country" 2>/dev/null || echo "cn"
-}
-
-get_routing_status() {
-    local enabled=$(uci get vipin.vpn.enabled 2>/dev/null || echo "0")
-    local country=$(get_current_country)
-    
-    echo "{\"enabled\": $enabled, \"country\": \"$country\", \"country_name\": \"$(country_name $country)\"}"
+    cat "/etc/vipin/country-ips/current_country" 2>/dev/null || echo "cn"
 }
 
 case "$1" in
     enable)
-        setup_nftables 1 "${2:-$(get_current_country)}"
+        add_rules "${2:-$(get_current_country)}"
         ;;
     disable)
-        setup_nftables 0
+        remove_rules
         ;;
     reload)
         enabled=$(uci get vipin.vpn.enabled 2>/dev/null || echo "0")
         country=$(get_current_country)
-        setup_nftables "$enabled" "$country"
+        if [ "$enabled" = "1" ]; then
+            add_rules "$country"
+        else
+            remove_rules
+        fi
         ;;
     status)
-        get_routing_status
+        if nft list tables 2>/dev/null | grep -q "vipin_routing"; then
+            echo "VPN routing: enabled"
+        else
+            echo "VPN routing: disabled"
+        fi
+        echo "Country: $(country_name $(get_current_country))"
         ;;
     country-name)
         country_name "$2"

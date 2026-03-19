@@ -1067,6 +1067,8 @@ function index()
     entry({"admin", "network", "vpn", "api_logout"}, call("api_logout"), nil, 26)
     entry({"admin", "network", "vpn", "api_auth_status"}, call("api_auth_status"), nil, 27)
     entry({"admin", "network", "vpn", "api_renewal"}, call("api_get_renewal_url"), nil, 28)
+    entry({"admin", "network", "vpn", "api_servers"}, call("api_get_servers"), nil, 29)
+    entry({"admin", "network", "vpn", "api_set_server"}, call("api_set_server"), nil, 30)
 end
 
 function api_get_vpn_status()
@@ -1078,7 +1080,7 @@ function api_get_vpn_status()
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
     local vpn_enabled = luci.model.uci:get("vipin", "vpn", "enabled") or "0"
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "0"
-    local vpn_connected = util.exec("pgrep -x easytier >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+    local vpn_connected = util.exec("pgrep -x openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
     local detected = false
@@ -1171,7 +1173,7 @@ function api_connect()
     
     if action == "connect" then
         local output = util.exec("/etc/init.d/vipin-vpn start 2>&1")
-        result.success = (util.exec("pgrep -x easytier >/dev/null && echo 1 || echo 0"):gsub("%s+", "") == "1")
+        result.success = (util.exec("pgrep -x openconnect >/dev/null && echo 1 || echo 0"):gsub("%s+", "") == "1")
     elseif action == "disconnect" then
         util.exec("/etc/init.d/vipin-vpn stop 2>&1")
         result.success = true
@@ -1363,6 +1365,83 @@ function api_get_renewal_url()
         url = url,
         username = username,
         token = token
+    }
+    
+    http.prepare_content("application/json")
+    http.write(json.encode(result))
+end
+
+function api_get_servers()
+    local http = require("luci.http")
+    local json = require("luci.json")
+    local util = require("luci.util")
+    local io = require("io")
+    
+    local servers = {}
+    
+    local countries = {
+        {code = "ar", name = "Argentina", flag = "🇦🇷"},
+        {code = "au", name = "Australia", flag = "🇦🇺"},
+        {code = "at", name = "Austria", flag = "🇦🇹"},
+        {code = "br", name = "Brazil", flag = "🇧🇷"},
+        {code = "ca", name = "Canada", flag = "🇨🇦"},
+        {code = "cn", name = "China", flag = "🇨🇳"},
+        {code = "dk", name = "Denmark", flag = "🇩🇰"},
+        {code = "fr", name = "France", flag = "🇫🇷"},
+        {code = "de", name = "Germany", flag = "🇩🇪"},
+        {code = "hk", name = "Hong Kong", flag = "🇭🇰"},
+        {code = "in", name = "India", flag = "🇮🇳"},
+        {code = "it", name = "Italy", flag = "🇮🇹"},
+        {code = "jp", name = "Japan", flag = "🇯🇵"},
+        {code = "kr", name = "Korea", flag = "🇰🇷"},
+        {code = "nl", name = "Netherland", flag = "🇳🇱"},
+        {code = "nz", name = "New Zealand", flag = "🇳🇿"},
+        {code = "pt", name = "Portugal", flag = "🇵🇹"},
+        {code = "sg", name = "Singapore", flag = "🇸🇬"},
+        {code = "es", name = "Spain", flag = "🇪🇸"},
+        {code = "ch", name = "Switzerland", flag = "🇨🇭"},
+        {code = "tw", name = "Taiwan", flag = "🇹🇼"},
+        {code = "th", name = "Thailand", flag = "🇹🇭"},
+        {code = "uk", name = "United Kingdom", flag = "🇬🇧"},
+        {code = "us", name = "United States", flag = "🇺🇸"}
+    }
+    
+    local base_domain = "fanq.in"
+    
+    for _, c in ipairs(countries) do
+        local server_domain = c.code .. "." .. base_domain
+        local output = util.exec("wget -q -O- --timeout=3 https://" .. server_domain .. " 2>/dev/null")
+        
+        table.insert(servers, {
+            code = c.code,
+            name = c.name,
+            flag = c.flag,
+            server = server_domain,
+            available = (output and output ~= "")
+        })
+    end
+    
+    http.prepare_content("application/json")
+    http.write(json.encode(servers))
+end
+
+function api_set_server()
+    local http = require("luci.http")
+    local json = require("luci.json")
+    
+    local server = luci.http.formvalue("server") or ""
+    
+    local success = false
+    if server and server ~= "" then
+        luci.model.uci:set("vipin", "vpn", "server", server)
+        luci.model.uci:save("vipin")
+        luci.model.uci:commit("vipin")
+        success = true
+    end
+    
+    local result = {
+        success = success,
+        server = server
     }
     
     http.prepare_content("application/json")

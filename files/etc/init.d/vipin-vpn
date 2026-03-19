@@ -5,15 +5,16 @@ STOP=10
 USE_PROCD=1
 
 NAME=vipin-vpn
-PROG=/usr/bin/easytier
+PROG=/usr/sbin/openconnect
+
+SERVERS_API="https://www.anyfq.com/api/v1/servers"
 
 get_config() {
     config_load vipin
     config_get_bool enabled vpn enabled 0
     config_get_bool split_tunnel vpn split_tunnel 1
     config_get server vpn server ""
-    config_get port vpn port 3000
-    config_get auth_token vpn auth_token ""
+    config_get username vpn username ""
     config_get country vpn country "cn"
 }
 
@@ -28,6 +29,29 @@ check_auth() {
     return 1
 }
 
+fetch_server_cert() {
+    local srv="$1"
+    local cert_file="/etc/vipin/vpn.crt"
+    
+    mkdir -p /etc/vipin
+    
+    echo | openssl s_client -connect "${srv}:443" -servername "${srv}" 2>/dev/null | \
+        openssl x509 -outform PEM > "$cert_file" 2>/dev/null
+    
+    if [ -s "$cert_file" ]; then
+        logger -t $NAME "Certificate fetched for $srv"
+        return 0
+    else
+        rm -f "$cert_file"
+        logger -t $NAME "Failed to fetch certificate for $srv"
+        return 1
+    fi
+}
+
+get_random_port() {
+    echo $((50000 + RANDOM % 10000))
+}
+
 start_service() {
     get_config
     
@@ -39,14 +63,16 @@ start_service() {
     
     mkdir -p /var/log
     mkdir -p /etc/vipin
-    
-    if [ -z "$server" ] || [ -z "$auth_token" ]; then
-        logger -t $NAME "VPN not configured, skipping start"
-        return 1
-    fi
+    mkdir -p /tmp/vipin
     
     local auth_info=$(/usr/sbin/vipin-auth status 2>/dev/null)
     local username=$(echo "$auth_info" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+    local password=$(cat /etc/vipin/auth.conf 2>/dev/null | grep "^password=" | cut -d'"' -f2)
+    
+    if [ -z "$server" ] || [ -z "$username" ]; then
+        logger -t $NAME "VPN not configured, skipping start"
+        return 1
+    fi
     
     if [ -n "$username" ]; then
         logger -t $NAME "Starting VPN for user: $username"
@@ -57,34 +83,45 @@ start_service() {
     
     /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
     
-    if pgrep -x easytier >/dev/null; then
+    if pgrep -x openconnect >/dev/null; then
         logger -t $NAME "VPN already running"
         return 0
     fi
     
+    fetch_server_cert "$server"
+    
+    local vpn_port=$(get_random_port)
+    
+    logger -t $NAME "Connecting to $server:$vpn_port"
+    
     procd_open_instance
     procd_set_param command $PROG
-    procd_append_param command -i easytier
-    procd_append_param command -c /etc/easytier
-    procd_append_param command -n "$server"
-    procd_append_param command -p "$port"
-    procd_append_param command -t "password=$auth_token"
-    procd_append_param command -l /var/log/easytier.log
-    procd_append_param command -d
+    procd_append_param command --protocol=anyconnect
+    procd_append_param command --server "$server"
+    procd_append_param command --useragent "OpenConnect VPN Agent"
+    procd_append_param command --authgroup ""
+    procd_append_param command --user "$username"
+    procd_append_param command --passwd-on-stdin
+    procd_append_param command --interface vpn_vipin
+    procd_append_param command --pid-file /var/run/vipin-vpn.pid
+    procd_append_param command --log /var/log/openconnect.log
+    procd_append_param command --stamp 0
+    procd_set_param env PASSWD="$password"
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
     
-    sleep 2
+    sleep 3
     
-    if pgrep -x easytier >/dev/null; then
-        logger -t $NAME "VPN started (server: $server:$port)"
+    if pgrep -x openconnect >/dev/null; then
+        logger -t $NAME "VPN started (server: $server)"
         
         if [ "$split_tunnel" = "1" ]; then
             /usr/sbin/vipin-vpn-routing enable "$country"
         fi
     else
         logger -t $NAME "Failed to start VPN"
+        cat /var/log/openconnect.log 2>/dev/null | tail -5 | logger -t $NAME
         return 1
     fi
 }
@@ -94,10 +131,12 @@ stop_service() {
     
     /usr/sbin/vipin-vpn-routing disable 2>/dev/null
     
-    if pgrep -x easytier >/dev/null; then
-        killall easytier 2>/dev/null
-        sleep 1
+    if pgrep -x openconnect >/dev/null; then
+        killall openconnect 2>/dev/null
+        sleep 2
     fi
+    
+    rm -f /var/run/vipin-vpn.pid
     
     logger -t $NAME "VPN stopped"
 }
@@ -115,7 +154,7 @@ restart() {
 }
 
 status() {
-    if pgrep -x easytier >/dev/null; then
+    if pgrep -x openconnect >/dev/null; then
         echo "VPN is running"
         local auth_info=$(/usr/sbin/vipin-auth status 2>/dev/null)
         local username=$(echo "$auth_info" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
