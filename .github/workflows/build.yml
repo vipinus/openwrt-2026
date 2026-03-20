@@ -95,6 +95,7 @@ jobs:
         run: |
           cd /tmp/openwrt
           
+          mkdir -p files
           cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || true
           
           echo "${VERSION:-20260405}" > files/etc/vipin_version
