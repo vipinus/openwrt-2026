@@ -1,0 +1,165 @@
+#!/bin/sh /etc/rc.common
+
+START=15
+USE_PROCD=1
+
+NAME=dnscrypt-proxy
+PROG=/usr/sbin/dnscrypt-proxy
+CONF_DIR=/etc/dnscrypt-proxy
+CONF_FILE=$CONF_DIR/dnscrypt-proxy.toml
+CACHE_FILE=$CONF_DIR/servers-list.json
+LOCK_FILE=/var/lock/dnscrypt-update.lock
+LOG_FILE=/var/log/dnscrypt-proxy.log
+UPDATE_INTERVAL=604800
+
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+    logger -t $NAME "$1"
+}
+
+load_config() {
+    config_load dnscrypt
+    config_get_bool enabled main enabled 0
+    config_get listen_addr main listen_addr "127.0.0.1"
+    config_get listen_port main listen_port "5353"
+    config_get_bool require_nolog main require_nolog 1
+    config_get_bool require_nofilter main require_nofilter 1
+    config_getBool bootstrap_resolver main bootstrap_resolver 1
+    config_getBool ipv4_servers main ipv4_servers 1
+    config_getBool ipv6_servers main ipv6_servers 0
+    config_get log_level main log_level "2"
+}
+
+fetch_server_list() {
+    local tmp_file="/tmp/dnscrypt-servers-new.json"
+
+    if [ -f "$LOCK_FILE" ]; then
+        lock_age=$(($(date +%s) - $(stat -c %Y "$LOCK_FILE" 2>/dev/null || echo 0)))
+        [ "$lock_age" -lt 300 ] && return 1
+    fi
+
+    touch "$LOCK_FILE"
+
+    for url in \
+        "https://download.dnscrypt.info/dnscrypt-resolvers/json/public-resolvers.json" \
+        "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.json"; do
+
+        if curl -s --max-time 30 -L "$url" -o "$tmp_file" 2>/dev/null; then
+            if [ -s "$tmp_file" ] && grep -q '"$type": "SDNS"' "$tmp_file" 2>/dev/null; then
+                mv "$tmp_file" "$CACHE_FILE"
+                rm -f "$LOCK_FILE"
+                log "Server list updated from $url"
+                return 0
+            fi
+        fi
+    done
+
+    rm -f "$tmp_file" "$LOCK_FILE"
+    log "Failed to fetch server list"
+    return 1
+}
+
+create_config() {
+    mkdir -p "$CONF_DIR"
+
+    local resolver_names=$(grep -o '"name": "[^"]*"' "$CACHE_FILE" 2>/dev/null | cut -d'"' -f4 | head -20 | tr '\n' ',' | sed 's/,$//')
+
+    cat > "$CONF_FILE" << EOF
+listen_addresses = ['${listen_addr}:${listen_port}']
+log_level = ${log_level}
+require_nolog = ${require_nolog}
+require_nofilter = ${require_nofilter}
+ipv4_servers = ${ipv4_servers}
+ipv6_servers = ${ipv6_servers}
+bootstrap_resolver = ${bootstrap_resolver}
+EOF
+
+    if [ -n "$resolver_names" ]; then
+        cat >> "$CONF_FILE" << EOF
+static.forced_for = []
+static.replaced = []
+static.resolvers_list = ['$resolver_names']
+EOF
+    else
+        cat >> "$CONF_FILE" << 'EOF'
+static.forced_for = []
+static.replaced = []
+EOF
+    fi
+
+    chmod 644 "$CONF_FILE"
+    log "Config created: ${listen_addr}:${listen_port}"
+}
+
+reload_config() {
+    create_config
+
+    if pgrep -x dnscrypt-proxy >/dev/null 2>&1; then
+        killall -HUP dnscrypt-proxy 2>/dev/null
+        log "Config reloaded"
+    fi
+}
+
+start_service() {
+    load_config
+
+    [ "$enabled" = "0" ] && {
+        log "Disabled in config"
+        return 1
+    }
+
+    mkdir -p /var/log
+    mkdir -p /tmp/dnscrypt-proxy
+
+    if [ ! -f "$CACHE_FILE" ] || [ $(($(date +%s) - $(stat -c %Y "$CACHE_FILE" 2>/dev/null || echo 0))) -gt $UPDATE_INTERVAL ]; then
+        fetch_server_list
+    fi
+
+    create_config
+
+    [ -x "$PROG" ] || {
+        log "Binary not found at $PROG"
+        return 1
+    }
+
+    procd_open_instance
+    procd_set_param command $PROG
+    procd_append_param command -config "$CONF_FILE"
+    procd_append_param command -pidfile /var/run/dnscrypt-proxy.pid
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param respawn
+    procd_set_param respawn_threshold 3600
+    procd_close_instance
+
+    log "Started on ${listen_addr}:${listen_port}"
+}
+
+stop_service() {
+    log "Stopping..."
+    killall dnscrypt-proxy 2>/dev/null
+    rm -f /var/run/dnscrypt-proxy.pid
+}
+
+reload_service() {
+    reload_config
+}
+
+restart() {
+    stop_service
+    sleep 1
+    start_service
+}
+
+update_servers() {
+    fetch_server_list && reload_config
+}
+
+boot() {
+    load_config
+    [ "$enabled" = "1" ] && start_service
+}
+
+service_triggers() {
+    procd_add_config_trigger "config.change" "dnscrypt" /etc/init.d/dnscrypt-proxy reload
+}
