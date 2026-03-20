@@ -1,0 +1,15 @@
+#!/bin/sh
+# Configure dnscrypt-proxy as the default DNS resolver
+# Runs after first boot setup is complete
+
+if [ -f /etc/config/dhcp ]; then
+   uci -q del_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+    uci -q add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+    uci -q commit dhcp
+fi
+
+/etc/init.d/dnsmasq restart 2>/dev/null
+
+rm -f /etc/uci-defaults/luci-dns-dnscrypt
+
+exit 0
