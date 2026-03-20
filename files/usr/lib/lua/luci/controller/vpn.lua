@@ -1406,7 +1406,7 @@ function api_get_servers()
         {code = "us", name = "United States", flag = "🇺🇸"}
     }
     
-    local base_domain = "fanq.in"
+    local base_domain = luci.model.uci:get("vipin", "vpn", "base_domain") or "fanq.in"
     
     for _, c in ipairs(countries) do
         local server_domain = c.code .. "." .. base_domain
@@ -1421,8 +1421,13 @@ function api_get_servers()
         })
     end
     
+    local result = {
+        servers = servers,
+        base_domain = base_domain
+    }
+    
     http.prepare_content("application/json")
-    http.write(json.encode(servers))
+    http.write(json.encode(result))
 end
 
 function api_set_server()

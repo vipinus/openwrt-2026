@@ -1,8 +1,10 @@
 #!/bin/sh
 # VIPIN Server List - Fetch and cache server list
+# Robust JSON parsing using sed
 
 SERVERS_API="https://www.anyfq.com/api/v1/servers"
 CACHE_FILE="/tmp/vipin/servers.json"
+BASE_DOMAIN=$(uci get vipin.vpn.base_domain 2>/dev/null || echo "fanq.in")
 CACHE_TTL=3600
 
 mkdir -p /tmp/vipin
@@ -35,12 +37,24 @@ get_servers() {
 }
 
 list_countries() {
-    get_servers | grep -o '"name":"[^"]*"' | cut -d'"' -f4 | sort
+    local servers_json=$(get_servers)
+    local domains=$(echo "$servers_json" | sed -n 's/.*"domain":"\([^"]*\)".*/\1/gp' | sort)
+    if [ -z "$domains" ]; then
+        domains=$(uci get vipin.vpn.server 2>/dev/null)
+        [ -n "$domains" ] && echo "$domains"
+    else
+        echo "$domains"
+    fi
 }
 
 get_server_by_country() {
     local country="$1"
-    get_servers | grep -A1 "\"name\":\"$country\"" | grep "server" | cut -d'"' -f4
+    local servers_json=$(get_servers)
+    local host=$(echo "$servers_json" | sed -n 's/.*"domain":"'"$country"'".*"host":"\([^"]*\)".*/\1/p' | head -1)
+    if [ -z "$host" ]; then
+        host="${country}.${BASE_DOMAIN}"
+    fi
+    echo "$host"
 }
 
 case "$1" in

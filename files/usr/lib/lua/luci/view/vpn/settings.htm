@@ -169,7 +169,6 @@ local i18n = {
         servers_count = "个服务器"
     }
 }
-}
 
 local t = i18n[lang] or i18n["en"]
 %>
@@ -1084,8 +1083,9 @@ function refreshServerList() {
         }
         
         try {
-            var servers = JSON.parse(xhr.responseText);
-            if (Array.isArray(servers) && servers.length > 0) {
+            var resp = JSON.parse(xhr.responseText);
+            var servers = Array.isArray(resp) ? resp : (resp && resp.servers ? resp.servers : []);
+            if (servers && servers.length > 0) {
                 if (select) {
                     var currentVal = select.value;
                     select.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';

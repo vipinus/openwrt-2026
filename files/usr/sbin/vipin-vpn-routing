@@ -6,10 +6,6 @@ add_rules() {
     local conf_dir="/etc/vipin/country-ips"
     local domestic_file="$conf_dir/${country}.txt"
     
-    nft flush ruleset 2>/dev/null
-    
-    nft add table inet vipin_routing 2>/dev/null
-    
     nft delete table inet vipin_routing 2>/dev/null
     nft add table inet vipin_routing
     
@@ -56,7 +52,6 @@ add_rules() {
     
     cat > "$VPN_RULES_FILE" << 'EOF'
 #!/bin/sh
-nft flush ruleset 2>/dev/null
 nft delete table inet vipin_routing 2>/dev/null
 EOF
     
@@ -70,7 +65,6 @@ EOF
 }
 
 remove_rules() {
-    nft flush ruleset 2>/dev/null
     nft delete table inet vipin_routing 2>/dev/null
     
     ip rule del fwmark 0x1 table 100 2>/dev/null

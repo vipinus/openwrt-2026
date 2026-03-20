@@ -4,6 +4,7 @@ config vipin 'vpn'
     option server ''
     option username ''
     option country 'cn'
+    option base_domain 'fanq.in'
 
 config vipin 'auth'
     option enabled '1'
