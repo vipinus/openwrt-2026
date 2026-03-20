@@ -1,17 +1,16 @@
 #!/bin/sh
-# Install custom i18n locale files (.lmo) for LuCI VPN/DNSCrypt modules
-# Installs to /usr/share/luci/i18n/<module>.<lang>.lmo
+# Install custom i18n locale files (.po text files) for LuCI VPN/DNSCrypt modules
+# OpenWRT LuCI reads .po files directly if .lmo is not available
 
 DEST_DIR="/usr/share/luci/i18n"
 mkdir -p "$DEST_DIR"
 
 for locale_dir in /usr/share/luci/locale/*/; do
     lang=$(basename "$locale_dir")
-    
-    for lmo_file in "$locale_dir"/LC_MESSAGES/*.lmo 2>/dev/null; do
-        [ -f "$lmo_file" ] || continue
-        module=$(basename "$lmo_file" .lmo)
-        install -m 0644 "$lmo_file" "$DEST_DIR/${module}.${lang}.lmo"
+    for po_file in "$locale_dir"/LC_MESSAGES/*.po 2>/dev/null; do
+        [ -f "$po_file" ] || continue
+        module=$(basename "$po_file" .po)
+        install -m 0644 "$po_file" "$DEST_DIR/${module}.${lang}.po"
     done
 done
 
