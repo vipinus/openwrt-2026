@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "Nastrojki VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "Status VPN"
+
+msgid "Enabled"
+msgstr "Vkljucheno"
+
+msgid "Disabled"
+msgstr "Otkljucheno"
+
+msgid "Connecting"
+msgstr "Podklyuchenie"
+
+msgid "Connected"
+msgstr "Podklyuchen"
+
+msgid "Disconnected"
+msgstr "Otklyuchen"
+
+msgid "Split Tunneling"
+msgstr "Razdelennyj tunnel"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "Vnutrennie IP naprjamuju, inostrannye cherez VPN"
+
+msgid "VPN Server"
+msgstr "Server VPN"
+
+msgid "Connect"
+msgstr "Podklyuchit"
+
+msgid "Disconnect"
+msgstr "Otklyuchit"
+
+msgid "Reconnect"
+msgstr "Perepodklyuchit"
+
+msgid "Save"
+msgstr "Sokhranit"
+
+msgid "Cancel"
+msgstr "Otmena"
+
+msgid "Apply"
+msgstr "Primenit"
+
+msgid "Refresh"
+msgstr "Obnovit"
+
+msgid "Loading..."
+msgstr "Zagruzka..."
+
+msgid "Error"
+msgstr "Oshibka"
+
+msgid "Success"
+msgstr "Uspeshno"
+
+msgid "Connection failed"
+msgstr "Oshibka podklyucheniya"
+
+msgid "Connection established"
+msgstr "Podklyuchen ustanovleno"
+
+msgid "Please wait..."
+msgstr "Pozhalujsta, podozhdite..."
+
+msgid "Checking..."
+msgstr "Proverka..."
+
+msgid "No servers available"
+msgstr "Net dostupnykh serverov"
+
+msgid "Server List"
+msgstr "Spisok serverov"
+
+msgid "Latency"
+msgstr "Zaderzhka"
+
+msgid "Update IP Ranges"
+msgstr "Obnovit diapazony IP"
+
+msgid "Last updated"
+msgstr "Poslednee obnovlenie"
+
+msgid "Never"
+msgstr "Nikogda"
+
+msgid "Count"
+msgstr "Kolichestvo"
+
+msgid "Routes updated"
+msgstr "Marshruty obnovleny"
+
+msgid "routes"
+msgstr "marshrutov"
+
+msgid "Domestic Traffic"
+msgstr "Vnutrennij traffic"
+
+msgid "Foreign Traffic"
+msgstr "Inostrannyj traffic"
+
+msgid "VPN Exit"
+msgstr "Vykhod VPN"
+
+msgid "Update Now"
+msgstr "Obnovit seychas"
+
+msgid "Detecting location..."
+msgstr "Opredelenie mestopolozheniya..."
+
+msgid "Detected"
+msgstr "Opredeleno"
+
+msgid "Your IP"
+msgstr "Vash IP"
+
+msgid "Your Country"
+msgstr "Vasha strana"
+
+msgid "Auto-detect"
+msgstr "Avto-opredelenie"
+
+msgid "Location detected"
+msgstr "Mestopolozhenie opredeleno"
+
+msgid "Detection failed"
+msgstr "Opredelenie ne udalos"
+
+msgid "Real IP (before VPN)"
+msgstr "Realnyj IP (do VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "Mestopolozhenie"
+
+msgid "IP ranges loaded"
+msgstr "Diapazony IP zagruzheny"
+
+msgid "Retry"
+msgstr "Povtorit"
+
+msgid "Login"
+msgstr "Vxod"
+
+msgid "Logout"
+msgstr "Vykhod"
+
+msgid "Username"
+msgstr "Imja polzovatelja"
+
+msgid "Password"
+msgstr "Parol"
+
+msgid "VIP Account Login"
+msgstr "Vxod v VIP-akkaunt"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "Vvedite svoi dannye dlja podklyuchenija k VPN"
+
+msgid "Login & Connect"
+msgstr "Vxod i podklyuchenie"
+
+msgid "Logout & Disconnect"
+msgstr "Vykhod i otklyuchenie"
+
+msgid "Invalid username or password"
+msgstr "Nevernoe imja polzovatelja ili parol"
+
+msgid "Account has expired"
+msgstr "Srok dejstviya akkaunta istek"
+
+msgid "This account is not a VIP account"
+msgstr "Etot akkaunt ne javljaetsya VIP-akkauntom"
+
+msgid "Logged In"
+msgstr "Avtorizovan"
+
+msgid "Not Logged In"
+msgstr "Ne avtorizovan"
+
+msgid "Expired"
+msgstr "Prosrochen"
+
+msgid "Not VIP"
+msgstr "Ne VIP"
+
+msgid "Login Required"
+msgstr "Trebuetsya avtorizatsiya"
+
+msgid "User Status"
+msgstr "Status polzovatelja"
+
+msgid "VIP User"
+msgstr "Polzovatel VIP"
+
+msgid "Valid Until"
+msgstr "Dejstvitelno do"
+
+msgid "Auto-connect when VIP"
+msgstr "Avtopodklyuchenie dlja VIP"
+
+msgid "Checking status..."
+msgstr "Proverka statusa..."
+
+msgid "Renew Now"
+msgstr "Prodlit seychas"
+
+msgid "Select Server"
+msgstr "Vybrat server"
+
+msgid "Refresh Servers"
+msgstr "Obnovit spisok"
+
+msgid "Servers updated"
+msgstr "Servery obnovleny"
+
+msgid "servers"
+msgstr "serverov"
+

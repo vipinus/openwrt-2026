@@ -1,0 +1,63 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Encrypted DNS proxy supporting DNSCrypt and DNS-over-HTTPS protocols."
+msgstr "支持 DNSCrypt 和 DNS-over-HTTPS 协议的加密 DNS 代理。"
+
+msgid "Enabled"
+msgstr "启用"
+
+msgid "Listen Address"
+msgstr "监听地址"
+
+msgid "Listen Port"
+msgstr "监听端口"
+
+msgid "IPv4 Servers"
+msgstr "IPv4服务器"
+
+msgid "IPv6 Servers"
+msgstr "IPv6服务器"
+
+msgid "Log Level"
+msgstr "日志级别"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Update Now"
+msgstr "立即更新"
+
+msgid "Restart"
+msgstr "重启"
+
+msgid "Debug"
+msgstr "调试"
+
+msgid "Info"
+msgstr "信息"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid "Error"
+msgstr "错误"
+
+msgid "All DNS queries are encrypted and routed through secure resolvers."
+msgstr "所有DNS查询均已加密并通过安全解析器路由。"
+

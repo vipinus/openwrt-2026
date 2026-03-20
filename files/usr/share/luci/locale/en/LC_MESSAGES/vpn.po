@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "VPN Settings"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "VPN Status"
+
+msgid "Enabled"
+msgstr "Enabled"
+
+msgid "Disabled"
+msgstr "Disabled"
+
+msgid "Connecting"
+msgstr "Connecting"
+
+msgid "Connected"
+msgstr "Connected"
+
+msgid "Disconnected"
+msgstr "Disconnected"
+
+msgid "Split Tunneling"
+msgstr "Split Tunneling"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "Route domestic traffic directly, foreign traffic via VPN"
+
+msgid "VPN Server"
+msgstr "VPN Server"
+
+msgid "Connect"
+msgstr "Connect"
+
+msgid "Disconnect"
+msgstr "Disconnect"
+
+msgid "Reconnect"
+msgstr "Reconnect"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Apply"
+msgstr "Apply"
+
+msgid "Refresh"
+msgstr "Refresh"
+
+msgid "Loading..."
+msgstr "Loading..."
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Success"
+msgstr "Success"
+
+msgid "Connection failed"
+msgstr "Connection failed"
+
+msgid "Connection established"
+msgstr "Connection established"
+
+msgid "Please wait..."
+msgstr "Please wait..."
+
+msgid "Checking..."
+msgstr "Checking..."
+
+msgid "No servers available"
+msgstr "No servers available"
+
+msgid "Server List"
+msgstr "Server List"
+
+msgid "Latency"
+msgstr "Latency"
+
+msgid "Update IP Ranges"
+msgstr "Update IP Ranges"
+
+msgid "Last updated"
+msgstr "Last updated"
+
+msgid "Never"
+msgstr "Never"
+
+msgid "Count"
+msgstr "Count"
+
+msgid "Routes updated"
+msgstr "Routes updated"
+
+msgid "routes"
+msgstr "routes"
+
+msgid "Domestic Traffic"
+msgstr "Domestic Traffic"
+
+msgid "Foreign Traffic"
+msgstr "Foreign Traffic"
+
+msgid "VPN Exit"
+msgstr "VPN Exit"
+
+msgid "Update Now"
+msgstr "Update Now"
+
+msgid "Detecting location..."
+msgstr "Detecting location..."
+
+msgid "Detected"
+msgstr "Detected"
+
+msgid "Your IP"
+msgstr "Your IP"
+
+msgid "Your Country"
+msgstr "Your Country"
+
+msgid "Auto-detect"
+msgstr "Auto-detect"
+
+msgid "Location detected"
+msgstr "Location detected"
+
+msgid "Detection failed"
+msgstr "Detection failed"
+
+msgid "Real IP (before VPN)"
+msgstr "Real IP (before VPN)"
+
+msgid "VPN IP"
+msgstr "VPN IP"
+
+msgid "Location"
+msgstr "Location"
+
+msgid "IP ranges loaded"
+msgstr "IP ranges loaded"
+
+msgid "Retry"
+msgstr "Retry"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Logout"
+msgstr "Logout"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "VIP Account Login"
+msgstr "VIP Account Login"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "Enter your account credentials to connect VPN"
+
+msgid "Login & Connect"
+msgstr "Login & Connect"
+
+msgid "Logout & Disconnect"
+msgstr "Logout & Disconnect"
+
+msgid "Invalid username or password"
+msgstr "Invalid username or password"
+
+msgid "Account has expired"
+msgstr "Account has expired"
+
+msgid "This account is not a VIP account"
+msgstr "This account is not a VIP account"
+
+msgid "Logged In"
+msgstr "Logged In"
+
+msgid "Not Logged In"
+msgstr "Not Logged In"
+
+msgid "Expired"
+msgstr "Expired"
+
+msgid "Not VIP"
+msgstr "Not VIP"
+
+msgid "Login Required"
+msgstr "Login Required"
+
+msgid "User Status"
+msgstr "User Status"
+
+msgid "VIP User"
+msgstr "VIP User"
+
+msgid "Valid Until"
+msgstr "Valid Until"
+
+msgid "Auto-connect when VIP"
+msgstr "Auto-connect when VIP"
+
+msgid "Checking status..."
+msgstr "Checking status..."
+
+msgid "Renew Now"
+msgstr "Renew Now"
+
+msgid "Select Server"
+msgstr "Select Server"
+
+msgid "Refresh Servers"
+msgstr "Refresh Servers"
+
+msgid "Servers updated"
+msgstr "Servers updated"
+
+msgid "servers"
+msgstr "servers"
+

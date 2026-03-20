@@ -1,0 +1,63 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Encrypted DNS proxy supporting DNSCrypt and DNS-over-HTTPS protocols."
+msgstr "وكيل DNS مشفر يدعم بروتوكولات DNSCrypt و DNS-over-HTTPS."
+
+msgid "Enabled"
+msgstr "مُفعَّل"
+
+msgid "Listen Address"
+msgstr "عنوان الاستماع"
+
+msgid "Listen Port"
+msgstr "منفذ الاستماع"
+
+msgid "IPv4 Servers"
+msgstr "خوادم IPv4"
+
+msgid "IPv6 Servers"
+msgstr "خوادم IPv6"
+
+msgid "Log Level"
+msgstr "مستوى السجل"
+
+msgid "Actions"
+msgstr "الاجراءات"
+
+msgid "Update Now"
+msgstr "تحديث الآن"
+
+msgid "Restart"
+msgstr "إعادة التشغيل"
+
+msgid "Debug"
+msgstr "تصحيح"
+
+msgid "Info"
+msgstr "معلومات"
+
+msgid "Warning"
+msgstr "تحذير"
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "All DNS queries are encrypted and routed through secure resolvers."
+msgstr "يتم تشفير جميع استعلامات DNS وتوجيهها عبر محللات آمنة."
+

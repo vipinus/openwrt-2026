@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "VPN सेटिंग्स"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "VPN स्थिति"
+
+msgid "Enabled"
+msgstr "सक्षम"
+
+msgid "Disabled"
+msgstr "अक्षम"
+
+msgid "Connecting"
+msgstr "कनेक्ट हो रहा है"
+
+msgid "Connected"
+msgstr "कनेक्टेड"
+
+msgid "Disconnected"
+msgstr "डिस्कनेक्टेड"
+
+msgid "Split Tunneling"
+msgstr "स्प्लिट टनलिंग"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "घरेलू IP सीधा, विदेशी IP VPN से"
+
+msgid "VPN Server"
+msgstr "VPN सर्वर"
+
+msgid "Connect"
+msgstr "कनेक्ट करें"
+
+msgid "Disconnect"
+msgstr "डिस्कनेक्ट करें"
+
+msgid "Reconnect"
+msgstr "पुनः कनेक्ट करें"
+
+msgid "Save"
+msgstr "सहेजें"
+
+msgid "Cancel"
+msgstr "रद्द करें"
+
+msgid "Apply"
+msgstr "लागू करें"
+
+msgid "Refresh"
+msgstr "रिफ्रेश करें"
+
+msgid "Loading..."
+msgstr "लोड हो रहा है..."
+
+msgid "Error"
+msgstr "त्रुटि"
+
+msgid "Success"
+msgstr "सफल"
+
+msgid "Connection failed"
+msgstr "कनेक्शन विफल"
+
+msgid "Connection established"
+msgstr "कनेक्शन स्थापित"
+
+msgid "Please wait..."
+msgstr "कृपया प्रतीक्षा करें..."
+
+msgid "Checking..."
+msgstr "जांच हो रही है..."
+
+msgid "No servers available"
+msgstr "कोई सर्वर उपलब्ध नहीं"
+
+msgid "Server List"
+msgstr "सर्वर सूची"
+
+msgid "Latency"
+msgstr "विलंब"
+
+msgid "Update IP Ranges"
+msgstr "IP रेंज अपडेट करें"
+
+msgid "Last updated"
+msgstr "अंतिम अपडेट"
+
+msgid "Never"
+msgstr "कभी नहीं"
+
+msgid "Count"
+msgstr "संख्या"
+
+msgid "Routes updated"
+msgstr "मार्ग अपडेट किए गए"
+
+msgid "routes"
+msgstr "मार्ग"
+
+msgid "Domestic Traffic"
+msgstr "घरेलू ट्रैफिक"
+
+msgid "Foreign Traffic"
+msgstr "विदेशी ट्रैफिक"
+
+msgid "VPN Exit"
+msgstr "VPN एग्जिट"
+
+msgid "Update Now"
+msgstr "अभी अपडेट करें"
+
+msgid "Detecting location..."
+msgstr "स्थान पता लगा रहा है..."
+
+msgid "Detected"
+msgstr "पता चला"
+
+msgid "Your IP"
+msgstr "आपका IP"
+
+msgid "Your Country"
+msgstr "आपका देश"
+
+msgid "Auto-detect"
+msgstr "ऑटो-डिटेक्ट"
+
+msgid "Location detected"
+msgstr "स्थान पता चला"
+
+msgid "Detection failed"
+msgstr "पता लगाना विफल"
+
+msgid "Real IP (before VPN)"
+msgstr "वास्तविक IP (VPN से पहले)"
+
+msgid "VPN IP"
+msgstr "VPN IP"
+
+msgid "Location"
+msgstr "स्थान"
+
+msgid "IP ranges loaded"
+msgstr "IP रेंज लोड हुई"
+
+msgid "Retry"
+msgstr "पुनः प्रयास करें"
+
+msgid "Login"
+msgstr "लॉगिन करें"
+
+msgid "Logout"
+msgstr "लॉगआउट करें"
+
+msgid "Username"
+msgstr "उपयोगकर्ता नाम"
+
+msgid "Password"
+msgstr "पासवर्ड"
+
+msgid "VIP Account Login"
+msgstr "VIP खाता लॉगिन"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "VPN से कनेक्ट करने के लिए अपना क्रेडेंशियल दर्ज करें"
+
+msgid "Login & Connect"
+msgstr "लॉगिन और कनेक्ट करें"
+
+msgid "Logout & Disconnect"
+msgstr "लॉगआउट और डिस्कनेक्ट करें"
+
+msgid "Invalid username or password"
+msgstr "अमान्य उपयोगकर्ता नाम या पासवर्ड"
+
+msgid "Account has expired"
+msgstr "खाते की अवधि समाप्त"
+
+msgid "This account is not a VIP account"
+msgstr "यह खाता VIP खाता नहीं है"
+
+msgid "Logged In"
+msgstr "लॉगिन है"
+
+msgid "Not Logged In"
+msgstr "लॉगआउट है"
+
+msgid "Expired"
+msgstr "समाप्त"
+
+msgid "Not VIP"
+msgstr "VIP नहीं"
+
+msgid "Login Required"
+msgstr "लॉगिन आवश्यक"
+
+msgid "User Status"
+msgstr "उपयोगकर्ता स्थिति"
+
+msgid "VIP User"
+msgstr "VIP उपयोगकर्ता"
+
+msgid "Valid Until"
+msgstr "तक वैध"
+
+msgid "Auto-connect when VIP"
+msgstr "VIP के लिए ऑटो कनेक्ट"
+
+msgid "Checking status..."
+msgstr "स्थिति जांच रहे हैं..."
+
+msgid "Renew Now"
+msgstr "अभी नवीनीकरण करें"
+
+msgid "Select Server"
+msgstr "सर्वर चुनें"
+
+msgid "Refresh Servers"
+msgstr "सूची रिफ्रेश करें"
+
+msgid "Servers updated"
+msgstr "सर्वर अपडेट किए गए"
+
+msgid "servers"
+msgstr "सर्वर"
+

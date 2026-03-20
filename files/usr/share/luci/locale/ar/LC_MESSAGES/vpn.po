@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "إعدادات VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "حالة VPN"
+
+msgid "Enabled"
+msgstr "مُفعَّل"
+
+msgid "Disabled"
+msgstr "مُعطَّل"
+
+msgid "Connecting"
+msgstr "جاري الاتصال"
+
+msgid "Connected"
+msgstr "متصل"
+
+msgid "Disconnected"
+msgstr "غير متصل"
+
+msgid "Split Tunneling"
+msgstr "النفق المنقسم"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "حركة المرور المحلية مباشرة، حركة المرور الأجنبية عبر VPN"
+
+msgid "VPN Server"
+msgstr "خادم VPN"
+
+msgid "Connect"
+msgstr "اتصال"
+
+msgid "Disconnect"
+msgstr "قطع الاتصال"
+
+msgid "Reconnect"
+msgstr "إعادة الاتصال"
+
+msgid "Save"
+msgstr "حفظ"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Apply"
+msgstr "تطبيق"
+
+msgid "Refresh"
+msgstr "تحديث"
+
+msgid "Loading..."
+msgstr "جاري التحميل..."
+
+msgid "Error"
+msgstr "خطأ"
+
+msgid "Success"
+msgstr "نجاح"
+
+msgid "Connection failed"
+msgstr "فشل الاتصال"
+
+msgid "Connection established"
+msgstr "تم إنشاء الاتصال"
+
+msgid "Please wait..."
+msgstr "يرجى الانتظار..."
+
+msgid "Checking..."
+msgstr "جاري التحقق..."
+
+msgid "No servers available"
+msgstr "لا توجد خوادم متاحة"
+
+msgid "Server List"
+msgstr "قائمة الخوادم"
+
+msgid "Latency"
+msgstr "زمن الاستجابة"
+
+msgid "Update IP Ranges"
+msgstr "تحديث نطاقات IP"
+
+msgid "Last updated"
+msgstr "آخر تحديث"
+
+msgid "Never"
+msgstr "أبداً"
+
+msgid "Count"
+msgstr "العدد"
+
+msgid "Routes updated"
+msgstr "تم تحديث المسارات"
+
+msgid "routes"
+msgstr "مسارات"
+
+msgid "Domestic Traffic"
+msgstr "حركة المرور المحلية"
+
+msgid "Foreign Traffic"
+msgstr "حركة المرور الأجنبية"
+
+msgid "VPN Exit"
+msgstr "مخرج VPN"
+
+msgid "Update Now"
+msgstr "تحديث الآن"
+
+msgid "Detecting location..."
+msgstr "جاري تحديد الموقع..."
+
+msgid "Detected"
+msgstr "تم التحديد"
+
+msgid "Your IP"
+msgstr "عنوان IP الخاص بك"
+
+msgid "Your Country"
+msgstr "دولتك"
+
+msgid "Auto-detect"
+msgstr "تحديد تلقائي"
+
+msgid "Location detected"
+msgstr "تم تحديد الموقع"
+
+msgid "Detection failed"
+msgstr "فشل التحديد"
+
+msgid "Real IP (before VPN)"
+msgstr "عنوان IP الحقيقي (قبل VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "الموقع"
+
+msgid "IP ranges loaded"
+msgstr "تم تحميل نطاقات IP"
+
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+msgid "Logout"
+msgstr "تسجيل الخروج"
+
+msgid "Username"
+msgstr "اسم المستخدم"
+
+msgid "Password"
+msgstr "كلمة المرور"
+
+msgid "VIP Account Login"
+msgstr "تسجيل دخول حساب VIP"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "أدخل بيانات اعتماد حسابك للاتصال بـ VPN"
+
+msgid "Login & Connect"
+msgstr "تسجيل الدخول والاتصال"
+
+msgid "Logout & Disconnect"
+msgstr "تسجيل الخروج وقطع الاتصال"
+
+msgid "Invalid username or password"
+msgstr "اسم المستخدم أو كلمة المرور غير صحيحة"
+
+msgid "Account has expired"
+msgstr "انتهت صلاحية الحساب"
+
+msgid "This account is not a VIP account"
+msgstr "هذا الحساب ليس حساب VIP"
+
+msgid "Logged In"
+msgstr "مسجل الدخول"
+
+msgid "Not Logged In"
+msgstr "غير مسجل"
+
+msgid "Expired"
+msgstr "منتهي الصلاحية"
+
+msgid "Not VIP"
+msgstr "ليس VIP"
+
+msgid "Login Required"
+msgstr "تسجيل الدخول مطلوب"
+
+msgid "User Status"
+msgstr "حالة المستخدم"
+
+msgid "VIP User"
+msgstr "مستخدم VIP"
+
+msgid "Valid Until"
+msgstr "صالح حتى"
+
+msgid "Auto-connect when VIP"
+msgstr "اتصال تلقائي لـ VIP"
+
+msgid "Checking status..."
+msgstr "جاري التحقق من الحالة..."
+
+msgid "Renew Now"
+msgstr "تجديد الآن"
+
+msgid "Select Server"
+msgstr "اختر خادماً"
+
+msgid "Refresh Servers"
+msgstr "تحديث القائمة"
+
+msgid "Servers updated"
+msgstr "تم تحديث الخوادم"
+
+msgid "servers"
+msgstr "خوادم"
+

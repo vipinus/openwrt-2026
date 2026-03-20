@@ -1,0 +1,63 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Encrypted DNS proxy supporting DNSCrypt and DNS-over-HTTPS protocols."
+msgstr "Proxy DNS criptografado suportando protocolos DNSCrypt e DNS-over-HTTPS."
+
+msgid "Enabled"
+msgstr "Ativado"
+
+msgid "Listen Address"
+msgstr "Endereco de escuta"
+
+msgid "Listen Port"
+msgstr "Porta de escuta"
+
+msgid "IPv4 Servers"
+msgstr "Servidores IPv4"
+
+msgid "IPv6 Servers"
+msgstr "Servidores IPv6"
+
+msgid "Log Level"
+msgstr "Nivel de log"
+
+msgid "Actions"
+msgstr "Acoes"
+
+msgid "Update Now"
+msgstr "Atualizar agora"
+
+msgid "Restart"
+msgstr "Reiniciar"
+
+msgid "Debug"
+msgstr "Depurar"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Warning"
+msgstr "Aviso"
+
+msgid "Error"
+msgstr "Erro"
+
+msgid "All DNS queries are encrypted and routed through secure resolvers."
+msgstr "Todas as consultas DNS sao criptografadas e roteadas por resolutores seguros."
+

@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "تنظیمات VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "وضعیت VPN"
+
+msgid "Enabled"
+msgstr "فعال"
+
+msgid "Disabled"
+msgstr "غیرفعال"
+
+msgid "Connecting"
+msgstr "در حال اتصال"
+
+msgid "Connected"
+msgstr "متصل"
+
+msgid "Disconnected"
+msgstr "قطع"
+
+msgid "Split Tunneling"
+msgstr "تونل تقسیم شده"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "ترافیک داخلی مستقیم، ترافیک خارجی از طریق VPN"
+
+msgid "VPN Server"
+msgstr "سرور VPN"
+
+msgid "Connect"
+msgstr "اتصال"
+
+msgid "Disconnect"
+msgstr "قطع اتصال"
+
+msgid "Reconnect"
+msgstr "اتصال مجدد"
+
+msgid "Save"
+msgstr "ذخیره"
+
+msgid "Cancel"
+msgstr "انصراف"
+
+msgid "Apply"
+msgstr "اعمال"
+
+msgid "Refresh"
+msgstr "بروزرسانی"
+
+msgid "Loading..."
+msgstr "در حال بارگذاری..."
+
+msgid "Error"
+msgstr "خطا"
+
+msgid "Success"
+msgstr "موفق"
+
+msgid "Connection failed"
+msgstr "اتصال ناموفق"
+
+msgid "Connection established"
+msgstr "اتصال برقرار شد"
+
+msgid "Please wait..."
+msgstr "لطفاً صبر کنید..."
+
+msgid "Checking..."
+msgstr "در حال بررسی..."
+
+msgid "No servers available"
+msgstr "سروری موجود نیست"
+
+msgid "Server List"
+msgstr "لیست سرورها"
+
+msgid "Latency"
+msgstr "تأخیر"
+
+msgid "Update IP Ranges"
+msgstr "بروزرسانی محدوده‌های IP"
+
+msgid "Last updated"
+msgstr "آخرین بروزرسانی"
+
+msgid "Never"
+msgstr "هیچ‌وقت"
+
+msgid "Count"
+msgstr "تعداد"
+
+msgid "Routes updated"
+msgstr "مسیرها بروزرسانی شد"
+
+msgid "routes"
+msgstr "مسیر"
+
+msgid "Domestic Traffic"
+msgstr "ترافیک داخلی"
+
+msgid "Foreign Traffic"
+msgstr "ترافیک خارجی"
+
+msgid "VPN Exit"
+msgstr "خروجی VPN"
+
+msgid "Update Now"
+msgstr "همین الان بروزرسانی کنید"
+
+msgid "Detecting location..."
+msgstr "در حال تشخیص موقعیت..."
+
+msgid "Detected"
+msgstr "تشخیص داده شد"
+
+msgid "Your IP"
+msgstr "IP شما"
+
+msgid "Your Country"
+msgstr "کشور شما"
+
+msgid "Auto-detect"
+msgstr "تشخیص خودکار"
+
+msgid "Location detected"
+msgstr "موقعیت تشخیص داده شد"
+
+msgid "Detection failed"
+msgstr "تشخیص ناموفق"
+
+msgid "Real IP (before VPN)"
+msgstr "IP واقعی (قبل از VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "موقعیت"
+
+msgid "IP ranges loaded"
+msgstr "محدوده‌های IP بارگذاری شد"
+
+msgid "Retry"
+msgstr "تلاش مجدد"
+
+msgid "Login"
+msgstr "ورود"
+
+msgid "Logout"
+msgstr "خروج"
+
+msgid "Username"
+msgstr "نام کاربری"
+
+msgid "Password"
+msgstr "رمز عبور"
+
+msgid "VIP Account Login"
+msgstr "ورود به حساب VIP"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "اطلاعات حساب خود را برای اتصال VPN وارد کنید"
+
+msgid "Login & Connect"
+msgstr "ورود و اتصال"
+
+msgid "Logout & Disconnect"
+msgstr "خروج و قطع اتصال"
+
+msgid "Invalid username or password"
+msgstr "نام کاربری یا رمز عبور اشتباه"
+
+msgid "Account has expired"
+msgstr "حساب منقضی شده"
+
+msgid "This account is not a VIP account"
+msgstr "این حساب VIP نیست"
+
+msgid "Logged In"
+msgstr "وارد شده"
+
+msgid "Not Logged In"
+msgstr "خارج شده"
+
+msgid "Expired"
+msgstr "منقضی شده"
+
+msgid "Not VIP"
+msgstr "VIP نیست"
+
+msgid "Login Required"
+msgstr "ورود لازم است"
+
+msgid "User Status"
+msgstr "وضعیت کاربر"
+
+msgid "VIP User"
+msgstr "کاربر VIP"
+
+msgid "Valid Until"
+msgstr "معتبر تا"
+
+msgid "Auto-connect when VIP"
+msgstr "اتصال خودکار برای VIP"
+
+msgid "Checking status..."
+msgstr "در حال بررسی وضعیت..."
+
+msgid "Renew Now"
+msgstr "همین الان تمدید کنید"
+
+msgid "Select Server"
+msgstr "انتخاب سرور"
+
+msgid "Refresh Servers"
+msgstr "بروزرسانی لیست"
+
+msgid "Servers updated"
+msgstr "سرورها بروزرسانی شد"
+
+msgid "servers"
+msgstr "سرور"
+

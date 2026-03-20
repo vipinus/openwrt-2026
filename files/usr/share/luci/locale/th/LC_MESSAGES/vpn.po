@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "การตั้งค่า VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "สถานะ VPN"
+
+msgid "Enabled"
+msgstr "เปิดใช้งาน"
+
+msgid "Disabled"
+msgstr "ปิดใช้งาน"
+
+msgid "Connecting"
+msgstr "กำลังเชื่อมต่อ"
+
+msgid "Connected"
+msgstr "เชื่อมต่อแล้ว"
+
+msgid "Disconnected"
+msgstr "ยังไม่เชื่อมต่อ"
+
+msgid "Split Tunneling"
+msgstr "แยกอุโมงค์"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "สัญญาณอินเทอร์เน็ตในประเทศตรง ต่างประเทศผ่าน VPN"
+
+msgid "VPN Server"
+msgstr "เซิร์ฟเวอร์ VPN"
+
+msgid "Connect"
+msgstr "เชื่อมต่อ"
+
+msgid "Disconnect"
+msgstr "ตัดการเชื่อมต่อ"
+
+msgid "Reconnect"
+msgstr "เชื่อมต่อใหม่"
+
+msgid "Save"
+msgstr "บันทึก"
+
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+msgid "Apply"
+msgstr "นำไปใช้"
+
+msgid "Refresh"
+msgstr "รีเฟรช"
+
+msgid "Loading..."
+msgstr "กำลังโหลด..."
+
+msgid "Error"
+msgstr "ข้อผิดพลาด"
+
+msgid "Success"
+msgstr "สำเร็จ"
+
+msgid "Connection failed"
+msgstr "เชื่อมต่อไม่สำเร็จ"
+
+msgid "Connection established"
+msgstr "เชื่อมต่อสำเร็จ"
+
+msgid "Please wait..."
+msgstr "กรุณารอสักครู่..."
+
+msgid "Checking..."
+msgstr "กำลังตรวจสอบ..."
+
+msgid "No servers available"
+msgstr "ไม่มีเซิร์ฟเวอร์ที่ใช้ได้"
+
+msgid "Server List"
+msgstr "รายการเซิร์ฟเวอร์"
+
+msgid "Latency"
+msgstr "เวลาแฝง"
+
+msgid "Update IP Ranges"
+msgstr "อัปเดตช่วง IP"
+
+msgid "Last updated"
+msgstr "อัปเดตล่าสุด"
+
+msgid "Never"
+msgstr "ไม่เคย"
+
+msgid "Count"
+msgstr "จำนวน"
+
+msgid "Routes updated"
+msgstr "เส้นทางอัปเดตแล้ว"
+
+msgid "routes"
+msgstr "เส้นทาง"
+
+msgid "Domestic Traffic"
+msgstr "สัญญาณในประเทศ"
+
+msgid "Foreign Traffic"
+msgstr "สัญญาณต่างประเทศ"
+
+msgid "VPN Exit"
+msgstr "ทางออก VPN"
+
+msgid "Update Now"
+msgstr "อัปเดตเดี๋ยวนี้"
+
+msgid "Detecting location..."
+msgstr "กำลังตรวจจับตำแหน่ง..."
+
+msgid "Detected"
+msgstr "ตรวจพบแล้ว"
+
+msgid "Your IP"
+msgstr "IP ของคุณ"
+
+msgid "Your Country"
+msgstr "ประเทศของคุณ"
+
+msgid "Auto-detect"
+msgstr "ตรวจจับอัตโนมัติ"
+
+msgid "Location detected"
+msgstr "ตำแหน่งถูกตรวจพบ"
+
+msgid "Detection failed"
+msgstr "การตรวจจับล้มเหลว"
+
+msgid "Real IP (before VPN)"
+msgstr "IP จริง (ก่อน VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "ตำแหน่ง"
+
+msgid "IP ranges loaded"
+msgstr "ช่วง IP โหลดแล้ว"
+
+msgid "Retry"
+msgstr "ลองอีกครั้ง"
+
+msgid "Login"
+msgstr "เข้าสู่ระบบ"
+
+msgid "Logout"
+msgstr "ออกจากระบบ"
+
+msgid "Username"
+msgstr "ชื่อผู้ใช้"
+
+msgid "Password"
+msgstr "รหัสผ่าน"
+
+msgid "VIP Account Login"
+msgstr "เข้าสู่ระบบบัญชี VIP"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "ป้อนข้อมูลประจำตัวเพื่อเชื่อมต่อ VPN"
+
+msgid "Login & Connect"
+msgstr "เข้าสู่ระบบและเชื่อมต่อ"
+
+msgid "Logout & Disconnect"
+msgstr "ออกจากระบบและตัดการเชื่อมต่อ"
+
+msgid "Invalid username or password"
+msgstr "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
+
+msgid "Account has expired"
+msgstr "บัญชีหมดอายุ"
+
+msgid "This account is not a VIP account"
+msgstr "บัญชีนี้ไม่ใช่บัญชี VIP"
+
+msgid "Logged In"
+msgstr "เข้าสู่ระบบแล้ว"
+
+msgid "Not Logged In"
+msgstr "ยังไม่เข้าสู่ระบบ"
+
+msgid "Expired"
+msgstr "หมดอายุ"
+
+msgid "Not VIP"
+msgstr "ไม่ใช่ VIP"
+
+msgid "Login Required"
+msgstr "ต้องเข้าสู่ระบบ"
+
+msgid "User Status"
+msgstr "สถานะผู้ใช้"
+
+msgid "VIP User"
+msgstr "ผู้ใช้ VIP"
+
+msgid "Valid Until"
+msgstr "ใช้ได้ถึง"
+
+msgid "Auto-connect when VIP"
+msgstr "เชื่อมต่ออัตโนมัติสำหรับ VIP"
+
+msgid "Checking status..."
+msgstr "กำลังตรวจสอบสถานะ..."
+
+msgid "Renew Now"
+msgstr "ต่ออายุเดี๋ยวนี้"
+
+msgid "Select Server"
+msgstr "เลือกเซิร์ฟเวอร์"
+
+msgid "Refresh Servers"
+msgstr "รีเฟรชรายการ"
+
+msgid "Servers updated"
+msgstr "เซิร์ฟเวอร์อัปเดตแล้ว"
+
+msgid "servers"
+msgstr "เซิร์ฟเวอร์"
+

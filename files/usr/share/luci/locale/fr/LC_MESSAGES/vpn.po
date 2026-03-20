@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "Parametres VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "Statut VPN"
+
+msgid "Enabled"
+msgstr "Active"
+
+msgid "Disabled"
+msgstr "Desactive"
+
+msgid "Connecting"
+msgstr "Connexion en cours"
+
+msgid "Connected"
+msgstr "Connecte"
+
+msgid "Disconnected"
+msgstr "Deconnecte"
+
+msgid "Split Tunneling"
+msgstr "Split Tunneling"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "Traffic domestique direct, traffic etranger via VPN"
+
+msgid "VPN Server"
+msgstr "Serveur VPN"
+
+msgid "Connect"
+msgstr "Connecter"
+
+msgid "Disconnect"
+msgstr "Deconnecter"
+
+msgid "Reconnect"
+msgstr "Reconnecter"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Refresh"
+msgstr "Actualiser"
+
+msgid "Loading..."
+msgstr "Chargement..."
+
+msgid "Error"
+msgstr "Erreur"
+
+msgid "Success"
+msgstr "Succes"
+
+msgid "Connection failed"
+msgstr "Connexion echouee"
+
+msgid "Connection established"
+msgstr "Connexion etablie"
+
+msgid "Please wait..."
+msgstr "Veuillez patienter..."
+
+msgid "Checking..."
+msgstr "Verification..."
+
+msgid "No servers available"
+msgstr "Aucun serveur disponible"
+
+msgid "Server List"
+msgstr "Liste des serveurs"
+
+msgid "Latency"
+msgstr "Latence"
+
+msgid "Update IP Ranges"
+msgstr "Mettre a jour les plages IP"
+
+msgid "Last updated"
+msgstr "Derniere mise a jour"
+
+msgid "Never"
+msgstr "Jamais"
+
+msgid "Count"
+msgstr "Nombre"
+
+msgid "Routes updated"
+msgstr "Routes mises a jour"
+
+msgid "routes"
+msgstr "routes"
+
+msgid "Domestic Traffic"
+msgstr "Traffic domestique"
+
+msgid "Foreign Traffic"
+msgstr "Traffic etranger"
+
+msgid "VPN Exit"
+msgstr "Sortie VPN"
+
+msgid "Update Now"
+msgstr "Mettre a jour maintenant"
+
+msgid "Detecting location..."
+msgstr "Detection de l'emplacement..."
+
+msgid "Detected"
+msgstr "Detecte"
+
+msgid "Your IP"
+msgstr "Votre IP"
+
+msgid "Your Country"
+msgstr "Votre pays"
+
+msgid "Auto-detect"
+msgstr "Detection automatique"
+
+msgid "Location detected"
+msgstr "Emplacement detecte"
+
+msgid "Detection failed"
+msgstr "Echec de la detection"
+
+msgid "Real IP (before VPN)"
+msgstr "IP reelle (avant VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "Emplacement"
+
+msgid "IP ranges loaded"
+msgstr "Plages IP chargees"
+
+msgid "Retry"
+msgstr "Reessayer"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Logout"
+msgstr "Deconnexion"
+
+msgid "Username"
+msgstr "Nom d'utilisateur"
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "VIP Account Login"
+msgstr "Connexion au compte VIP"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "Entrez vos identifiants pour vous connecter au VPN"
+
+msgid "Login & Connect"
+msgstr "Connexion et connexion VPN"
+
+msgid "Logout & Disconnect"
+msgstr "Deconnexion et arret VPN"
+
+msgid "Invalid username or password"
+msgstr "Nom d'utilisateur ou mot de passe invalide"
+
+msgid "Account has expired"
+msgstr "Compte expire"
+
+msgid "This account is not a VIP account"
+msgstr "Ce compte n'est pas un compte VIP"
+
+msgid "Logged In"
+msgstr "Connecte"
+
+msgid "Not Logged In"
+msgstr "Deconnecte"
+
+msgid "Expired"
+msgstr "Expire"
+
+msgid "Not VIP"
+msgstr "Pas VIP"
+
+msgid "Login Required"
+msgstr "Connexion requise"
+
+msgid "User Status"
+msgstr "Statut utilisateur"
+
+msgid "VIP User"
+msgstr "Utilisateur VIP"
+
+msgid "Valid Until"
+msgstr "Valide jusqu'au"
+
+msgid "Auto-connect when VIP"
+msgstr "Connexion automatique pour VIP"
+
+msgid "Checking status..."
+msgstr "Verification du statut..."
+
+msgid "Renew Now"
+msgstr "Renouveler maintenant"
+
+msgid "Select Server"
+msgstr "Selectionner un serveur"
+
+msgid "Refresh Servers"
+msgstr "Actualiser la liste"
+
+msgid "Servers updated"
+msgstr "Serveurs mis a jour"
+
+msgid "servers"
+msgstr "serveurs"
+

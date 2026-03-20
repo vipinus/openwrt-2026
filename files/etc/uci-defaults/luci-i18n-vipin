@@ -1,0 +1,20 @@
+#!/bin/sh
+# Install custom i18n locale files (.lmo) for LuCI VPN/DNSCrypt modules
+# Installs to /usr/share/luci/i18n/<module>.<lang>.lmo
+
+DEST_DIR="/usr/share/luci/i18n"
+mkdir -p "$DEST_DIR"
+
+for locale_dir in /usr/share/luci/locale/*/; do
+    lang=$(basename "$locale_dir")
+    
+    for lmo_file in "$locale_dir"/LC_MESSAGES/*.lmo 2>/dev/null; do
+        [ -f "$lmo_file" ] || continue
+        module=$(basename "$lmo_file" .lmo)
+        install -m 0644 "$lmo_file" "$DEST_DIR/${module}.${lang}.lmo"
+    done
+done
+
+rm -f /etc/uci-defaults/luci-i18n-vipin
+
+exit 0

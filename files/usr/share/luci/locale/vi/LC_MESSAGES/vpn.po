@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "Cai dat VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "Trang thai VPN"
+
+msgid "Enabled"
+msgstr "Da bat"
+
+msgid "Disabled"
+msgstr "Da tat"
+
+msgid "Connecting"
+msgstr "Dang ket noi"
+
+msgid "Connected"
+msgstr "Da ket noi"
+
+msgid "Disconnected"
+msgstr "Da ngat ket noi"
+
+msgid "Split Tunneling"
+msgstr "Chia Tunnel"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "Mang noi dia chi noi bo truc tiep, mang nuoc ngoai qua VPN"
+
+msgid "VPN Server"
+msgstr "May chu VPN"
+
+msgid "Connect"
+msgstr "Ket noi"
+
+msgid "Disconnect"
+msgstr "Ngat ket noi"
+
+msgid "Reconnect"
+msgstr "Ket noi lai"
+
+msgid "Save"
+msgstr "Luu"
+
+msgid "Cancel"
+msgstr "Huy"
+
+msgid "Apply"
+msgstr "Ap dung"
+
+msgid "Refresh"
+msgstr "Lam moi"
+
+msgid "Loading..."
+msgstr "Dang tai..."
+
+msgid "Error"
+msgstr "Loi"
+
+msgid "Success"
+msgstr "Thanh cong"
+
+msgid "Connection failed"
+msgstr "Ket noi that bai"
+
+msgid "Connection established"
+msgstr "Da thiet lap ket noi"
+
+msgid "Please wait..."
+msgstr "Vui long cho..."
+
+msgid "Checking..."
+msgstr "Dang kiem tra..."
+
+msgid "No servers available"
+msgstr "Khong co may chu nao"
+
+msgid "Server List"
+msgstr "Danh sach may chu"
+
+msgid "Latency"
+msgstr "Do tre"
+
+msgid "Update IP Ranges"
+msgstr "Cap nhat pham vi IP"
+
+msgid "Last updated"
+msgstr "Cap nhat lan cuoi"
+
+msgid "Never"
+msgstr "Chua bao gio"
+
+msgid "Count"
+msgstr "So luong"
+
+msgid "Routes updated"
+msgstr "Tuyen duong da cap nhat"
+
+msgid "routes"
+msgstr "tuyen duong"
+
+msgid "Domestic Traffic"
+msgstr "Luu luong noi dia"
+
+msgid "Foreign Traffic"
+msgstr "Luu luong nuoc ngoai"
+
+msgid "VPN Exit"
+msgstr "Diem thoat VPN"
+
+msgid "Update Now"
+msgstr "Cap nhat ngay"
+
+msgid "Detecting location..."
+msgstr "Dang phat hien vi tri..."
+
+msgid "Detected"
+msgstr "Da phat hien"
+
+msgid "Your IP"
+msgstr "IP cua ban"
+
+msgid "Your Country"
+msgstr "Quoc gia cua ban"
+
+msgid "Auto-detect"
+msgstr "Tu dong phat hien"
+
+msgid "Location detected"
+msgstr "Vi tri duoc phat hien"
+
+msgid "Detection failed"
+msgstr "Phat hien that bai"
+
+msgid "Real IP (before VPN)"
+msgstr "IP that (truoc VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "Vi tri"
+
+msgid "IP ranges loaded"
+msgstr "Pham vi IP da tai"
+
+msgid "Retry"
+msgstr "Thu lai"
+
+msgid "Login"
+msgstr "Dang nhap"
+
+msgid "Logout"
+msgstr "Dang xuat"
+
+msgid "Username"
+msgstr "Ten nguoi dung"
+
+msgid "Password"
+msgstr "Mat khau"
+
+msgid "VIP Account Login"
+msgstr "Dang nhap tai khoan VIP"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "Nhap thong tin tai khoan de ket noi VPN"
+
+msgid "Login & Connect"
+msgstr "Dang nhap va ket noi"
+
+msgid "Logout & Disconnect"
+msgstr "Dang xuat va ngat ket noi"
+
+msgid "Invalid username or password"
+msgstr "Ten nguoi dung hoac mat khau khong hop le"
+
+msgid "Account has expired"
+msgstr "Tai khoan da het han"
+
+msgid "This account is not a VIP account"
+msgstr "Tai khoan nay khong phai tai khoan VIP"
+
+msgid "Logged In"
+msgstr "Da dang nhap"
+
+msgid "Not Logged In"
+msgstr "Chua dang nhap"
+
+msgid "Expired"
+msgstr "Da het han"
+
+msgid "Not VIP"
+msgstr "Khong phai VIP"
+
+msgid "Login Required"
+msgstr "Can dang nhap"
+
+msgid "User Status"
+msgstr "Trang thai nguoi dung"
+
+msgid "VIP User"
+msgstr "Nguoi dung VIP"
+
+msgid "Valid Until"
+msgstr "Hop le den"
+
+msgid "Auto-connect when VIP"
+msgstr "Ket noi tu dong cho VIP"
+
+msgid "Checking status..."
+msgstr "Dang kiem tra trang thai..."
+
+msgid "Renew Now"
+msgstr "Gia han ngay"
+
+msgid "Select Server"
+msgstr "Chon may chu"
+
+msgid "Refresh Servers"
+msgstr "Lam moi danh sach"
+
+msgid "Servers updated"
+msgstr "May chu da duoc cap nhat"
+
+msgid "servers"
+msgstr "may chu"
+

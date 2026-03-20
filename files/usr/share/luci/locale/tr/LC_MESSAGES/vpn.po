@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "VPN Ayarlari"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "VPN Durumu"
+
+msgid "Enabled"
+msgstr "Etkin"
+
+msgid "Disabled"
+msgstr "Devre disi"
+
+msgid "Connecting"
+msgstr "Baglaniyor"
+
+msgid "Connected"
+msgstr "Bagli"
+
+msgid "Disconnected"
+msgstr "Bagli degil"
+
+msgid "Split Tunneling"
+msgstr "Bolunmus Tuennel"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "Yurt ici IP dogrudan, yurt disi IP VPN uzerinden"
+
+msgid "VPN Server"
+msgstr "VPN Sunucusu"
+
+msgid "Connect"
+msgstr "Baglan"
+
+msgid "Disconnect"
+msgstr "Baglantiyi kes"
+
+msgid "Reconnect"
+msgstr "Yeniden baglan"
+
+msgid "Save"
+msgstr "Kaydet"
+
+msgid "Cancel"
+msgstr "Iptal"
+
+msgid "Apply"
+msgstr "Uygula"
+
+msgid "Refresh"
+msgstr "Yenile"
+
+msgid "Loading..."
+msgstr "Yukleniyor..."
+
+msgid "Error"
+msgstr "Hata"
+
+msgid "Success"
+msgstr "Basarili"
+
+msgid "Connection failed"
+msgstr "Baglanti basarisiz"
+
+msgid "Connection established"
+msgstr "Baglanti kuruldu"
+
+msgid "Please wait..."
+msgstr "Lutfen bekleyin..."
+
+msgid "Checking..."
+msgstr "Kontrol ediliyor..."
+
+msgid "No servers available"
+msgstr "Kullanilabilir sunucu yok"
+
+msgid "Server List"
+msgstr "Sunucu Listesi"
+
+msgid "Latency"
+msgstr "Gecirme"
+
+msgid "Update IP Ranges"
+msgstr "IP araliklarini guncelle"
+
+msgid "Last updated"
+msgstr "Son guncelleme"
+
+msgid "Never"
+msgstr "Hic"
+
+msgid "Count"
+msgstr "Sayi"
+
+msgid "Routes updated"
+msgstr "Yonlendirmeler guncellendi"
+
+msgid "routes"
+msgstr "yonlendirme"
+
+msgid "Domestic Traffic"
+msgstr "Yurt ici Trafik"
+
+msgid "Foreign Traffic"
+msgstr "Yurt disi Trafik"
+
+msgid "VPN Exit"
+msgstr "VPN Cikisi"
+
+msgid "Update Now"
+msgstr "Simdi guncelle"
+
+msgid "Detecting location..."
+msgstr "Konum tespit ediliyor..."
+
+msgid "Detected"
+msgstr "Tespit edildi"
+
+msgid "Your IP"
+msgstr "IP Adresiniz"
+
+msgid "Your Country"
+msgstr "Ulkeniz"
+
+msgid "Auto-detect"
+msgstr "Otomatik tespit"
+
+msgid "Location detected"
+msgstr "Konum tespit edildi"
+
+msgid "Detection failed"
+msgstr "Tespit basarisiz"
+
+msgid "Real IP (before VPN)"
+msgstr "Gercek IP (VPN oncesi)"
+
+msgid "VPN IP"
+msgstr "VPN IP"
+
+msgid "Location"
+msgstr "Konum"
+
+msgid "IP ranges loaded"
+msgstr "IP araliklari yuklendi"
+
+msgid "Retry"
+msgstr "Tekrar dene"
+
+msgid "Login"
+msgstr "Giris yap"
+
+msgid "Logout"
+msgstr "Cikis yap"
+
+msgid "Username"
+msgstr "Kullanici adi"
+
+msgid "Password"
+msgstr "Sifre"
+
+msgid "VIP Account Login"
+msgstr "VIP Hesabi Girisi"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "VPN'e baglanmak icin kimlik bilgilerinizi girin"
+
+msgid "Login & Connect"
+msgstr "Giris yap ve baglan"
+
+msgid "Logout & Disconnect"
+msgstr "Cikis yap ve baglantiyi kes"
+
+msgid "Invalid username or password"
+msgstr "Gecersiz kullanici adi veya sifre"
+
+msgid "Account has expired"
+msgstr "Hesap suresi doldu"
+
+msgid "This account is not a VIP account"
+msgstr "Bu hesap VIP hesabi degil"
+
+msgid "Logged In"
+msgstr "Girili"
+
+msgid "Not Logged In"
+msgstr "Cikili"
+
+msgid "Expired"
+msgstr "Surasi doldu"
+
+msgid "Not VIP"
+msgstr "VIP degil"
+
+msgid "Login Required"
+msgstr "Giris gerekli"
+
+msgid "User Status"
+msgstr "Kullanici durumu"
+
+msgid "VIP User"
+msgstr "VIP Kullanici"
+
+msgid "Valid Until"
+msgstr "Gecerli until"
+
+msgid "Auto-connect when VIP"
+msgstr "VIP icin otomatik baglanma"
+
+msgid "Checking status..."
+msgstr "Durum kontrol ediliyor..."
+
+msgid "Renew Now"
+msgstr "Simdi yenile"
+
+msgid "Select Server"
+msgstr "Sunucu sec"
+
+msgid "Refresh Servers"
+msgstr "Listeyi yenile"
+
+msgid "Servers updated"
+msgstr "Sunucular guncellendi"
+
+msgid "servers"
+msgstr "sunucu"
+

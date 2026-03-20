@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "Configuracion VPN"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "Estado de VPN"
+
+msgid "Enabled"
+msgstr "Habilitado"
+
+msgid "Disabled"
+msgstr "Deshabilitado"
+
+msgid "Connecting"
+msgstr "Conectando"
+
+msgid "Connected"
+msgstr "Conectado"
+
+msgid "Disconnected"
+msgstr "Desconectado"
+
+msgid "Split Tunneling"
+msgstr "Split Tunneling"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "Trafico nacional directo, trafico extranjero via VPN"
+
+msgid "VPN Server"
+msgstr "Servidor VPN"
+
+msgid "Connect"
+msgstr "Conectar"
+
+msgid "Disconnect"
+msgstr "Desconectar"
+
+msgid "Reconnect"
+msgstr "Reconectar"
+
+msgid "Save"
+msgstr "Guardar"
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Apply"
+msgstr "Aplicar"
+
+msgid "Refresh"
+msgstr "Actualizar"
+
+msgid "Loading..."
+msgstr "Cargando..."
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Success"
+msgstr "Exito"
+
+msgid "Connection failed"
+msgstr "Conexion fallida"
+
+msgid "Connection established"
+msgstr "Conexion establecida"
+
+msgid "Please wait..."
+msgstr "Por favor espere..."
+
+msgid "Checking..."
+msgstr "Verificando..."
+
+msgid "No servers available"
+msgstr "No hay servidores disponibles"
+
+msgid "Server List"
+msgstr "Lista de servidores"
+
+msgid "Latency"
+msgstr "Latencia"
+
+msgid "Update IP Ranges"
+msgstr "Actualizar rangos IP"
+
+msgid "Last updated"
+msgstr "Ultima actualizacion"
+
+msgid "Never"
+msgstr "Nunca"
+
+msgid "Count"
+msgstr "Cantidad"
+
+msgid "Routes updated"
+msgstr "Rutas actualizadas"
+
+msgid "routes"
+msgstr "rutas"
+
+msgid "Domestic Traffic"
+msgstr "Trafico nacional"
+
+msgid "Foreign Traffic"
+msgstr "Trafico extranjero"
+
+msgid "VPN Exit"
+msgstr "Salida VPN"
+
+msgid "Update Now"
+msgstr "Actualizar ahora"
+
+msgid "Detecting location..."
+msgstr "Detectando ubicacion..."
+
+msgid "Detected"
+msgstr "Detectado"
+
+msgid "Your IP"
+msgstr "Tu IP"
+
+msgid "Your Country"
+msgstr "Tu pais"
+
+msgid "Auto-detect"
+msgstr "Auto-detectar"
+
+msgid "Location detected"
+msgstr "Ubicacion detectada"
+
+msgid "Detection failed"
+msgstr "Deteccion fallida"
+
+msgid "Real IP (before VPN)"
+msgstr "IP real (antes de VPN)"
+
+msgid "VPN IP"
+msgstr "IP VPN"
+
+msgid "Location"
+msgstr "Ubicacion"
+
+msgid "IP ranges loaded"
+msgstr "Rangos IP cargados"
+
+msgid "Retry"
+msgstr "Reintentar"
+
+msgid "Login"
+msgstr "Iniciar sesion"
+
+msgid "Logout"
+msgstr "Cerrar sesion"
+
+msgid "Username"
+msgstr "Nombre de usuario"
+
+msgid "Password"
+msgstr "Contrasena"
+
+msgid "VIP Account Login"
+msgstr "Inicio de sesion cuenta VIP"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "Ingrese sus credenciales para conectar VPN"
+
+msgid "Login & Connect"
+msgstr "Iniciar sesion y conectar"
+
+msgid "Logout & Disconnect"
+msgstr "Cerrar sesion y desconectar"
+
+msgid "Invalid username or password"
+msgstr "Usuario o contrasena invalidos"
+
+msgid "Account has expired"
+msgstr "Cuenta vencida"
+
+msgid "This account is not a VIP account"
+msgstr "Esta cuenta no es una cuenta VIP"
+
+msgid "Logged In"
+msgstr "Sesion iniciada"
+
+msgid "Not Logged In"
+msgstr "Sesion cerrada"
+
+msgid "Expired"
+msgstr "Vencido"
+
+msgid "Not VIP"
+msgstr "No es VIP"
+
+msgid "Login Required"
+msgstr "Inicio de sesion requerido"
+
+msgid "User Status"
+msgstr "Estado del usuario"
+
+msgid "VIP User"
+msgstr "Usuario VIP"
+
+msgid "Valid Until"
+msgstr "Valido hasta"
+
+msgid "Auto-connect when VIP"
+msgstr "Conexion automatica para VIP"
+
+msgid "Checking status..."
+msgstr "Verificando estado..."
+
+msgid "Renew Now"
+msgstr "Renovar ahora"
+
+msgid "Select Server"
+msgstr "Seleccionar servidor"
+
+msgid "Refresh Servers"
+msgstr "Actualizar lista"
+
+msgid "Servers updated"
+msgstr "Servidores actualizados"
+
+msgid "servers"
+msgstr "servidores"
+

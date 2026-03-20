@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "VPN設定"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "VPN状態"
+
+msgid "Enabled"
+msgstr "有効"
+
+msgid "Disabled"
+msgstr "無効"
+
+msgid "Connecting"
+msgstr "接続中"
+
+msgid "Connected"
+msgstr "接続済み"
+
+msgid "Disconnected"
+msgstr "未接続"
+
+msgid "Split Tunneling"
+msgstr "スプリットトンネリング"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "国内IPは直接、海外IPはVPN経由"
+
+msgid "VPN Server"
+msgstr "VPNサーバー"
+
+msgid "Connect"
+msgstr "接続"
+
+msgid "Disconnect"
+msgstr "切断"
+
+msgid "Reconnect"
+msgstr "再接続"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Apply"
+msgstr "適用"
+
+msgid "Refresh"
+msgstr "更新"
+
+msgid "Loading..."
+msgstr "読み込み中..."
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "Success"
+msgstr "成功"
+
+msgid "Connection failed"
+msgstr "接続失敗"
+
+msgid "Connection established"
+msgstr "接続完了"
+
+msgid "Please wait..."
+msgstr "お待ちください..."
+
+msgid "Checking..."
+msgstr "確認中..."
+
+msgid "No servers available"
+msgstr "利用可能なサーバーなし"
+
+msgid "Server List"
+msgstr "サーバー一覧"
+
+msgid "Latency"
+msgstr "遅延"
+
+msgid "Update IP Ranges"
+msgstr "IP範囲を更新"
+
+msgid "Last updated"
+msgstr "最終更新"
+
+msgid "Never"
+msgstr "なし"
+
+msgid "Count"
+msgstr "数"
+
+msgid "Routes updated"
+msgstr "ルート更新済み"
+
+msgid "routes"
+msgstr "ルート"
+
+msgid "Domestic Traffic"
+msgstr "国内トラフィック"
+
+msgid "Foreign Traffic"
+msgstr "海外トラフィック"
+
+msgid "VPN Exit"
+msgstr "VPN出口"
+
+msgid "Update Now"
+msgstr "今すぐ更新"
+
+msgid "Detecting location..."
+msgstr "位置を検出中..."
+
+msgid "Detected"
+msgstr "検出済み"
+
+msgid "Your IP"
+msgstr "あなたのIP"
+
+msgid "Your Country"
+msgstr "あなたの国"
+
+msgid "Auto-detect"
+msgstr "自動検出"
+
+msgid "Location detected"
+msgstr "位置を検出しました"
+
+msgid "Detection failed"
+msgstr "検出に失敗しました"
+
+msgid "Real IP (before VPN)"
+msgstr "実際のIP（VPN前）"
+
+msgid "VPN IP"
+msgstr "VPN IP"
+
+msgid "Location"
+msgstr "所在地"
+
+msgid "IP ranges loaded"
+msgstr "IP範囲読み込み済み"
+
+msgid "Retry"
+msgstr "再試行"
+
+msgid "Login"
+msgstr "ログイン"
+
+msgid "Logout"
+msgstr "ログアウト"
+
+msgid "Username"
+msgstr "ユーザー名"
+
+msgid "Password"
+msgstr "パスワード"
+
+msgid "VIP Account Login"
+msgstr "VIPアカウントログイン"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "アカウント資格情報を入力してVPNに接続"
+
+msgid "Login & Connect"
+msgstr "ログインして接続"
+
+msgid "Logout & Disconnect"
+msgstr "ログアウトして切断"
+
+msgid "Invalid username or password"
+msgstr "ユーザー名またはパスワードが無効です"
+
+msgid "Account has expired"
+msgstr "アカウント有効期限切れ"
+
+msgid "This account is not a VIP account"
+msgstr "このアカウントはVIPアカウントではありません"
+
+msgid "Logged In"
+msgstr "ログイン済み"
+
+msgid "Not Logged In"
+msgstr "未ログイン"
+
+msgid "Expired"
+msgstr "期限切れ"
+
+msgid "Not VIP"
+msgstr "VIP外"
+
+msgid "Login Required"
+msgstr "ログインが必要です"
+
+msgid "User Status"
+msgstr "ユーザー状態"
+
+msgid "VIP User"
+msgstr "VIPユーザー"
+
+msgid "Valid Until"
+msgstr "有効期限"
+
+msgid "Auto-connect when VIP"
+msgstr "VIPユーザーは自動接続"
+
+msgid "Checking status..."
+msgstr "状態確認中..."
+
+msgid "Renew Now"
+msgstr "今すぐ更新"
+
+msgid "Select Server"
+msgstr "サーバーを選択"
+
+msgid "Refresh Servers"
+msgstr "一覧を更新"
+
+msgid "Servers updated"
+msgstr "サーバーを更新しました"
+
+msgid "servers"
+msgstr "サーバー"
+

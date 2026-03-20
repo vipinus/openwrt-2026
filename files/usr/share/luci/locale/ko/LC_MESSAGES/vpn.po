@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "VPN 설정"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "VPN 상태"
+
+msgid "Enabled"
+msgstr "활성화됨"
+
+msgid "Disabled"
+msgstr "비활성화됨"
+
+msgid "Connecting"
+msgstr "연결 중"
+
+msgid "Connected"
+msgstr "연결됨"
+
+msgid "Disconnected"
+msgstr "연결 안됨"
+
+msgid "Split Tunneling"
+msgstr "분할 터널링"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "국내 IP는 직접, 해외 IP는 VPN 경유"
+
+msgid "VPN Server"
+msgstr "VPN 서버"
+
+msgid "Connect"
+msgstr "연결"
+
+msgid "Disconnect"
+msgstr "연결 해제"
+
+msgid "Reconnect"
+msgstr "재연결"
+
+msgid "Save"
+msgstr "저장"
+
+msgid "Cancel"
+msgstr "취소"
+
+msgid "Apply"
+msgstr "적용"
+
+msgid "Refresh"
+msgstr "새로고침"
+
+msgid "Loading..."
+msgstr "로딩 중..."
+
+msgid "Error"
+msgstr "오류"
+
+msgid "Success"
+msgstr "성공"
+
+msgid "Connection failed"
+msgstr "연결 실패"
+
+msgid "Connection established"
+msgstr "연결됨"
+
+msgid "Please wait..."
+msgstr "잠시만 기다려주세요..."
+
+msgid "Checking..."
+msgstr "확인 중..."
+
+msgid "No servers available"
+msgstr "사용 가능한 서버 없음"
+
+msgid "Server List"
+msgstr "서버 목록"
+
+msgid "Latency"
+msgstr "지연시간"
+
+msgid "Update IP Ranges"
+msgstr "IP 범위 업데이트"
+
+msgid "Last updated"
+msgstr "마지막 업데이트"
+
+msgid "Never"
+msgstr "없음"
+
+msgid "Count"
+msgstr "개수"
+
+msgid "Routes updated"
+msgstr "경로 업데이트됨"
+
+msgid "routes"
+msgstr "경로"
+
+msgid "Domestic Traffic"
+msgstr "국내 트래픽"
+
+msgid "Foreign Traffic"
+msgstr "해외 트래픽"
+
+msgid "VPN Exit"
+msgstr "VPN 출구"
+
+msgid "Update Now"
+msgstr "지금 업데이트"
+
+msgid "Detecting location..."
+msgstr "위치 감지 중..."
+
+msgid "Detected"
+msgstr "감지됨"
+
+msgid "Your IP"
+msgstr "내 IP"
+
+msgid "Your Country"
+msgstr "내 국가"
+
+msgid "Auto-detect"
+msgstr "자동 감지"
+
+msgid "Location detected"
+msgstr "위치 감지됨"
+
+msgid "Detection failed"
+msgstr "감지 실패"
+
+msgid "Real IP (before VPN)"
+msgstr "실제 IP (VPN 전)"
+
+msgid "VPN IP"
+msgstr "VPN IP"
+
+msgid "Location"
+msgstr "위치"
+
+msgid "IP ranges loaded"
+msgstr "IP 범위 로드됨"
+
+msgid "Retry"
+msgstr "재시도"
+
+msgid "Login"
+msgstr "로그인"
+
+msgid "Logout"
+msgstr "로그아웃"
+
+msgid "Username"
+msgstr "사용자 이름"
+
+msgid "Password"
+msgstr "비밀번호"
+
+msgid "VIP Account Login"
+msgstr "VIP 계정 로그인"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "계정 자격 증명을 입력하여 VPN 연결"
+
+msgid "Login & Connect"
+msgstr "로그인 및 연결"
+
+msgid "Logout & Disconnect"
+msgstr "로그아웃 및 연결 해제"
+
+msgid "Invalid username or password"
+msgstr "사용자 이름 또는 비밀번호가 올바르지 않습니다"
+
+msgid "Account has expired"
+msgstr "계정이 만료되었습니다"
+
+msgid "This account is not a VIP account"
+msgstr "이 계정은 VIP 계정이 아닙니다"
+
+msgid "Logged In"
+msgstr "로그인됨"
+
+msgid "Not Logged In"
+msgstr "로그아웃됨"
+
+msgid "Expired"
+msgstr "만료됨"
+
+msgid "Not VIP"
+msgstr "VIP 아님"
+
+msgid "Login Required"
+msgstr "로그인 필요"
+
+msgid "User Status"
+msgstr "사용자 상태"
+
+msgid "VIP User"
+msgstr "VIP 사용자"
+
+msgid "Valid Until"
+msgstr "유효 기간"
+
+msgid "Auto-connect when VIP"
+msgstr "VIP 사용자 자동 연결"
+
+msgid "Checking status..."
+msgstr "상태 확인 중..."
+
+msgid "Renew Now"
+msgstr "지금 갱신"
+
+msgid "Select Server"
+msgstr "서버 선택"
+
+msgid "Refresh Servers"
+msgstr "목록 새로고침"
+
+msgid "Servers updated"
+msgstr "서버 업데이트됨"
+
+msgid "servers"
+msgstr "개 서버"
+

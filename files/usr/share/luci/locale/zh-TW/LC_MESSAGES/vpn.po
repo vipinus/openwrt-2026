@@ -1,0 +1,246 @@
+# English translations for VPN package.
+# Copyright (C) 2026
+# This file is distributed under the same license as the PACKAGE package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: auto\n"
+"Language-Team: none\n"
+"Language: LC_MESSAGES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "VPN Settings"
+msgstr "VPN 設定"
+
+msgid "VPN"
+msgstr "VPN"
+
+msgid "VPN Status"
+msgstr "VPN 狀態"
+
+msgid "Enabled"
+msgstr "已啟用"
+
+msgid "Disabled"
+msgstr "已停用"
+
+msgid "Connecting"
+msgstr "連線中"
+
+msgid "Connected"
+msgstr "已連線"
+
+msgid "Disconnected"
+msgstr "未連線"
+
+msgid "Split Tunneling"
+msgstr "智慧分流"
+
+msgid "Route domestic traffic directly, foreign traffic via VPN"
+msgstr "國內IP直連，海外IP走VPN"
+
+msgid "VPN Server"
+msgstr "VPN伺服器"
+
+msgid "Connect"
+msgstr "連線"
+
+msgid "Disconnect"
+msgstr "斷線"
+
+msgid "Reconnect"
+msgstr "重連"
+
+msgid "Save"
+msgstr "儲存"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Apply"
+msgstr "套用"
+
+msgid "Refresh"
+msgstr "重新整理"
+
+msgid "Loading..."
+msgstr "載入中..."
+
+msgid "Error"
+msgstr "錯誤"
+
+msgid "Success"
+msgstr "成功"
+
+msgid "Connection failed"
+msgstr "連線失敗"
+
+msgid "Connection established"
+msgstr "連線成功"
+
+msgid "Please wait..."
+msgstr "請稍候..."
+
+msgid "Checking..."
+msgstr "檢查中..."
+
+msgid "No servers available"
+msgstr "暫無可用伺服器"
+
+msgid "Server List"
+msgstr "伺服器列表"
+
+msgid "Latency"
+msgstr "延遲"
+
+msgid "Update IP Ranges"
+msgstr "更新IP段"
+
+msgid "Last updated"
+msgstr "上次更新"
+
+msgid "Never"
+msgstr "從未"
+
+msgid "Count"
+msgstr "數量"
+
+msgid "Routes updated"
+msgstr "路由已更新"
+
+msgid "routes"
+msgstr "條路由"
+
+msgid "Domestic Traffic"
+msgstr "國內流量"
+
+msgid "Foreign Traffic"
+msgstr "海外流量"
+
+msgid "VPN Exit"
+msgstr "VPN出口"
+
+msgid "Update Now"
+msgstr "立即更新"
+
+msgid "Detecting location..."
+msgstr "正在偵測位置..."
+
+msgid "Detected"
+msgstr "已偵測"
+
+msgid "Your IP"
+msgstr "您的IP"
+
+msgid "Your Country"
+msgstr "您的國家"
+
+msgid "Auto-detect"
+msgstr "自動偵測"
+
+msgid "Location detected"
+msgstr "位置已偵測"
+
+msgid "Detection failed"
+msgstr "偵測失敗"
+
+msgid "Real IP (before VPN)"
+msgstr "真實IP（VPN前）"
+
+msgid "VPN IP"
+msgstr "VPN IP"
+
+msgid "Location"
+msgstr "位置"
+
+msgid "IP ranges loaded"
+msgstr "已載入IP段"
+
+msgid "Retry"
+msgstr "重試"
+
+msgid "Login"
+msgstr "登入"
+
+msgid "Logout"
+msgstr "登出"
+
+msgid "Username"
+msgstr "使用者名稱"
+
+msgid "Password"
+msgstr "密碼"
+
+msgid "VIP Account Login"
+msgstr "VIP帳戶登入"
+
+msgid "Enter your account credentials to connect VPN"
+msgstr "輸入您的帳戶憑證以連線VPN"
+
+msgid "Login & Connect"
+msgstr "登入並連線"
+
+msgid "Logout & Disconnect"
+msgstr "登出並斷線"
+
+msgid "Invalid username or password"
+msgstr "使用者名稱或密碼錯誤"
+
+msgid "Account has expired"
+msgstr "帳戶已過期"
+
+msgid "This account is not a VIP account"
+msgstr "此帳戶不是VIP帳戶"
+
+msgid "Logged In"
+msgstr "已登入"
+
+msgid "Not Logged In"
+msgstr "未登入"
+
+msgid "Expired"
+msgstr "已過期"
+
+msgid "Not VIP"
+msgstr "非VIP"
+
+msgid "Login Required"
+msgstr "需要登入"
+
+msgid "User Status"
+msgstr "使用者狀態"
+
+msgid "VIP User"
+msgstr "VIP使用者"
+
+msgid "Valid Until"
+msgstr "有效期至"
+
+msgid "Auto-connect when VIP"
+msgstr "VIP使用者自動連線"
+
+msgid "Checking status..."
+msgstr "檢查狀態中..."
+
+msgid "Renew Now"
+msgstr "立即續費"
+
+msgid "Select Server"
+msgstr "選擇伺服器"
+
+msgid "Refresh Servers"
+msgstr "重新整理列表"
+
+msgid "Servers updated"
+msgstr "伺服器已更新"
+
+msgid "servers"
+msgstr "個伺服器"
+

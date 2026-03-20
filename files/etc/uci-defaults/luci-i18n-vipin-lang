@@ -1,0 +1,40 @@
+#!/bin/sh
+# Sync LuCI language with /etc/vipin_lang
+# Maps website lang codes to OpenWRT LuCI lang codes
+
+LANG_FILE="/etc/vipin_lang"
+DEFAULT_LANG="en"
+
+if [ -f "$LANG_FILE" ]; then
+    USER_LANG=$(cat "$LANG_FILE" 2>/dev/null | tr -d '\n\r ')
+    [ -z "$USER_LANG" ] && USER_LANG="$DEFAULT_LANG"
+else
+    USER_LANG="$DEFAULT_LANG"
+fi
+
+case "$USER_LANG" in
+    zh|zh-CN|zh-cn) LUCI_LANG="zh_cn" ;;
+    zh-TW|zh-tw|zh-Hant) LUCI_LANG="zh_tw" ;;
+    ja) LUCI_LANG="ja" ;;
+    ko) LUCI_LANG="ko" ;;
+    de) LUCI_LANG="de" ;;
+    fr) LUCI_LANG="fr" ;;
+    es) LUCI_LANG="es" ;;
+    pt) LUCI_LANG="pt" ;;
+    ru) LUCI_LANG="ru" ;;
+    ar) LUCI_LANG="ar" ;;
+    th) LUCI_LANG="th" ;;
+    fa) LUCI_LANG="fa" ;;
+    tr) LUCI_LANG="tr" ;;
+    id) LUCI_LANG="id" ;;
+    hi) LUCI_LANG="hi" ;;
+    vi) LUCI_LANG="vi" ;;
+    en|*) LUCI_LANG="en" ;;
+esac
+
+uci set luci.main.lang="$LUCI_LANG" 2>/dev/null
+uci commit luci 2>/dev/null
+
+rm -f /etc/uci-defaults/luci-i18n-vipin-lang
+
+exit 0
