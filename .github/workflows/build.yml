@@ -62,19 +62,16 @@ jobs:
           fi
 
       - name: Find Config File
-        id: find_config
         run: |
           CONFIG_FILE="${{ github.workspace }}/configs/${TARGET}.config"
           if [ ! -f "$CONFIG_FILE" ]; then
-            echo "Config not found: $CONFIG_FILE"
-            # Try lowercase
             CONFIG_FILE="${{ github.workspace }}/configs/$(echo $TARGET | tr 'A-Z' 'a-z' | tr '_' '-').config"
           fi
           if [ -f "$CONFIG_FILE" ]; then
-            echo "Found: $CONFIG_FILE"
+            echo "Config: $CONFIG_FILE ($(wc -l < "$CONFIG_FILE") lines)"
           else
-            echo "ERROR: No config file found for target: $TARGET"
-            ls -la "${{ github.workspace }}/configs/" | head -20
+            echo "ERROR: No config found for: $TARGET"
+            ls "${{ github.workspace }}/configs/" | head -20
             exit 1
           fi
 
@@ -97,23 +94,18 @@ jobs:
       - name: Setup Custom Files
         run: |
           cd /tmp/openwrt
-          rm -rf files
-          mkdir -p files/etc/init.d files/usr/sbin files/etc/config files/etc/crontabs
-          mkdir -p files/usr/share/luci/locale files/usr/lib/lua/luci/controller
-          mkdir -p files/usr/lib/lua/luci/model/cbi files/usr/lib/lua/luci/view
-          mkdir -p files/usr/lib/lua/luci/view/dnscrypt files/usr/lib/lua/luci/view/vpn
-          mkdir -p files/usr/sbin files/etc/uci-defaults files/usr/share/luci/i18n
-
+          
+          cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || true
+          
           echo "${VERSION:-20260405}" > files/etc/vipin_version
           echo "${TARGET:-Unknown}" > files/etc/vipin_model
-
-          if [ -d "${{ github.workspace }}/files" ]; then
-            cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || \
-            cp -r "${{ github.workspace }}/files/" files/
-          fi
-
+          
+          chmod +x files/etc/init.d/* 2>/dev/null || true
+          chmod +x files/usr/sbin/* 2>/dev/null || true
+          chmod +x files/etc/uci-defaults/* 2>/dev/null || true
+          
           echo "=== Custom files ==="
-          find files -type f | head -20
+          find files -type f | head -30
 
       - name: Update Feeds
         run: |
@@ -128,14 +120,20 @@ jobs:
           if [ ! -f "$CONFIG_FILE" ]; then
             CONFIG_FILE="${{ github.workspace }}/configs/$(echo $TARGET | tr 'A-Z' 'a-z' | tr '_' '-').config"
           fi
-          cp "$CONFIG_FILE" .config
-          echo "=== Config file head ==="
-          head -5 .config
+          
+          if [ -f "$CONFIG_FILE" ]; then
+            cp "$CONFIG_FILE" .config
+            echo "=== Config loaded ($(wc -l < .config) lines) ==="
+            head -5 .config
+          else
+            echo "ERROR: Config not found: $CONFIG_FILE"
+            exit 1
+          fi
 
-      - name: Configure
+      - name: Ensure Config Validity
         run: |
           cd /tmp/openwrt
-          make defconfig
+          make defconfig 2>&1 | tail -5
 
       - name: Download Sources
         run: |
@@ -162,50 +160,48 @@ jobs:
             cp "$f" artifacts/
           done
 
-          find . -name "*.tar.gz" -type f 2>/dev/null | while read f; do
-            cp "$f" artifacts/
-          done
-
           find . -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
-          find . -name "openwrt-*.bin" -type f 2>/dev/null | while read f; do
+          find . -name "openwrt-*-*.bin" -type f 2>/dev/null | while read f; do
+            cp "$f" artifacts/
+          done
+
+          find . -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
           cp build.log artifacts/ 2>/dev/null || true
 
           echo "=== Artifacts found ==="
-          ls -la artifacts/
+          ls -la artifacts/ || echo "No artifacts"
 
       - name: Check Build Result
         run: |
           echo "Checking if firmware was built..."
-          if [ -z "$(ls -A /tmp/openwrt/artifacts/*.bin 2>/dev/null)" ] && \
-             [ -z "$(ls -A /tmp/openwrt/artifacts/*.img 2>/dev/null)" ] && \
-             [ -z "$(ls -A /tmp/openwrt/artifacts/*.tar.gz 2>/dev/null)" ]; then
-            echo "ERROR: No firmware files found!"
-            echo "=== Check for kernel panic ==="
-            grep -i "kernel\|panic\|error\|failed" /tmp/openwrt/build.log | tail -20 || true
-            echo "=== Check for .config issues ==="
-            head -50 /tmp/openwrt/.config 2>/dev/null || true
-            echo "=== Check for build output ==="
-            ls -la /tmp/openwrt/bin/ 2>/dev/null || echo "bin/ not found"
-            ls -la /tmp/openwrt/staging_dir/ 2>/dev/null || echo "staging_dir/ not found"
+          ARTIFACTS=$(find /tmp/openwrt/artifacts -type f \( -name "*.bin" -o -name "*.img" -o -name "*-sysupgrade.bin" \) 2>/dev/null | wc -l)
+          if [ "$ARTIFACTS" -eq 0 ]; then
+            echo "WARNING: No firmware files found!"
+            echo "=== Check build log for errors ==="
+            grep -i "error\|failed\|kconfig" /tmp/openwrt/build.log | tail -20 || true
+            echo "=== Config after defconfig ==="
+            head -10 /tmp/openwrt/.config || true
+            echo "=== Check bin directory ==="
+            find /tmp/openwrt/bin -type f 2>/dev/null | head -10 || echo "bin/ not found"
           else
-            echo "Firmware files found!"
+            echo "Found $ARTIFACTS firmware files!"
           fi
 
       - name: Create ZIP
         run: |
           cd /tmp/openwrt/artifacts
-          FIRMWARE_FILES=$(ls *.bin *.img *.tar.gz 2>/dev/null || true)
+          FIRMware_FILES=$(find . -type f \( -name "*.bin" -o -name "*.img" -o -name "*-sysupgrade.bin" -o -name "openwrt-*.tar.gz" \) 2>/dev/null)
           if [ -n "$FIRMWARE_FILES" ]; then
             zip -r "firmware-${TARGET:-unknown}.zip" $FIRMWARE_FILES
             cp "firmware-${TARGET:-unknown}.zip" /tmp/openwrt/
             echo "=== ZIP created ==="
-            ls -la *.zip
+            ls -la *.zip 2>/dev/null || echo "No zip"
           else
             echo "No firmware files to zip"
           fi
@@ -226,7 +222,8 @@ jobs:
           files: |
             /tmp/openwrt/artifacts/*.bin
             /tmp/openwrt/artifacts/*.img
-            /tmp/openwrt/artifacts/*.tar.gz
+            /tmp/openwrt/artifacts/*-sysupgrade.bin
+            /tmp/openwrt/artifacts/openwrt-*.tar.gz
             /tmp/openwrt/firmware-*.zip
           draft: true
           name: OpenWRT ${{ env.OPENWRT_VERSION }} - ${{ env.TARGET }}
