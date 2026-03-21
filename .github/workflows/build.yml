@@ -145,15 +145,15 @@ jobs:
         shell: bash
         run: |
           cd /tmp/openwrt
-          set -o pipefail
-          make -j$(nproc) world 2>&1 | tee build.log
-          BUILD_EXIT=${PIPESTATUS[0]}
+          mkdir -p artifacts
+          make -j$(nproc) world > build.log 2>&1
+          BUILD_EXIT=$?
+          tail -30 build.log
           if [ "$BUILD_EXIT" -ne 0 ]; then
-            echo "=== Build log tail ==="
-            tail -30 build.log
             echo "ERROR: make world failed with exit code $BUILD_EXIT"
-            echo "=== Last 50 lines of error ==="
-            grep -i "error\|failed\|kconfig\|warning" build.log | tail -50
+            echo "=== Build errors/warnings ==="
+            grep -i "error\|failed\|kconfig\|warning" build.log | tail -50 || true
+            cp build.log artifacts/
             exit 1
           fi
 
