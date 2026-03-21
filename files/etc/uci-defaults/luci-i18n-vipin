@@ -7,11 +7,13 @@ mkdir -p "$DEST_DIR"
 
 for locale_dir in /usr/share/luci/locale/*/; do
     lang=$(basename "$locale_dir")
-    for po_file in "$locale_dir"/LC_MESSAGES/*.po 2>/dev/null; do
-        [ -f "$po_file" ] || continue
-        module=$(basename "$po_file" .po)
-        install -m 0644 "$po_file" "$DEST_DIR/${module}.${lang}.po"
-    done
+    if [ -d "$locale_dir/LC_MESSAGES" ]; then
+        for po_file in "$locale_dir"/LC_MESSAGES/*.po; do
+            [ -f "$po_file" ] || continue
+            module=$(basename "$po_file" .po)
+            install -m 0644 "$po_file" "$DEST_DIR/${module}.${lang}.po"
+        done
+    fi
 done
 
 rm -f /etc/uci-defaults/luci-i18n-vipin
