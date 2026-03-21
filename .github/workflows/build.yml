@@ -83,7 +83,7 @@ jobs:
             python3 python3-pip python3-setuptools python3-wheel \
             libncurses-dev libssl-dev zlib1g-dev libelf-dev autoconf \
             automake libtool pkg-config unzip rsync wget git curl \
-            subversion bc findutils tar bzip2 gzip
+            subversion bc findutils tar bzip2 gzip help2man
 
       - name: Clone OpenWRT
         run: |
