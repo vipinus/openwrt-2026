@@ -153,23 +153,23 @@ jobs:
           cd /tmp/openwrt
           mkdir -p artifacts
 
-          find . -name "*.bin" -type f 2>/dev/null | while read f; do
+          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
-          find . -name "*.img" -type f 2>/dev/null | while read f; do
+          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
-          find . -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do
+          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
-          find . -name "openwrt-*-*.bin" -type f 2>/dev/null | while read f; do
+          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
-          find . -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do
+          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do
             cp "$f" artifacts/
           done
 
@@ -181,7 +181,7 @@ jobs:
       - name: Check Build Result
         run: |
           echo "Checking if firmware was built..."
-          ARTIFACTS=$(find /tmp/openwrt/artifacts -type f \( -name "*.bin" -o -name "*.img" -o -name "*-sysupgrade.bin" \) 2>/dev/null | wc -l)
+          ARTIFACTS=$(find /tmp/openwrt/bin -type f \( -name "*-sysupgrade.bin" -o -name "*-factory.bin" -o -name "*-initramfs.bin" -o -name "*.img" \) 2>/dev/null | wc -l)
           if [ "$ARTIFACTS" -eq 0 ]; then
             echo "WARNING: No firmware files found!"
             echo "=== Check build log for errors ==="
@@ -192,17 +192,24 @@ jobs:
             find /tmp/openwrt/bin -type f 2>/dev/null | head -10 || echo "bin/ not found"
           else
             echo "Found $ARTIFACTS firmware files!"
+            echo "=== Firmware files ==="
+            find /tmp/openwrt/bin -type f \( -name "*-sysupgrade.bin" -o -name "*-factory.bin" -o -name "*-initramfs.bin" -o -name "*.img" \) 2>/dev/null
           fi
 
       - name: Create ZIP
         run: |
-          cd /tmp/openwrt/artifacts
-          FIRMware_FILES=$(find . -type f \( -name "*.bin" -o -name "*.img" -o -name "*-sysupgrade.bin" -o -name "openwrt-*.tar.gz" \) 2>/dev/null)
-          if [ -n "$FIRMWARE_FILES" ]; then
-            zip -r "firmware-${TARGET:-unknown}.zip" $FIRMWARE_FILES
-            cp "firmware-${TARGET:-unknown}.zip" /tmp/openwrt/
+          cd /tmp/openwrt
+          mkdir -p artifacts
+          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          cp build.log artifacts/ 2>/dev/null || true
+          if [ "$(ls -A artifacts/)" ]; then
+            zip -r "firmware-${TARGET:-unknown}.zip" -@ < <(find artifacts -type f)
             echo "=== ZIP created ==="
-            ls -la *.zip 2>/dev/null || echo "No zip"
+            ls -la firmware-*.zip
           else
             echo "No firmware files to zip"
           fi
