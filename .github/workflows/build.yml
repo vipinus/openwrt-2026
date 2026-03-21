@@ -85,6 +85,17 @@ jobs:
             automake libtool pkg-config unzip rsync wget git curl \
             subversion bc findutils tar bzip2 gzip help2man
 
+      - name: Check Available Resources
+        run: |
+          echo "=== System Resources ==="
+          nproc
+          free -h
+          df -h /tmp /home
+          echo "=== Setting build limits ==="
+          echo "Reducing parallel jobs to prevent OOM on 7GB RAM runner"
+          echo "MAKE_JOBS=4" >> $GITHUB_ENV
+          echo "PARALLEL_JOBS=4" >> $GITHUB_ENV
+
       - name: Clone OpenWRT
         run: |
           rm -rf /tmp/openwrt
@@ -147,13 +158,25 @@ jobs:
           cd /tmp/openwrt
           mkdir -p artifacts
           set -o pipefail
-          make -j$(nproc) world V=sc 2>&1 | tee build.log
+          
+          echo "=== Pre-build resource check ==="
+          free -m
+          df -h /tmp
+          
+          echo "=== Starting build with -j${PARALLEL_JOBS:-4} (limited for OOM prevention) ==="
+          make -j${PARALLEL_JOBS:-4} world V=sc 2>&1 | tee build.log
           BUILD_EXIT=${PIPESTATUS[0]}
+          
+          echo "=== Post-build resource check ==="
+          free -m
+          df -h /tmp
+          
           if [ "$BUILD_EXIT" -ne 0 ]; then
             echo "ERROR: make world failed with exit code $BUILD_EXIT"
             echo "=== Last 50 errors/warnings ==="
             grep -i "error\|failed\|kconfig" build.log | tail -50 || true
-            tail -10 build.log
+            echo "=== Last 100 lines of build log ==="
+            tail -100 build.log
             cp build.log artifacts/
             exit 1
           fi
