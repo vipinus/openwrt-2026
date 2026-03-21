@@ -35,7 +35,7 @@ on:
 
 env:
   DEBIAN_FRONTEND: noninteractive
-  OPENWRT_VERSION: "24.10.4"
+  OPENWRT_VERSION: "25.12.1"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
