@@ -118,7 +118,7 @@ jobs:
           cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || true
           echo "${VERSION:-20260405}" > files/etc/vipin_version
           echo "${TARGET:-Unknown}" > files/etc/vipin_model
-          echo "${LUCI_LANG:-zh_Hans}" > files/etc/vipin_language
+          echo "${LUCI_LANG:-en}" > files/etc/vipin_language
           chmod +x files/etc.init.d/* 2>/dev/null || true
           chmod +x files/usr/sbin/* 2>/dev/null || true
           chmod +x files/etc/uci-defaults/* 2>/dev/null || true
