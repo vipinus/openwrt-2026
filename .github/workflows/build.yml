@@ -1,5 +1,9 @@
 name: Build OpenWRT Firmware
 
+concurrency:
+  group: ${{ github.repository }}-${{ github.event.inputs.target || github.event.client_payload.router_model }}
+  cancel-in-progress: true
+
 on:
   workflow_dispatch:
     inputs:
