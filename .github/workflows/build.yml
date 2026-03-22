@@ -158,6 +158,7 @@ jobs:
           make download -j$(nproc)
 
       - name: Build Firmware
+        id: build
         shell: bash
         run: |
           cd /tmp/openwrt
@@ -179,7 +180,9 @@ jobs:
             echo "=== Last 100 lines of build log ==="
             tail -100 build.log
             cp build.log artifacts/
-            exit 1
+            echo "BUILD_STATUS=failed" >> $GITHUB_ENV
+          else
+            echo "BUILD_STATUS=success" >> $GITHUB_ENV
           fi
 
       - name: Collect Artifacts
@@ -223,7 +226,8 @@ jobs:
           find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
           if [ ! "$(ls -A firmware-only/)" ]; then
             echo "No firmware files found"
-            exit 1
+            echo "BUILD_STATUS=failed" >> $GITHUB_ENV
+          fi
           fi
 
       - name: Upload Artifacts
@@ -255,7 +259,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Send Webhook Callback
-        if: env.CALLBACK_URL != ''
+        if: always() && env.CALLBACK_URL != ''
         run: |
           if [ -n "${{ env.BUILD_ID }}" ] && [ -n "${{ env.CALLBACK_URL }}" ]; then
             if [ "${{ job.status }}" = "success" ]; then
