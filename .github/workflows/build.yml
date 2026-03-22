@@ -28,6 +28,11 @@ on:
         required: false
         default: ''
         type: string
+      language:
+        description: 'LuCI Language (e.g., zh_Hans, en)'
+        required: false
+        default: 'en'
+        type: string
 
   repository_dispatch:
     types: [build-firmware]
@@ -37,11 +42,11 @@ env:
   DEBIAN_FRONTEND: noninteractive
   OPENWRT_VERSION: "25.12.1"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  LUCI_LANG: ${{ inputs.language }}
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -105,17 +110,14 @@ jobs:
       - name: Setup Custom Files
         run: |
           cd /tmp/openwrt
-          
           mkdir -p files
           cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || true
-          
           echo "${VERSION:-20260405}" > files/etc/vipin_version
           echo "${TARGET:-Unknown}" > files/etc/vipin_model
-          
-          chmod +x files/etc/init.d/* 2>/dev/null || true
+          echo "${LUCI_LANG:-zh_Hans}" > files/etc/vipin_language
+          chmod +x files/etc.init.d/* 2>/dev/null || true
           chmod +x files/usr/sbin/* 2>/dev/null || true
           chmod +x files/etc/uci-defaults/* 2>/dev/null || true
-          
           echo "=== Custom files ==="
           find files -type f | head -30
 
@@ -132,7 +134,6 @@ jobs:
           if [ ! -f "$CONFIG_FILE" ]; then
             CONFIG_FILE="${{ github.workspace }}/configs/$(echo $TARGET | tr 'A-Z' 'a-z' | tr '_' '-').config"
           fi
-          
           if [ -f "$CONFIG_FILE" ]; then
             cp "$CONFIG_FILE" .config
             echo "=== Config loaded ($(wc -l < .config) lines) ==="
@@ -158,19 +159,15 @@ jobs:
           cd /tmp/openwrt
           mkdir -p artifacts
           set -o pipefail
-          
           echo "=== Pre-build resource check ==="
           free -m
           df -h /tmp
-          
           echo "=== Starting build with -j${PARALLEL_JOBS:-4} (limited for OOM prevention) ==="
           make -j${PARALLEL_JOBS:-4} world V=sc 2>&1 | tee build.log
           BUILD_EXIT=${PIPESTATUS[0]}
-          
           echo "=== Post-build resource check ==="
           free -m
           df -h /tmp
-          
           if [ "$BUILD_EXIT" -ne 0 ]; then
             echo "ERROR: make world failed with exit code $BUILD_EXIT"
             echo "=== Last 50 errors/warnings ==="
@@ -185,29 +182,11 @@ jobs:
         run: |
           cd /tmp/openwrt
           mkdir -p artifacts
-
-          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do
-            cp "$f" artifacts/
-          done
-
-          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do
-            cp "$f" artifacts/
-          done
-
-          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do
-            cp "$f" artifacts/
-          done
-
-          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do
-            cp "$f" artifacts/
-          done
-
-          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do
-            cp "$f" artifacts/
-          done
-
-          cp build.log artifacts/ 2>/dev/null || true
-
+          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
+          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
           echo "=== Artifacts found ==="
           ls -la artifacts/ || echo "No artifacts"
 
@@ -229,22 +208,18 @@ jobs:
             find /tmp/openwrt/bin -type f \( -name "*-sysupgrade.bin" -o -name "*-factory.bin" -o -name "*-initramfs.bin" -o -name "*.img" \) 2>/dev/null
           fi
 
-      - name: Create ZIP
+      - name: Create Firmware Package
         run: |
           cd /tmp/openwrt
-          mkdir -p artifacts
-          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          cp build.log artifacts/ 2>/dev/null || true
-          if [ "$(ls -A artifacts/)" ]; then
-            zip -r "firmware-${TARGET:-unknown}.zip" -@ < <(find artifacts -type f)
-            echo "=== ZIP created ==="
-            ls -la firmware-*.zip
-          else
-            echo "No firmware files to zip"
+          mkdir -p firmware-only
+          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          if [ ! "$(ls -A firmware-only/)" ]; then
+            echo "No firmware files found"
+            exit 1
           fi
 
       - name: Upload Artifacts
@@ -252,7 +227,7 @@ jobs:
         with:
           name: openwrt-${{ env.TARGET }}-firmware
           path: |
-            /tmp/openwrt/artifacts/
+            /tmp/openwrt/firmware-only/
             /tmp/openwrt/firmware-*.zip
           retention-days: 7
 
@@ -261,10 +236,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            /tmp/openwrt/artifacts/*.bin
-            /tmp/openwrt/artifacts/*.img
-            /tmp/openwrt/artifacts/*-sysupgrade.bin
-            /tmp/openwrt/artifacts/openwrt-*.tar.gz
+            /tmp/openwrt/firmware-only/*.bin
+            /tmp/openwrt/firmware-only/*.img
+            /tmp/openwrt/firmware-only/*-sysupgrade.bin
+            /tmp/openwrt/firmware-only/openwrt-*.tar.gz
             /tmp/openwrt/firmware-*.zip
           draft: true
           name: OpenWRT ${{ env.OPENWRT_VERSION }} - ${{ env.TARGET }}
@@ -286,7 +261,6 @@ jobs:
               STATUS="failed"
               DOWNLOAD_URL=""
             fi
-            
             curl -s -X POST "${{ env.CALLBACK_URL }}" \
               -H "Content-Type: application/json" \
               -d "{
@@ -297,4 +271,3 @@ jobs:
                 \"github_run_id\": \"${{ github.run_id }}\",
                 \"download_url\": \"$DOWNLOAD_URL\"
               }"
-          fi
