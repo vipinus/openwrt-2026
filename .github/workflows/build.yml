@@ -259,23 +259,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Send Webhook Callback
-        if: always() && env.CALLBACK_URL != ''
+        if: always() && env.CALLBACK_URL != '' && env.CALLBACK_URL != 'skip'
         run: |
-          if [ -n "${{ env.BUILD_ID }}" ] && [ -n "${{ env.CALLBACK_URL }}" ]; then
-            if [ "${{ job.status }}" = "success" ]; then
-              STATUS="completed"
-              DOWNLOAD_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            else
-              STATUS="failed"
-              DOWNLOAD_URL=""
-            fi
-            curl -s -X POST "${{ env.CALLBACK_URL }}" \
-              -H "Content-Type: application/json" \
-              -d "{
-                \"build_id\": \"${{ env.BUILD_ID }}\",
-                \"status\": \"$STATUS\",
-                \"router_model\": \"${{ env.TARGET }}\",
-                \"version\": \"${{ env.VERSION }}\",
-                \"github_run_id\": \"${{ github.run_id }}\",
-                \"download_url\": \"$DOWNLOAD_URL\"
-              }"
+          if [ "${{ job.status }}" = "success" ]; then
+            STATUS="completed"
+            DOWNLOAD_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            STATUS="failed"
+            DOWNLOAD_URL=""
+          fi
+          echo "Sending webhook callback: build_id=$BUILD_ID, status=$STATUS"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ env.CALLBACK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"build_id\": \"${{ env.BUILD_ID }}\",
+              \"status\": \"$STATUS\",
+              \"router_model\": \"${{ env.TARGET }}\",
+              \"version\": \"${{ env.VERSION }}\",
+              \"github_run_id\": \"${{ github.run_id }}\",
+              \"download_url\": \"$DOWNLOAD_URL\"
+            }")
+          echo "Webhook response code: $HTTP_CODE"
