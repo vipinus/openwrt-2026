@@ -466,7 +466,7 @@ end
 function index()
     entry({"admin", "system", "vipin"}, alias("admin", "system", "vipin", "status"), "ViPiN").dependent = false
     local lang = get_lang and get_lang() or "en"
-    entry({"admin", "system", "vipin", "status"}, form("vipin/status"), i18n[lang] and i18n[lang].title or "ViPiN Firmware", 10)
+    entry({"admin", "system", "vipin", "status"}, template("vipin/status"), i18n[lang] and i18n[lang].title or "ViPiN Firmware", 10)
     entry({"admin", "system", "vipin", "api"}, call("api_get_status"), nil, 20)
     entry({"admin", "system", "vipin", "api_check"}, call("api_check_update"), nil, 21)
     entry({"admin", "system", "vipin", "api_set_lang"}, call("api_set_language"), nil, 22)
