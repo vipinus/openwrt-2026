@@ -1,6 +1,13 @@
 #!/bin/sh
 
-# Set default WiFi SSID and password
+# Set hostname
+uci set system.@system[0].hostname='20260406'
+uci commit system
+
+# Set root password using passwd
+echo -e 'www.anyfq.com\nwww.anyfq.com' | passwd root
+
+# Enable WiFi
 uci set wireless.radio0.disabled='0'
 uci set wireless.default_radio0.ssid='www.anyfq.com'
 uci set wireless.default_radio0.encryption='psk2'
@@ -27,6 +34,11 @@ for iface in $(uci show wireless | grep "=wifi-iface" | cut -d= -f1 | sed 's/wir
 done
 
 uci commit wireless
+
+# Set LAN IP
+uci set network.lan.ipaddr='192.168.11.1'
+uci commit network
+
 /etc/init.d/network reload
 
 exit 0
