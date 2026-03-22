@@ -1056,8 +1056,10 @@ function get_country_flag(code)
 end
 
 function index()
-    entry({"admin", "network", "vpn"}, alias("admin", "network", "vpn", "settings"), i18n[get_lang()].vpn, 50)
-    entry({"admin", "network", "vpn", "settings"}, form("vpn/settings"), i18n[get_lang()].vpn_settings, 10)
+    local lang = get_lang and get_lang() or "en"
+    local i = i18n[lang] or i18n["en"]
+    entry({"admin", "network", "vpn"}, alias("admin", "network", "vpn", "settings"), i.vpn or "VPN", 50)
+    entry({"admin", "network", "vpn", "settings"}, form("vpn/settings"), i.vpn_settings or "VPN Settings", 10)
     entry({"admin", "network", "vpn", "api"}, call("api_get_vpn_status"), nil, 20)
     entry({"admin", "network", "vpn", "api_connect"}, call("api_connect"), nil, 21)
     entry({"admin", "network", "vpn", "api_set_split"}, call("api_set_split_tunnel"), nil, 22)
