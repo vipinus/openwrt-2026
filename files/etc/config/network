@@ -6,6 +6,7 @@ config interface 'loopback'
 config globals 'globals'
         option dhcp_default_duid '00046452d9c7cc734ca5850b499a8f565099'
         option ula_prefix 'fd7b:5bd8:248a::/48'
+        option packet_steering '1'
 
 config device
         option name 'br-lan'
@@ -15,8 +16,9 @@ config device
 config interface 'lan'
         option device 'br-lan'
         option proto 'static'
-        list ipaddr '192.168.11.1/24'
         option ip6assign '60'
+        option multipath 'off'
+        list ipaddr '192.168.11.1/24'
 
 config interface 'wan'
         option device 'eth0.2'
@@ -40,4 +42,3 @@ config switch_vlan
         option device 'switch0'
         option vlan '2'
         option ports '0 6t'
-
