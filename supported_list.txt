@@ -684,7 +684,7 @@ zyxel_nsa310b|ZYXEL-NSA310B.config
 zyxel_nsa310s|ZYXEL-NSA310S.config
 zyxel_nsa325|ZYXEL-NSA325.config
 zyxel_nwa50ax-pro|ZYXEL-NWA50AX-PRO.config
-LINKSYS-WRT3200ACM
+linksys_wrt3200acm|LINKSYS-WRT3200ACM.config
 adslr-g7|ADSLR_G7.config
 afoundry-ew1200|AFOUNDRY_EW1200.config
 alfa-network-ax1800rm|ALFA_NETWORK_AX1800RM.config
