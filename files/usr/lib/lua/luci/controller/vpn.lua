@@ -1075,7 +1075,7 @@ end
 
 function api_get_vpn_status()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local current_country = util.exec("/usr/sbin/vipin-country-ips get-country 2>/dev/null"):gsub("%s+", "")
@@ -1167,7 +1167,7 @@ end
 
 function api_connect()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local action = luci.http.formvalue("action") or "connect"
@@ -1187,7 +1187,7 @@ end
 
 function api_set_split_tunnel()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local enabled = luci.http.formvalue("enabled") or "0"
@@ -1211,7 +1211,7 @@ end
 
 function api_auto_detect()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local output = util.exec("/usr/sbin/vipin-detect auto 2>&1")
@@ -1243,7 +1243,7 @@ end
 
 function api_update_ips()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local country = util.exec("/usr/sbin/vipin-country-ips get-country 2>/dev/null"):gsub("%s+", "")
@@ -1265,7 +1265,7 @@ end
 
 function api_login()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local username = luci.http.formvalue("username") or ""
@@ -1299,7 +1299,7 @@ end
 
 function api_logout()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     util.exec("/usr/sbin/vipin-auth logout 2>/dev/null")
@@ -1316,7 +1316,7 @@ end
 
 function api_auth_status()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local status_json = util.exec("/usr/sbin/vipin-auth status 2>/dev/null")
@@ -1350,7 +1350,7 @@ end
 
 function api_get_renewal_url()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local result_json = util.exec("/usr/sbin/vipin-auth renewal-url 2>/dev/null")
@@ -1375,7 +1375,7 @@ end
 
 function api_get_servers()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     local io = require("io")
     
@@ -1434,7 +1434,7 @@ end
 
 function api_set_server()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     
     local server = luci.http.formvalue("server") or ""
     

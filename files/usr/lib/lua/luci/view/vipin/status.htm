@@ -370,7 +370,7 @@ local t = i18n[lang] or i18n["en"]
 local version_file = io.open("/etc/vipin_version", "r")
 local current_version = version_file and version_file:read("*all") or "0"
 if version_file then version_file:close() end
-current_version = (current_version or ""):match("^%s*(.-)%s*$"
+current_version = (current_version or ""):match("^%s*(.-)%s*$")
 
 local model_file = io.open("/etc/vipin_model", "r")
 local model = model_file and model_file:read("*all") or "Unknown"

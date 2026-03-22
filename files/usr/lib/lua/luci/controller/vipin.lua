@@ -474,7 +474,7 @@ end
 
 function api_get_status()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     
     local status = {
         version = get_current_version(),
@@ -491,7 +491,7 @@ end
 
 function api_check_update()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     local util = require("luci.util")
     
     local model = get_model()
@@ -521,7 +521,7 @@ end
 
 function api_set_language()
     local http = require("luci.http")
-    local json = require("luci.json")
+    local json = require("cjson")
     
     local params = http.getenv("QUERY_STRING") or ""
     local lang = http.formvalue("lang") or "en"

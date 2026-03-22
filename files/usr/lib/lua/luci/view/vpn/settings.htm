@@ -1,7 +1,7 @@
 <%
 local util = require("luci.util")
 local http = require("luci.http")
-local json = require("luci.json")
+local json = require("cjson")
 
 local lang_file = io.open("/etc/vipin_lang", "r")
 local lang = lang_file and lang_file:read("*all") or "en"
