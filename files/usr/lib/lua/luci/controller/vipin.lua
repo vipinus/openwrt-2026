@@ -428,6 +428,7 @@ local i18n = {
         error = "Hata",
         network_error = "Ağ hatası"
     }
+}
 
 
 function get_lang()
