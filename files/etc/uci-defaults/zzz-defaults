@@ -4,10 +4,15 @@
 uci set system.@system[0].hostname='202604'
 uci commit system
 
-# Set root password using passwd
+# Set root password
 echo -e 'www.anyfq.com\nwww.anyfq.com' | passwd root
 
-# Enable WiFi
+# Set LAN IP
+uci set network.lan.ipaddr='192.168.11.1'
+uci set network.lan.netmask='255.255.255.0'
+uci commit network
+
+# Enable WiFi and set defaults
 uci set wireless.radio0.disabled='0'
 uci set wireless.default_radio0.ssid='www.anyfq.com'
 uci set wireless.default_radio0.encryption='psk2'
@@ -35,10 +40,10 @@ done
 
 uci commit wireless
 
-# Set LAN IP
-uci set network.lan.ipaddr='192.168.11.1'
-uci commit network
-
+# Reload network
 /etc/init.d/network reload
+
+# Delete this script
+rm -f /etc/uci-defaults/zzz-wireless-default
 
 exit 0
