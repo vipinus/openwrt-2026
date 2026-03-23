@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Set hostname
-uci set system.@system[0].hostname='20260406'
+uci set system.@system[0].hostname='202604'
 uci commit system
 
 # Set root password using passwd
