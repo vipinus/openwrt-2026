@@ -18,14 +18,13 @@ uci commit network
 # Wait for wireless config to be generated
 sleep 2
 
-# Enable all radios and set WiFi defaults
-for radio in $(uci show wireless | grep "=wifi-device" | cut -d. -f2); do
-    # Enable radio
+# Enable all radios
+for radio in $(uci show wireless | grep "=wifi-device" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${radio}.disabled='0'
 done
 
 # Configure all wifi-iface
-for iface in $(uci show wireless | grep "=wifi-iface" | cut -d. -f2); do
+for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${iface}.ssid='www.anyfq.com'
     uci set wireless.${iface}.encryption='psk2'
     uci set wireless.${iface}.key='www.anyfq.com'
