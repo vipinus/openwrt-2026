@@ -63,6 +63,7 @@ jobs:
             echo "BUILD_ID=${{ github.event.client_payload.build_id }}" >> $GITHUB_ENV
             echo "CALLBACK_URL=${{ github.event.client_payload.callback_url }}" >> $GITHUB_ENV
             echo "VERSION=${{ github.event.client_payload.version }}" >> $GITHUB_ENV
+            echo "LUCI_LANG=${{ github.event.client_payload.language }}" >> $GITHUB_ENV
           else
             echo "TARGET=${{ inputs.target }}" >> $GITHUB_ENV
             echo "BUILD_ID=${{ inputs.build_id }}" >> $GITHUB_ENV
@@ -116,9 +117,19 @@ jobs:
           cd /tmp/openwrt
           mkdir -p files
           cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || true
+          
+          # Map language code
+          FINAL_LANG="${LUCI_LANG:-en}"
+          case "$FINAL_LANG" in
+            zh-CN|zh_CN) FINAL_LANG="zh_Hans" ;;
+            zh-TW|zh_TW) FINAL_LANG="zh_Hant" ;;
+            pt-BR|pt_BR) FINAL_LANG="pt_BR" ;;
+          esac
+          echo "FINAL_LANG=${FINAL_LANG}" >> $GITHUB_ENV
+          
           echo "${VERSION:-20260405}" > files/etc/vipin_version
           echo "${TARGET:-Unknown}" > files/etc/vipin_model
-          echo "${LUCI_LANG:-en}" > files/etc/vipin_language
+          echo "${FINAL_LANG}" > files/etc/vipin_language
           chmod +x files/etc.init.d/* 2>/dev/null || true
           chmod +x files/usr/sbin/* 2>/dev/null || true
           chmod +x files/etc/uci-defaults/* 2>/dev/null || true
@@ -146,6 +157,46 @@ jobs:
             echo "ERROR: Config not found: $CONFIG_FILE"
             exit 1
           fi
+
+      - name: Add Language Pack
+        run: |
+          cd /tmp/openwrt
+          LANG_CODE="${FINAL_LANG:-en}"
+          
+          # Skip if English (default)
+          if [ "$LANG_CODE" = "en" ]; then
+            echo "Default English language, no additional pack needed"
+            exit 0
+          fi
+          
+          # Check if language directory exists
+          if [ ! -d "feeds/luci/modules/luci-base/po/${LANG_CODE}" ]; then
+            echo "WARNING: Language directory not found: ${LANG_CODE}, falling back to English"
+            exit 0
+          fi
+          
+          echo "Adding language pack: $LANG_CODE"
+          
+          # Add language support to config
+          echo "CONFIG_LUCI_LANG_${LANG_CODE}=y" >> .config
+          
+          # Base language packages
+          echo "CONFIG_PACKAGE_luci-i18n-base-${LANG_CODE}=y" >> .config
+          echo "CONFIG_PACKAGE_luci-i18n-compat-${LANG_CODE}=y" >> .config
+          
+          # Application language packages
+          for pkg in firewall opkg; do
+            if [ -d "feeds/luci/applications/luci-app-${pkg}/po/${LANG_CODE}" ]; then
+              echo "CONFIG_PACKAGE_luci-i18n-${pkg}-${LANG_CODE}=y" >> .config
+            fi
+          done
+          
+          # Theme language (if available)
+          if [ -d "feeds/luci/themes/luci-theme-bootstrap/po/${LANG_CODE}" ]; then
+            echo "CONFIG_PACKAGE_luci-i18n-bootstrap-${LANG_CODE}=y" >> .config
+          fi
+          
+          echo "=== Language pack added for: ${LANG_CODE} ==="
 
       - name: Ensure Config Validity
         run: |
