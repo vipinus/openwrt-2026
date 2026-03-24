@@ -16,20 +16,20 @@ uci commit network
 [ ! -f /etc/config/wireless ] && wifi detect > /etc/config/wireless
 
 # Wait for wireless config to be generated
-sleep 1
+sleep 2
 
-# Enable WiFi and set defaults
-for radio in $(uci show wireless | grep "=wireless-device" | cut -d. -f2); do
-    uci set wireless.$radio.disabled='0'
-    
-    # Find the first wifi-iface for this radio
-    iface=$(uci show wireless | grep "device='$radio'" | cut -d. -f2 | head -1)
-    
-    if [ -n "$iface" ]; then
-        uci set wireless.$iface.ssid='www.anyfq.com'
-        uci set wireless.$iface.encryption='psk2'
-        uci set wireless.$iface.key='www.anyfq.com'
-    fi
+# Enable all radios and set WiFi defaults
+for radio in $(uci show wireless | grep "=wifi-device" | cut -d. -f2); do
+    # Enable radio
+    uci set wireless.${radio}.disabled='0'
+done
+
+# Configure all wifi-iface
+for iface in $(uci show wireless | grep "=wifi-iface" | cut -d. -f2); do
+    uci set wireless.${iface}.ssid='www.anyfq.com'
+    uci set wireless.${iface}.encryption='psk2'
+    uci set wireless.${iface}.key='www.anyfq.com'
+    uci set wireless.${iface}.disabled='0'
 done
 
 # Commit and bring up WiFi
