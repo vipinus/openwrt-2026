@@ -12,38 +12,31 @@ uci set network.lan.ipaddr='192.168.11.1'
 uci set network.lan.netmask='255.255.255.0'
 uci commit network
 
+# Force generate wireless config if not exists
+[ ! -f /etc/config/wireless ] && wifi detect > /etc/config/wireless
+
+# Wait for wireless config to be generated
+sleep 1
+
 # Enable WiFi and set defaults
-uci set wireless.radio0.disabled='0'
-uci set wireless.default_radio0.ssid='www.anyfq.com'
-uci set wireless.default_radio0.encryption='psk2'
-uci set wireless.default_radio0.key='www.anyfq.com'
-
-# Enable 5GHz radio if exists
-[ -n "$(uci get wireless.radio1 2>/dev/null)" ] && {
-	uci set wireless.radio1.disabled='0'
-	uci set wireless.default_radio1.ssid='www.anyfq.com'
-	uci set wireless.default_radio1.encryption='psk2'
-	uci set wireless.default_radio1.key='www.anyfq.com'
-}
-
-# Enable all radios
-for radio in $(uci show wireless | grep "^wireless.radio" | cut -d. -f2); do
-	uci set wireless.$radio.disabled='0'
+for radio in $(uci show wireless | grep "=wireless-device" | cut -d. -f2); do
+    uci set wireless.$radio.disabled='0'
+    
+    # Find the first wifi-iface for this radio
+    iface=$(uci show wireless | grep "device='$radio'" | cut -d. -f2 | head -1)
+    
+    if [ -n "$iface" ]; then
+        uci set wireless.$iface.ssid='www.anyfq.com'
+        uci set wireless.$iface.encryption='psk2'
+        uci set wireless.$iface.key='www.anyfq.com'
+    fi
 done
 
-# Set default WiFi for all interfaces
-for iface in $(uci show wireless | grep "=wifi-iface" | cut -d= -f1 | sed 's/wireless.//'); do
-	uci set wireless.$iface.ssid='www.anyfq.com'
-	uci set wireless.$iface.encryption='psk2'
-	uci set wireless.$iface.key='www.anyfq.com'
-done
-
+# Commit and bring up WiFi
 uci commit wireless
+wifi up
 
 # Reload network
 /etc/init.d/network reload
-
-# Delete this script
-rm -f /etc/uci-defaults/zzz-wireless-default
 
 exit 0
