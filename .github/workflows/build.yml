@@ -310,23 +310,29 @@ jobs:
 
       - name: Send Webhook Callback
         if: always() && env.CALLBACK_URL != '' && env.CALLBACK_URL != 'skip'
+        env:
+          WEBHOOK_SECRET: ${{ secrets.FIRMWARE_WEBHOOK_SECRET }}
         run: |
-          if [ "${{ job.status }}" = "success" ]; then
+          if [ "$BUILD_STATUS" = "success" ]; then
             STATUS="completed"
             DOWNLOAD_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            ERROR_MSG=""
           else
             STATUS="failed"
             DOWNLOAD_URL=""
+            ERROR_MSG="Build failed on GitHub Actions (run ${{ github.run_id }})"
           fi
           echo "Sending webhook callback: build_id=$BUILD_ID, status=$STATUS"
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ env.CALLBACK_URL }}" \
             -H "Content-Type: application/json" \
+            -H "X-Webhook-Secret: $WEBHOOK_SECRET" \
             -d "{
               \"build_id\": \"${{ env.BUILD_ID }}\",
               \"status\": \"$STATUS\",
               \"router_model\": \"${{ env.TARGET }}\",
               \"version\": \"${{ env.VERSION }}\",
               \"github_run_id\": \"${{ github.run_id }}\",
-              \"download_url\": \"$DOWNLOAD_URL\"
+              \"download_url\": \"$DOWNLOAD_URL\",
+              \"error_message\": \"$ERROR_MSG\"
             }")
           echo "Webhook response code: $HTTP_CODE"
