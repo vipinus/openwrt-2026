@@ -1359,490 +1359,117 @@ local t = i18n[lang] or i18n["en"]
 %>
 
 <style>
-.vpn-container {
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-.vpn-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #e0e0e0;
-}
-.vpn-header h1 {
-    font-size: 28px;
-    color: #333;
-    margin: 0 0 10px 0;
-}
-.vpn-card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    overflow: hidden;
-}
-.vpn-card-header {
-    padding: 16px 20px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e0e0e0;
-    font-weight: 600;
-    font-size: 16px;
-}
-.vpn-card-body {
-    padding: 20px;
-}
-.vpn-status-bar {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    color: white;
-    margin-bottom: 20px;
-}
-.vpn-status-indicator {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-.vpn-status-indicator.connected {
-    background: #28a745;
-}
-.vpn-status-indicator.disconnected {
-    background: #dc3545;
-}
-.vpn-status-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
-}
-.vpn-status-info p {
-    margin: 0;
-    opacity: 0.9;
-    font-size: 14px;
-}
-.vpn-control-buttons {
-    display: flex;
-    gap: 10px;
-    margin-left: auto;
-}
-.vpn-btn {
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: none;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.vpn-btn-connect {
-    background: #28a745;
-    color: white;
-}
-.vpn-btn-connect:hover {
-    background: #218838;
-}
-.vpn-btn-disconnect {
-    background: #dc3545;
-    color: white;
-}
-.vpn-btn-disconnect:hover {
-    background: #c82333;
-}
-.vpn-split-section {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-.vpn-split-info h4 {
-    margin: 0 0 5px 0;
-    font-size: 16px;
-    color: #333;
-}
-.vpn-split-info p {
-    margin: 0;
-    font-size: 13px;
-    color: #666;
-}
-.vpn-toggle {
-    position: relative;
-    width: 56px;
-    height: 28px;
-}
-.vpn-toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-.vpn-toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.3s;
-    border-radius: 28px;
-}
-.vpn-toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.3s;
-    border-radius: 50%;
-}
-.vpn-toggle input:checked + .vpn-toggle-slider {
-    background-color: #28a745;
-}
-.vpn-toggle input:checked + .vpn-toggle-slider:before {
-    transform: translateX(28px);
-}
-.vpn-detection-box {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 20px;
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    border-radius: 12px;
-    color: white;
-    margin: 15px 0;
-}
-.vpn-detection-box.detecting {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-.vpn-detection-box.failed {
-    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
-}
-.vpn-detection-flag {
-    font-size: 48px;
-}
-.vpn-detection-info {
-    flex: 1;
-}
-.vpn-detection-info h4 {
-    margin: 0 0 5px 0;
-    font-size: 18px;
-}
-.vpn-detection-info p {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.9;
-}
-.vpn-detection-ip {
-    font-family: monospace;
-    font-size: 16px;
-    font-weight: 600;
-}
-.vpn-detect-btn {
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: 2px solid white;
-    background: transparent;
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.vpn-detect-btn:hover {
-    background: white;
-    color: #11998e;
-}
-.vpn-detect-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-.vpn-flow-diagram {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-top: 15px;
-}
-.vpn-flow-item {
-    padding: 10px 15px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-}
-.vpn-flow-direct {
-    background: #e3f2fd;
-    color: #1565c0;
-}
-.vpn-flow-vpn {
-    background: #fce4ec;
-    color: #c62828;
-}
-.vpn-flow-arrow {
-    color: #999;
-    font-size: 18px;
-}
-.vpn-country-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 25px;
-    font-size: 15px;
-    font-weight: 600;
-    margin-top: 15px;
-}
-.vpn-country-badge .flag {
-    font-size: 20px;
-}
-.vpn-info-box {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    margin-top: 20px;
-}
-.vpn-info-item {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-}
-.vpn-info-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
-}
-.vpn-info-value {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-}
-.vpn-ip-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 5px 12px;
-    background: #e8f5e9;
-    color: #2e7d32;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-}
-.vpn-expired {
-    color: #dc3545 !important;
-}
-.vpn-valid {
-    color: #28a745 !important;
-}
-.vpn-expired-bg {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
-}
-.vpn-valid-bg {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
-}
-.vpn-renew-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.vpn-renew-btn:hover {
-    background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
-    transform: translateY(-1px);
-}
+#vpn-status-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; font-weight:bold; }
+#vpn-status-badge.connected { background:#dff0d8; color:#3c763d; border:1px solid #d6e9c6; }
+#vpn-status-badge.disconnected { background:#f2dede; color:#a94442; border:1px solid #ebccd1; }
+.cbi-value-description { font-size:90%; color:#999; }
 </style>
 
-<div class="vpn-container">
-    <div class="vpn-header">
-        <h1>🔒 <%= t.vpn_settings %></h1>
-    </div>
-    
-    <div class="vpn-status-bar" id="vpn-status-bar">
-        <div class="vpn-status-indicator" id="vpn-indicator">
-            <span id="vpn-status-icon">○</span>
-        </div>
-        <div class="vpn-status-info">
-            <h3 id="vpn-status-title"><%= t.loading %></h3>
-            <p id="vpn-status-desc"></p>
-        </div>
-    </div>
-    
-    <div class="vpn-card">
-        <div class="vpn-card-header">
-            <%= t.user_status %>
-        </div>
-        <div class="vpn-card-body" id="login-section">
+<div class="cbi-map">
+    <h2><%= t.vpn_settings %></h2>
+    <div class="cbi-map-descr"><%= t.vpn_status %>: <span id="vpn-status-badge" class="disconnected"><%= t.disconnected %></span></div>
+
+    <!-- VPN Account -->
+    <fieldset class="cbi-section" id="cbi-vpn-account">
+        <legend><%= t.user_status %></legend>
+        <div class="cbi-section-node">
             <div id="login-form" style="display:none;">
-                <div class="vpn-login-box">
-                    <h4 style="margin:0 0 10px 0;"><%= t.login_title %></h4>
-                    <p style="margin:0 0 15px 0;color:#666;font-size:13px;"><%= t.login_desc %></p>
-                    <div style="margin-bottom:15px;">
-                        <input type="text" id="login-username" placeholder="<%= t.username %>" 
-                               style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.username %></label>
+                    <div class="cbi-value-field">
+                        <input type="text" id="login-username" class="cbi-input-text" />
                     </div>
-                    <div style="margin-bottom:15px;">
-                        <input type="password" id="login-password" placeholder="<%= t.password %>"
-                               style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.password %></label>
+                    <div class="cbi-value-field">
+                        <input type="password" id="login-password" class="cbi-input-text" />
                     </div>
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block;margin-bottom:6px;font-size:13px;color:#666;font-weight:500;"><%= t.select_server %></label>
-                        <div style="display:flex;gap:10px;align-items:center;">
-                            <select id="server-select" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
-                                <option value="">-- <%= t.select_server %> --</option>
-                            </select>
-                            <button class="vpn-detect-btn" id="btn-refresh-servers" onclick="refreshServerList()" type="button" style="white-space:nowrap;">
-                                🔄
-                            </button>
-                        </div>
-                        <div id="server-status" style="margin-top:6px;font-size:12px;color:#666;"></div>
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.select_server %></label>
+                    <div class="cbi-value-field">
+                        <select id="server-select" class="cbi-input-select">
+                            <option value="">-- <%= t.select_server %> --</option>
+                        </select>
+                        <input type="button" class="cbi-button cbi-button-neutral" id="btn-refresh-servers" onclick="refreshServerList()" value="&#x21bb;" title="<%= t.refresh_servers %>" style="margin-left:4px;" />
+                        <br/><span id="server-status" class="cbi-value-description"></span>
                     </div>
-                    <button class="vpn-detect-btn" onclick="doLogin()" style="width:100%;padding:12px;font-size:15px;">
-                        <%= t.login_button %>
-                    </button>
-                    <p id="login-error" style="color:#dc3545;margin-top:10px;font-size:13px;display:none;"></p>
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title">&nbsp;</label>
+                    <div class="cbi-value-field">
+                        <input type="button" class="cbi-button cbi-button-apply" onclick="doLogin()" value="<%= t.login_button %>" />
+                        <span id="login-error" style="color:#a94442;margin-left:10px;display:none;"></span>
+                    </div>
                 </div>
             </div>
-            
+
             <div id="user-info" style="display:none;">
-                <div class="vpn-detection-box vpn-valid-bg" id="user-status-box">
-                    <div class="vpn-detection-flag" id="user-status-icon">👤</div>
-                    <div class="vpn-detection-info">
-                        <h4 id="user-status-title"><%= t.logged_in %></h4>
-                        <p><%= t.username %>: <strong id="user-name">-</strong></p>
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.username %></label>
+                    <div class="cbi-value-field"><strong id="user-name">-</strong></div>
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.vip_user %></label>
+                    <div class="cbi-value-field"><span id="user-type">-</span></div>
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.valid_until %></label>
+                    <div class="cbi-value-field"><span id="user-expiry">-</span></div>
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title"><%= t.select_server %></label>
+                    <div class="cbi-value-field">
+                        <select id="server-select-loggedin" class="cbi-input-select">
+                            <option value="">-- <%= t.select_server %> --</option>
+                        </select>
+                        <input type="button" class="cbi-button cbi-button-neutral" id="btn-refresh-servers-loggedin" onclick="refreshServerList()" value="&#x21bb;" title="<%= t.refresh_servers %>" style="margin-left:4px;" />
                     </div>
-                    <button class="vpn-detect-btn" onclick="doLogout()">
-                        <%= t.logout_button %>
-                    </button>
                 </div>
-                
-                <div class="vpn-info-box" style="margin-top:15px;">
-                    <div class="vpn-info-item">
-                        <div class="vpn-info-label"><%= t.vip_user %></div>
-                        <div class="vpn-info-value" id="user-type">-</div>
-                    </div>
-                    <div class="vpn-info-item">
-                        <div class="vpn-info-label"><%= t.valid_until %></div>
-                        <div class="vpn-info-value" id="user-expiry">-</div>
+                <div id="expiry-warning" class="alert-message warning" style="display:none;">
+                    <span id="expiry-warning-text"></span>
+                    <input type="button" class="cbi-button cbi-button-action" onclick="openRenewalPage()" value="<%= t.renew_now %>" style="margin-left:10px;" />
+                </div>
+                <div class="cbi-value">
+                    <label class="cbi-value-title">&nbsp;</label>
+                    <div class="cbi-value-field">
+                        <input type="button" class="cbi-button cbi-button-apply" id="btn-connect" onclick="vpn_toggle()" value="<%= t.connect %>" />
+                        <input type="button" class="cbi-button cbi-button-reset" onclick="doLogout()" value="<%= t.logout_button %>" style="margin-left:4px;" />
+                        <input type="button" class="cbi-button cbi-button-action" onclick="openRenewalPage()" value="<%= t.renew_now %>" style="margin-left:4px;" />
                     </div>
                 </div>
-                
-                <div id="expiry-warning" style="display:none;margin-top:15px;padding:12px;background:#fff3cd;border-radius:8px;border:1px solid #ffc107;">
-                    <span style="font-size:20px;">⚠️</span>
-                    <span id="expiry-warning-text" style="margin-left:10px;color:#856404;"></span>
-                    <button id="btn-renew-warning" class="vpn-renew-btn" onclick="openRenewalPage()" style="margin-left:15px;">
-                        <%= t.renew_now %>
-                    </button>
+            </div>
+        </div>
+    </fieldset>
+
+    <!-- Split Tunneling -->
+    <fieldset class="cbi-section" id="cbi-vpn-split">
+        <legend><%= t.split_tunnel %></legend>
+        <div class="cbi-section-node">
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.split_tunnel %></label>
+                <div class="cbi-value-field">
+                    <input type="checkbox" id="split-toggle" onchange="toggle_split(this)" />
+                    <span class="cbi-value-description"><%= t.split_tunnel_desc %></span>
                 </div>
-                
-                <div id="renew-section" style="margin-top:15px;">
-                    <button id="btn-renew" class="vpn-renew-btn" onclick="openRenewalPage()" style="width:100%;padding:12px;font-size:14px;">
-                        💳 <%= t.renew_now %>
-                    </button>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.your_country %></label>
+                <div class="cbi-value-field">
+                    <span id="detection-flag"></span> <span id="detection-title"><%= t.detecting %></span>
+                    &mdash; <span id="detection-ip" style="font-family:monospace;">-</span>
+                    <input type="button" class="cbi-button cbi-button-action" id="btn-detect" onclick="auto_detect()" value="<%= t.auto_detect %>" style="margin-left:8px;" />
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.count %></label>
+                <div class="cbi-value-field">
+                    <span id="info-country">-</span> &mdash; <span id="info-count">-</span>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="vpn-card">
-        <div class="vpn-card-header">
-            <%= t.auto_detect %> <%= t.your_country %>
-        </div>
-        <div class="vpn-card-body">
-            <div class="vpn-detection-box" id="detection-box">
-                <div class="vpn-detection-flag" id="detection-flag">🌐</div>
-                <div class="vpn-detection-info">
-                    <h4 id="detection-title"><%= t.detecting %></h4>
-                    <p id="detection-desc"><%= t.your_ip %>: <span class="vpn-detection-ip" id="detection-ip">-</span></p>
-                </div>
-                <button class="vpn-detect-btn" id="btn-detect" onclick="auto_detect()">
-                    <%= t.auto_detect %>
-                </button>
-            </div>
-            
-            <div class="vpn-country-badge" id="country-badge" style="display:none;">
-                <span class="flag" id="badge-flag">🌐</span>
-                <span id="badge-name">-</span>
-                <span> - </span>
-                <span id="badge-routes">0</span>
-                <span><%= t.routes_count %></span>
-                <span><%= t.ip_ranges_loaded %></span>
-            </div>
-        </div>
-    </div>
-    
-    <div class="vpn-card">
-        <div class="vpn-card-header">
-            <%= t.split_tunnel %>
-        </div>
-        <div class="vpn-card-body">
-            <div class="vpn-split-section">
-                <div class="vpn-split-info">
-                    <h4><%= t.split_tunnel %></h4>
-                    <p><%= t.split_tunnel_desc %></p>
-                </div>
-                <label class="vpn-toggle">
-                    <input type="checkbox" id="split-toggle" onchange="toggle_split(this)">
-                    <span class="vpn-toggle-slider"></span>
-                </label>
-            </div>
-            
-            <div class="vpn-flow-diagram">
-                <div class="vpn-flow-item vpn-flow-direct">
-                    <span>🌐 <%= t.domestic_traffic %></span>
-                </div>
-                <span class="vpn-flow-arrow">→</span>
-                <div class="vpn-flow-item vpn-flow-direct">
-                    <span>Direct</span>
-                </div>
-                <span class="vpn-flow-arrow">|</span>
-                <div class="vpn-flow-item vpn-flow-vpn">
-                    <span>🌍 <%= t.foreign_traffic %></span>
-                </div>
-                <span class="vpn-flow-arrow">→</span>
-                <div class="vpn-flow-item vpn-flow-vpn">
-                    <span>VPN</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="vpn-card">
-        <div class="vpn-card-header">
-            <%= t.vpn_exit %>
-        </div>
-        <div class="vpn-card-body">
-            <div class="vpn-info-box">
-                <div class="vpn-info-item">
-                    <div class="vpn-info-label"><%= t.your_country %></div>
-                    <div class="vpn-info-value" id="info-country">-</div>
-                </div>
-                <div class="vpn-info-item">
-                    <div class="vpn-info-label"><%= t.count %></div>
-                    <div class="vpn-info-value" id="info-count">-</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </fieldset>
 </div>
 
 <script>
@@ -1851,7 +1478,7 @@ var vpnData = {
     splitEnabled: false,
     currentCountry: 'cn',
     currentCountryName: 'China',
-    currentCountryFlag: '🇨🇳',
+    currentCountryFlag: '',
     ipCount: 0,
     detected: false,
     detectedIp: '',
@@ -1868,60 +1495,43 @@ var vpnData = {
 };
 
 function updateUI() {
-    var indicator = document.getElementById('vpn-indicator');
-    var statusIcon = document.getElementById('vpn-status-icon');
-    var statusTitle = document.getElementById('vpn-status-title');
+    var badge = document.getElementById('vpn-status-badge');
     var btnConnect = document.getElementById('btn-connect');
     var splitToggle = document.getElementById('split-toggle');
-    
+
     if (vpnData.connected) {
-        indicator.className = 'vpn-status-indicator connected';
-        statusIcon.textContent = '✓';
-        statusTitle.textContent = vpnData.t.connected;
-        btnConnect.textContent = vpnData.t.disconnect;
-        btnConnect.className = 'vpn-btn vpn-btn-disconnect';
+        badge.className = 'connected';
+        badge.textContent = vpnData.t.connected;
+        if (btnConnect) { btnConnect.value = vpnData.t.disconnect; btnConnect.className = 'cbi-button cbi-button-remove'; }
     } else {
-        indicator.className = 'vpn-status-indicator disconnected';
-        statusIcon.textContent = '○';
-        statusTitle.textContent = vpnData.t.disconnected;
-        btnConnect.textContent = vpnData.t.connect;
-        btnConnect.className = 'vpn-btn vpn-btn-connect';
+        badge.className = 'disconnected';
+        badge.textContent = vpnData.t.disconnected;
+        if (btnConnect) { btnConnect.value = vpnData.t.connect; btnConnect.className = 'cbi-button cbi-button-apply'; }
     }
-    
-    splitToggle.checked = vpnData.splitEnabled;
-    
+
+    if (splitToggle) splitToggle.checked = vpnData.splitEnabled;
+
     var countryName = vpnData.detected ? vpnData.detectedCountryName : vpnData.currentCountryName;
     var countryFlag = vpnData.detected ? vpnData.detectedCountryFlag : vpnData.currentCountryFlag;
-    var country = vpnData.detected ? vpnData.detectedCountry : vpnData.currentCountry;
-    
+
     document.getElementById('info-country').textContent = countryFlag + ' ' + countryName;
     document.getElementById('info-count').textContent = vpnData.ipCount + ' ' + vpnData.t.routes_count;
-    document.getElementById('badge-flag').textContent = countryFlag;
-    document.getElementById('badge-name').textContent = countryName;
-    document.getElementById('badge-routes').textContent = vpnData.ipCount;
-    
-    if (vpnData.detected || vpnData.ipCount > 0) {
-        document.getElementById('country-badge').style.display = 'inline-flex';
-    }
 }
 
 function vpn_toggle() {
     var action = vpnData.connected ? 'disconnect' : 'connect';
+    var btn = document.getElementById('btn-connect');
+    if (btn) { btn.disabled = true; btn.value = vpnData.t.please_wait; }
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_connect', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
+        if (btn) btn.disabled = false;
         try {
-            var response = JSON.parse(xhr.responseText);
-            if (action === 'connect') {
-                vpnData.connected = true;
-            } else {
-                vpnData.connected = false;
-            }
+            JSON.parse(xhr.responseText);
+            vpnData.connected = (action === 'connect');
             updateUI();
-        } catch (e) {
-            console.error('Error:', e);
-        }
+        } catch (e) { console.error(e); }
     };
     xhr.send('action=' + action);
 }
@@ -1932,76 +1542,47 @@ function toggle_split(el) {
     xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_set_split', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
-        try {
-            var response = JSON.parse(xhr.responseText);
-            vpnData.splitEnabled = el.checked;
-            updateUI();
-        } catch (e) {
-            console.error('Error:', e);
-        }
+        try { JSON.parse(xhr.responseText); vpnData.splitEnabled = el.checked; updateUI(); } catch (e) { console.error(e); }
     };
     xhr.send('enabled=' + enabled);
 }
 
 function auto_detect() {
     var btn = document.getElementById('btn-detect');
-    var box = document.getElementById('detection-box');
-    var flag = document.getElementById('detection-flag');
     var title = document.getElementById('detection-title');
+    var flag = document.getElementById('detection-flag');
     var ip = document.getElementById('detection-ip');
-    
-    if (!btn || !box) return;
-    
-    btn.disabled = true;
-    btn.textContent = vpnData.t.detecting;
-    box.className = 'vpn-detection-box detecting';
-    flag.textContent = '🔄';
-    title.textContent = vpnData.t.detecting;
-    ip.textContent = '-';
-    
+    if (btn) { btn.disabled = true; btn.value = vpnData.t.detecting; }
+    if (title) title.textContent = vpnData.t.detecting;
+    if (flag) flag.textContent = '';
+    if (ip) ip.textContent = '-';
+
     var xhr = new XMLHttpRequest();
     xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_detect', true);
     xhr.onload = function() {
-        btn.disabled = false;
-        btn.textContent = vpnData.t.retry;
-        
+        if (btn) { btn.disabled = false; btn.value = vpnData.t.auto_detect; }
         try {
-            var response = JSON.parse(xhr.responseText);
-            
-            if (response.success) {
+            var r = JSON.parse(xhr.responseText);
+            if (r.success) {
                 vpnData.detected = true;
-                vpnData.detectedIp = response.detected_ip || response.ip || '';
-                vpnData.detectedCountry = response.country || '';
-                vpnData.detectedCountryName = response.country_name || '';
-                vpnData.detectedCountryFlag = response.country_flag || '🌐';
-                vpnData.ipCount = response.ip_count || 0;
-                vpnData.currentCountry = response.country || vpnData.currentCountry;
-                
-                box.className = 'vpn-detection-box';
-                flag.textContent = vpnData.detectedCountryFlag;
-                title.textContent = vpnData.t.detected + ': ' + vpnData.detectedCountryName;
-                ip.textContent = vpnData.detectedIp;
+                vpnData.detectedIp = r.detected_ip || r.ip || '';
+                vpnData.detectedCountry = r.country || '';
+                vpnData.detectedCountryName = r.country_name || '';
+                vpnData.detectedCountryFlag = r.country_flag || '';
+                vpnData.ipCount = r.ip_count || 0;
+                vpnData.currentCountry = r.country || vpnData.currentCountry;
+                if (flag) flag.textContent = vpnData.detectedCountryFlag;
+                if (title) title.textContent = vpnData.detectedCountryName;
+                if (ip) ip.textContent = vpnData.detectedIp;
             } else {
-                box.className = 'vpn-detection-box failed';
-                flag.textContent = '❌';
-                title.textContent = vpnData.t.detection_failed;
-                ip.textContent = '-';
+                if (title) title.textContent = vpnData.t.detection_failed;
             }
-        } catch (e) {
-            box.className = 'vpn-detection-box failed';
-            flag.textContent = '❌';
-            title.textContent = vpnData.t.detection_failed;
-            console.error('Error:', e);
-        }
-        
+        } catch (e) { if (title) title.textContent = vpnData.t.detection_failed; }
         updateUI();
     };
     xhr.onerror = function() {
-        btn.disabled = false;
-        btn.textContent = vpnData.t.retry;
-        box.className = 'vpn-detection-box failed';
-        flag.textContent = '❌';
-        title.textContent = vpnData.t.detection_failed;
+        if (btn) { btn.disabled = false; btn.value = vpnData.t.auto_detect; }
+        if (title) title.textContent = vpnData.t.detection_failed;
     };
     xhr.send();
 }
@@ -2011,17 +1592,14 @@ function loadAuthStatus() {
     xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_auth_status', true);
     xhr.onload = function() {
         try {
-            var response = JSON.parse(xhr.responseText);
-            vpnData.authLoggedIn = response.logged_in;
-            vpnData.authUsername = response.username || '';
-            vpnData.authType = response.type || '';
-            vpnData.authExpiry = response.expiration || '';
-            vpnData.authReason = response.reason || '';
-            vpnData.authTime = response.auth_time || '';
+            var r = JSON.parse(xhr.responseText);
+            vpnData.authLoggedIn = r.logged_in;
+            vpnData.authUsername = r.username || '';
+            vpnData.authType = r.type || '';
+            vpnData.authExpiry = r.expiration || '';
+            vpnData.authReason = r.reason || '';
             updateAuthUI();
-        } catch (e) {
-            console.error('Auth error:', e);
-        }
+        } catch (e) { console.error(e); }
     };
     xhr.send();
 }
@@ -2029,40 +1607,21 @@ function loadAuthStatus() {
 function updateAuthUI() {
     var loginForm = document.getElementById('login-form');
     var userInfo = document.getElementById('user-info');
-    var statusBox = document.getElementById('user-status-box');
-    var statusIcon = document.getElementById('user-status-icon');
-    var statusTitle = document.getElementById('user-status-title');
-    var userName = document.getElementById('user-name');
-    var userType = document.getElementById('user-type');
-    var userExpiry = document.getElementById('user-expiry');
-    var expiryWarning = document.getElementById('expiry-warning');
-    var expiryText = document.getElementById('expiry-warning-text');
-    
     if (vpnData.authLoggedIn) {
         loginForm.style.display = 'none';
         userInfo.style.display = 'block';
-        
-        statusBox.className = 'vpn-detection-box vpn-valid-bg';
-        statusIcon.textContent = '👤';
-        statusTitle.textContent = vpnData.t.logged_in;
-        userName.textContent = vpnData.authUsername;
-        userType.innerHTML = '<span style="color:#28a745;font-weight:bold;">' + vpnData.authType.toUpperCase() + '</span>';
-        
-        var expiryDate = vpnData.authExpiry;
+        document.getElementById('user-name').textContent = vpnData.authUsername;
+        document.getElementById('user-type').innerHTML = '<strong style="color:#3c763d;">' + vpnData.authType.toUpperCase() + '</strong>';
         var isExpired = vpnData.authExpiry && new Date(vpnData.authExpiry) < new Date();
-        
+        var expiryEl = document.getElementById('user-expiry');
+        var warnEl = document.getElementById('expiry-warning');
         if (isExpired) {
-            userExpiry.innerHTML = '<span class="vpn-expired">' + expiryDate + ' ⚠️</span>';
-            userExpiry.className = 'vpn-info-value vpn-expired';
-            expiryWarning.style.display = 'block';
-            expiryWarning.style.background = '#f8d7da';
-            expiryWarning.style.borderColor = '#f5c6cb';
-            expiryText.style.color = '#721c24';
-            expiryText.textContent = vpnData.t.expired + ': ' + expiryDate;
+            expiryEl.innerHTML = '<span style="color:#a94442;font-weight:bold;">' + vpnData.authExpiry + '</span>';
+            warnEl.style.display = 'block';
+            document.getElementById('expiry-warning-text').textContent = vpnData.t.expired + ': ' + vpnData.authExpiry;
         } else {
-            userExpiry.innerHTML = '<span class="vpn-valid">✓ ' + expiryDate + '</span>';
-            userExpiry.className = 'vpn-info-value vpn-valid';
-            expiryWarning.style.display = 'none';
+            expiryEl.innerHTML = '<span style="color:#3c763d;">' + vpnData.authExpiry + '</span>';
+            warnEl.style.display = 'none';
         }
     } else {
         loginForm.style.display = 'block';
@@ -2074,40 +1633,27 @@ function doLogin() {
     var username = document.getElementById('login-username').value;
     var password = document.getElementById('login-password').value;
     var errorEl = document.getElementById('login-error');
-    
-    if (!username || !password) {
-        errorEl.textContent = vpnData.t.invalid_credentials;
-        errorEl.style.display = 'block';
-        return;
-    }
-    
+    if (!username || !password) { errorEl.textContent = vpnData.t.invalid_credentials; errorEl.style.display = 'inline'; return; }
     errorEl.style.display = 'none';
-    
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_login', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         try {
-            var response = JSON.parse(xhr.responseText);
-            
-            if (response.success) {
+            var r = JSON.parse(xhr.responseText);
+            if (r.success) {
                 vpnData.authLoggedIn = true;
-                vpnData.authUsername = response.username || username;
-                vpnData.authType = response.type || '';
-                vpnData.authExpiry = response.expiration || '';
-                updateAuthUI();
-                updateUI();
+                vpnData.authUsername = r.username || username;
+                vpnData.authType = r.type || '';
+                vpnData.authExpiry = r.expiration || '';
+                updateAuthUI(); updateUI();
             } else {
                 var msg = vpnData.t.invalid_credentials;
-                if (response.status === 'expired') msg = vpnData.t.account_expired;
-                if (response.status === 'not_vip') msg = vpnData.t.not_vip_account;
-                errorEl.textContent = msg;
-                errorEl.style.display = 'block';
+                if (r.status === 'expired') msg = vpnData.t.account_expired;
+                if (r.status === 'not_vip') msg = vpnData.t.not_vip_account;
+                errorEl.textContent = msg; errorEl.style.display = 'inline';
             }
-        } catch (e) {
-            errorEl.textContent = vpnData.t.error;
-            errorEl.style.display = 'block';
-        }
+        } catch (e) { errorEl.textContent = vpnData.t.error; errorEl.style.display = 'inline'; }
     };
     xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
 }
@@ -2117,15 +1663,11 @@ function doLogout() {
     xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_logout', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
-        vpnData.authLoggedIn = false;
-        vpnData.authUsername = '';
-        vpnData.authType = '';
-        vpnData.authExpiry = '';
-        vpnData.connected = false;
+        vpnData.authLoggedIn = false; vpnData.authUsername = ''; vpnData.authType = '';
+        vpnData.authExpiry = ''; vpnData.connected = false;
         document.getElementById('login-username').value = '';
         document.getElementById('login-password').value = '';
-        updateAuthUI();
-        updateUI();
+        updateAuthUI(); updateUI();
     };
     xhr.send();
 }
@@ -2134,16 +1676,7 @@ function openRenewalPage() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_renewal', true);
     xhr.onload = function() {
-        try {
-            var response = JSON.parse(xhr.responseText);
-            if (response.success && response.url) {
-                window.open(response.url, '_blank');
-            } else {
-                alert('Failed to generate renewal link. Please login first.');
-            }
-        } catch (e) {
-            console.error('Renewal error:', e);
-        }
+        try { var r = JSON.parse(xhr.responseText); if (r.success && r.url) window.open(r.url, '_blank'); } catch (e) {}
     };
     xhr.send();
 }
@@ -2153,37 +1686,117 @@ function loadStatus() {
     xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api', true);
     xhr.onload = function() {
         try {
-            var response = JSON.parse(xhr.responseText);
-            vpnData.connected = response.vpn_connected;
-            vpnData.splitEnabled = response.split_tunnel;
-            vpnData.currentCountry = response.current_country || 'cn';
-            vpnData.currentCountryName = response.current_country_name || 'China';
-            vpnData.currentCountryFlag = response.current_country_flag || '🇨🇳';
-            vpnData.ipCount = response.ip_count || 0;
-            vpnData.detected = response.detected || false;
-            vpnData.detectedIp = response.detected_ip || '';
-            vpnData.detectedCountry = response.detected_country || '';
-            vpnData.detectedCountryName = response.detected_country_name || '';
-            vpnData.detectedCountryFlag = response.detected_country_flag || '🌐';
-            
+            var r = JSON.parse(xhr.responseText);
+            vpnData.connected = r.vpn_connected;
+            vpnData.splitEnabled = r.split_tunnel;
+            vpnData.currentCountry = r.current_country || 'cn';
+            vpnData.currentCountryName = r.current_country_name || 'China';
+            vpnData.currentCountryFlag = r.current_country_flag || '';
+            vpnData.ipCount = r.ip_count || 0;
+            vpnData.detected = r.detected || false;
+            vpnData.detectedIp = r.detected_ip || '';
+            vpnData.detectedCountry = r.detected_country || '';
+            vpnData.detectedCountryName = r.detected_country_name || '';
+            vpnData.detectedCountryFlag = r.detected_country_flag || '';
             if (vpnData.detected) {
-                var box = document.getElementById('detection-box');
                 var flag = document.getElementById('detection-flag');
                 var title = document.getElementById('detection-title');
                 var ip = document.getElementById('detection-ip');
-                
-                box.className = 'vpn-detection-box';
-                flag.textContent = vpnData.detectedCountryFlag;
-                title.textContent = vpnData.t.detected + ': ' + vpnData.detectedCountryName;
-                ip.textContent = vpnData.detectedIp;
+                if (flag) flag.textContent = vpnData.detectedCountryFlag;
+                if (title) title.textContent = vpnData.detectedCountryName;
+                if (ip) ip.textContent = vpnData.detectedIp;
             }
-            
             updateUI();
-        } catch (e) {
-            console.error('Error:', e);
-        }
+        } catch (e) { console.error(e); }
     };
     xhr.send();
+}
+
+var serverCountries = {
+    "jp": {name: "Japan", flag: "\ud83c\uddef\ud83c\uddf5", server: "jp.fanq.in"},
+    "hk": {name: "Hong Kong", flag: "\ud83c\udded\ud83c\uddf0", server: "hk.fanq.in"},
+    "sg": {name: "Singapore", flag: "\ud83c\uddf8\ud83c\uddec", server: "sg.fanq.in"},
+    "tw": {name: "Taiwan", flag: "\ud83c\uddf9\ud83c\uddfc", server: "tw.fanq.in"},
+    "kr": {name: "Korea", flag: "\ud83c\uddf0\ud83c\uddf7", server: "kr.fanq.in"},
+    "us": {name: "United States", flag: "\ud83c\uddfa\ud83c\uddf8", server: "us.fanq.in"},
+    "uk": {name: "United Kingdom", flag: "\ud83c\uddec\ud83c\udde7", server: "uk.fanq.in"},
+    "de": {name: "Germany", flag: "\ud83c\udde9\ud83c\uddea", server: "de.fanq.in"},
+    "fr": {name: "France", flag: "\ud83c\uddeb\ud83c\uddf7", server: "fr.fanq.in"},
+    "nl": {name: "Netherlands", flag: "\ud83c\uddf3\ud83c\uddf1", server: "nl.fanq.in"},
+    "ca": {name: "Canada", flag: "\ud83c\udde8\ud83c\udde6", server: "ca.fanq.in"},
+    "au": {name: "Australia", flag: "\ud83c\udde6\ud83c\uddfa", server: "au.fanq.in"},
+    "in": {name: "India", flag: "\ud83c\uddee\ud83c\uddf3", server: "in.fanq.in"},
+    "br": {name: "Brazil", flag: "\ud83c\udde7\ud83c\uddf7", server: "br.fanq.in"},
+    "ar": {name: "Argentina", flag: "\ud83c\udde6\ud83c\uddf7", server: "ar.fanq.in"},
+    "at": {name: "Austria", flag: "\ud83c\udde6\ud83c\uddf9", server: "at.fanq.in"},
+    "ch": {name: "Switzerland", flag: "\ud83c\udde8\ud83c\udded", server: "ch.fanq.in"},
+    "cn": {name: "China", flag: "\ud83c\udde8\ud83c\uddf3", server: "cn.fanq.in"},
+    "dk": {name: "Denmark", flag: "\ud83c\udde9\ud83c\uddf0", server: "dk.fanq.in"},
+    "es": {name: "Spain", flag: "\ud83c\uddea\ud83c\uddf8", server: "es.fanq.in"},
+    "it": {name: "Italy", flag: "\ud83c\uddee\ud83c\uddf9", server: "it.fanq.in"},
+    "nz": {name: "New Zealand", flag: "\ud83c\uddf3\ud83c\uddff", server: "nz.fanq.in"},
+    "pt": {name: "Portugal", flag: "\ud83c\uddf5\ud83c\uddf9", server: "pt.fanq.in"},
+    "th": {name: "Thailand", flag: "\ud83c\uddf9\ud83c\udded", server: "th.fanq.in"}
+};
+
+function populateServerSelect(selectEl) {
+    if (!selectEl) return;
+    var currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
+    selectEl.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
+    for (var code in serverCountries) {
+        var s = serverCountries[code];
+        var opt = document.createElement('option');
+        opt.value = s.server;
+        opt.textContent = s.flag + ' ' + s.name;
+        if (s.server === currentServer) opt.selected = true;
+        selectEl.appendChild(opt);
+    }
+}
+
+function loadServerList() {
+    populateServerSelect(document.getElementById('server-select'));
+    populateServerSelect(document.getElementById('server-select-loggedin'));
+}
+
+function refreshServerList() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_servers', true);
+    xhr.onload = function() {
+        try {
+            var resp = JSON.parse(xhr.responseText);
+            var servers = Array.isArray(resp) ? resp : (resp && resp.servers ? resp.servers : []);
+            if (servers && servers.length > 0) {
+                ['server-select', 'server-select-loggedin'].forEach(function(id) {
+                    var sel = document.getElementById(id);
+                    if (!sel) return;
+                    var cur = sel.value;
+                    sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
+                    servers.forEach(function(s) {
+                        var opt = document.createElement('option');
+                        opt.value = s.server;
+                        opt.textContent = (s.flag || '') + ' ' + (s.name || s.server);
+                        if (s.server === cur) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                });
+            }
+        } catch (e) { console.error(e); }
+    };
+    xhr.send();
+}
+
+function saveServerSelection(selectEl) {
+    if (!selectEl || !selectEl.value) return;
+    // Sync both selects
+    ['server-select', 'server-select-loggedin'].forEach(function(id) {
+        var s = document.getElementById(id);
+        if (s && s !== selectEl) s.value = selectEl.value;
+    });
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_set_server', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {};
+    xhr.send('server=' + encodeURIComponent(selectEl.value));
 }
 
 window.addEventListener('DOMContentLoaded', function() {
@@ -2191,157 +1804,9 @@ window.addEventListener('DOMContentLoaded', function() {
     loadStatus();
     loadServerList();
     setTimeout(auto_detect, 1000);
-});
-
-var serverCountries = {
-    "ar": {name: "Argentina", flag: "🇦🇷", server: "ar.fanq.in"},
-    "au": {name: "Australia", flag: "🇦🇺", server: "au.fanq.in"},
-    "at": {name: "Austria", flag: "🇦🇹", server: "at.fanq.in"},
-    "br": {name: "Brazil", flag: "🇧🇷", server: "br.fanq.in"},
-    "ca": {name: "Canada", flag: "🇨🇦", server: "ca.fanq.in"},
-    "cn": {name: "China", flag: "🇨🇳", server: "cn.fanq.in"},
-    "dk": {name: "Denmark", flag: "🇩🇰", server: "dk.fanq.in"},
-    "fr": {name: "France", flag: "🇫🇷", server: "fr.fanq.in"},
-    "de": {name: "Germany", flag: "🇩🇪", server: "de.fanq.in"},
-    "hk": {name: "Hong Kong", flag: "🇭🇰", server: "hk.fanq.in"},
-    "in": {name: "India", flag: "🇮🇳", server: "in.fanq.in"},
-    "it": {name: "Italy", flag: "🇮🇹", server: "it.fanq.in"},
-    "jp": {name: "Japan", flag: "🇯🇵", server: "jp.fanq.in"},
-    "kr": {name: "Korea", flag: "🇰🇷", server: "kr.fanq.in"},
-    "nl": {name: "Netherland", flag: "🇳🇱", server: "nl.fanq.in"},
-    "nz": {name: "New Zealand", flag: "🇳🇿", server: "nz.fanq.in"},
-    "pt": {name: "Portugal", flag: "🇵🇹", server: "pt.fanq.in"},
-    "sg": {name: "Singapore", flag: "🇸🇬", server: "sg.fanq.in"},
-    "es": {name: "Spain", flag: "🇪🇸", server: "es.fanq.in"},
-    "ch": {name: "Switzerland", flag: "🇨🇭", server: "ch.fanq.in"},
-    "tw": {name: "Taiwan", flag: "🇹🇼", server: "tw.fanq.in"},
-    "th": {name: "Thailand", flag: "🇹🇭", server: "th.fanq.in"},
-    "uk": {name: "United Kingdom", flag: "🇬🇧", server: "uk.fanq.in"},
-    "us": {name: "United States", flag: "🇺🇸", server: "us.fanq.in"}
-};
-
-function loadServerList() {
-    var select = document.getElementById('server-select');
-    var status = document.getElementById('server-status');
-    if (!select) return;
-    
-    var currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
-    
-    for (var code in serverCountries) {
-        var opt = document.createElement('option');
-        opt.value = serverCountries[code].server;
-        opt.textContent = serverCountries[code].flag + ' ' + serverCountries[code].name + ' (' + serverCountries[code].server + ')';
-        if (serverCountries[code].server === currentServer) {
-            opt.selected = true;
-        }
-        select.appendChild(opt);
-    }
-    
-    if (status) {
-        status.textContent = Object.keys(serverCountries).length + ' ' + vpnData.t.servers_count;
-    }
-}
-
-function refreshServerList() {
-    var btn = document.getElementById('btn-refresh-servers');
-    var status = document.getElementById('server-status');
-    var select = document.getElementById('server-select');
-    
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = vpnData.t.loading;
-    }
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/cgi-bin/luci/admin/network/vpn/api_servers', true);
-    xhr.onload = function() {
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = '🔄 ' + vpnData.t.refresh_servers;
-        }
-        
-        try {
-            var resp = JSON.parse(xhr.responseText);
-            var servers = Array.isArray(resp) ? resp : (resp && resp.servers ? resp.servers : []);
-            if (servers && servers.length > 0) {
-                if (select) {
-                    var currentVal = select.value;
-                    select.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
-                    servers.forEach(function(s) {
-                        var opt = document.createElement('option');
-                        opt.value = s.server;
-                        opt.textContent = (s.flag || '🌐') + ' ' + (s.name || s.server);
-                        if (s.server === currentVal) {
-                            opt.selected = true;
-                        }
-                        select.appendChild(opt);
-                    });
-                }
-                if (status) {
-                    status.textContent = servers.length + ' ' + vpnData.t.servers_count + ' - ' + vpnData.t.servers_updated;
-                    status.style.color = '#28a745';
-                }
-            } else {
-                if (status) {
-                    status.textContent = vpnData.t.no_servers;
-                    status.style.color = '#dc3545';
-                }
-            }
-        } catch (e) {
-            console.error('Server list error:', e);
-            if (status) {
-                status.textContent = vpnData.t.error;
-                status.style.color = '#dc3545';
-            }
-        }
-    };
-    xhr.onerror = function() {
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = '🔄 ' + vpnData.t.refresh_servers;
-        }
-        if (status) {
-            status.textContent = vpnData.t.error;
-            status.style.color = '#dc3545';
-        }
-    };
-    xhr.send();
-}
-
-function saveServerSelection() {
-    var select = document.getElementById('server-select');
-    if (!select || !select.value) return;
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/cgi-bin/luci/admin/network/vpn/api_set_server', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        try {
-            var response = JSON.parse(xhr.responseText);
-            if (response.success) {
-                showNotification(vpnData.t.success, 'success');
-            }
-        } catch (e) {
-            console.error('Save server error:', e);
-        }
-    };
-    xhr.send('server=' + encodeURIComponent(select.value));
-}
-
-function showNotification(msg, type) {
-    var notif = document.createElement('div');
-    notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px 20px;background:' + 
-        (type === 'success' ? '#28a745' : '#dc3545') + ';color:white;border-radius:8px;' +
-        'z-index:9999;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,0.2);';
-    notif.textContent = msg;
-    document.body.appendChild(notif);
-    setTimeout(function() { notif.remove(); }, 3000);
-}
-
-var serverSelect = document.getElementById('server-select');
-if (serverSelect) {
-    serverSelect.addEventListener('change', function() {
-        saveServerSelection();
+    ['server-select', 'server-select-loggedin'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', function() { saveServerSelection(this); });
     });
-}
+});
 </script>
