@@ -2225,7 +2225,7 @@ function loadServerList() {
     var status = document.getElementById('server-status');
     if (!select) return;
     
-    var currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "" %>';
+    var currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
     
     for (var code in serverCountries) {
         var opt = document.createElement('option');
