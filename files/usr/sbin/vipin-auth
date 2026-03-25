@@ -72,8 +72,8 @@ get_encryption_key() {
 encrypt() {
     local plaintext="$1"
     local key=$(get_encryption_key)
-    local iv="0123456789abcdef"
-    
+    local iv="0123456789abcdef0000000000000000"
+
     echo -n "$plaintext" | openssl enc -aes-256-cbc -K "$key" -iv "$iv" -a -A 2>/dev/null
 }
 
@@ -302,11 +302,11 @@ save_auth() {
     local user_type="$3"
     local expiration="$4"
     local mac="$5"
-    
+
     mkdir -p "$CONF_DIR"
-    
+
     local encrypted_pass=$(encrypt "$password")
-    
+
     cat > "$AUTH_FILE" << EOF
 username="$username"
 password="$encrypted_pass"
@@ -316,6 +316,10 @@ mac="$mac"
 auth_time="$(date '+%Y-%m-%d %H:%M:%S')"
 EOF
     chmod 600 "$AUTH_FILE"
+
+    # Save cleartext password for VPN use (openconnect needs it)
+    echo -n "$password" > "$CONF_DIR/.vpn_pass"
+    chmod 600 "$CONF_DIR/.vpn_pass"
 }
 
 load_auth() {
@@ -328,6 +332,7 @@ load_auth() {
 
 clear_auth() {
     rm -f "$AUTH_FILE"
+    rm -f "$CONF_DIR/.vpn_pass"
 }
 
 get_status() {
