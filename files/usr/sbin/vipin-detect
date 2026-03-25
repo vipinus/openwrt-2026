@@ -20,7 +20,8 @@ get_public_ip() {
         "https://ipinfo.io/ip" \
         "https://myip.dnsomatic.com"; do
         
-        ip=$(curl -s --max-time 5 "$url" 2>/dev/null | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+        ip=$(wget -q -O- --timeout=5 "$url" 2>/dev/null || curl -s --max-time 5 "$url" 2>/dev/null)
+        ip=$(echo "$ip" | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
         if [ -n "$ip" ]; then
             break
         fi
@@ -37,7 +38,7 @@ get_country_by_ip() {
         "https://ip-api.com/json/$ip?fields=countryCode,country" \
         "https://ipinfo.io/$ip/json"; do
         
-        local response=$(curl -s --max-time 5 "$url" 2>/dev/null)
+        local response=$(wget -q -O- --timeout=5 "$url" 2>/dev/null || curl -s --max-time 5 "$url" 2>/dev/null)
         if [ -n "$response" ]; then
             country=$(echo "$response" | grep -o '"country_code":"[^"]*"' | cut -d'"' -f4)
             [ -z "$country" ] && country=$(echo "$response" | grep -o '"countryCode":"[^"]*"' | cut -d'"' -f4)

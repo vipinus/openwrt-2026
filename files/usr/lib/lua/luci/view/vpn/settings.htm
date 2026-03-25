@@ -1704,6 +1704,18 @@ local t = i18n[lang] or i18n["en"]
                         <input type="password" id="login-password" placeholder="<%= t.password %>"
                                style="width:100%;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;box-sizing:border-box;">
                     </div>
+                    <div style="margin-bottom:15px;">
+                        <label style="display:block;margin-bottom:6px;font-size:13px;color:#666;font-weight:500;"><%= t.select_server %></label>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <select id="server-select" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                                <option value="">-- <%= t.select_server %> --</option>
+                            </select>
+                            <button class="vpn-detect-btn" id="btn-refresh-servers" onclick="refreshServerList()" type="button" style="white-space:nowrap;">
+                                🔄
+                            </button>
+                        </div>
+                        <div id="server-status" style="margin-top:6px;font-size:12px;color:#666;"></div>
+                    </div>
                     <button class="vpn-detect-btn" onclick="doLogin()" style="width:100%;padding:12px;font-size:15px;">
                         <%= t.login_button %>
                     </button>
@@ -1747,25 +1759,6 @@ local t = i18n[lang] or i18n["en"]
                         💳 <%= t.renew_now %>
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="vpn-card">
-        <div class="vpn-card-header">
-            <%= t.select_server %>
-        </div>
-        <div class="vpn-card-body">
-            <div class="vpn-server-section">
-                <div style="display:flex;gap:10px;align-items:center;">
-                    <select id="server-select" style="flex:1;padding:12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
-                        <option value="">-- <%= t.select_server %> --</option>
-                    </select>
-                    <button class="vpn-detect-btn" id="btn-refresh-servers" onclick="refreshServerList()">
-                        🔄 <%= t.refresh_servers %>
-                    </button>
-                </div>
-                <div id="server-status" style="margin-top:10px;font-size:13px;color:#666;"></div>
             </div>
         </div>
     </div>

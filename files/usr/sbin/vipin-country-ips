@@ -30,13 +30,14 @@ get_ips_apnic() {
     
     touch "$LOCK_FILE"
     
-    if ! curl -s --max-time 60 "$url" -o "$temp_file" 2>/dev/null; then
+    if ! wget -q -O "$temp_file" --timeout=60 "$url" 2>/dev/null && \
+       ! curl -s --max-time 60 "$url" -o "$temp_file" 2>/dev/null; then
         log "Failed to download APNIC data"
         rm -f "$temp_file" "$LOCK_FILE"
         return 1
     fi
     
-    grep "|$country|" "$temp_file" | awk -F'|' '$2 == "ipv4" {print $4 "/" 32-log($5)/log(2)}' > "$CONF_DIR/$country.txt"
+    grep "|$country|" "$temp_file" | awk -F'|' '$3 == "ipv4" {print $4 "/" 32-log($5)/log(2)}' > "$CONF_DIR/$country.txt"
     
     rm -f "$temp_file" "$LOCK_FILE"
     
@@ -52,7 +53,8 @@ get_ips_ipdeny() {
     
     log "Fetching ipdeny data for country: $country"
     
-    if ! curl -s --max-time 30 -L "$url" -o "$temp_file" 2>/dev/null; then
+    if ! wget -q -O "$temp_file" --timeout=30 "$url" 2>/dev/null && \
+       ! curl -s --max-time 30 -L "$url" -o "$temp_file" 2>/dev/null; then
         log "Failed to download ipdeny data for $country"
         rm -f "$temp_file"
         return 1
