@@ -1,20 +1,23 @@
 #!/bin/sh
 # Split tunneling: domestic IPs go direct, foreign IPs go through VPN
-# Works by adding specific routes for domestic IPs via WAN gateway
-# VPN's 0/1 + 128/1 routes catch everything else -> VPN
+# Uses nftables set for domestic IPs + policy routing
+# VPN's 0/1 + 128/1 routes stay in main table for all traffic
 
 CONF_DIR="/etc/vipin/country-ips"
+TABLE_ID=100
+MARK_VPN=0x100
+MARK_DIRECT=0x200
 
 get_current_country() {
     cat "$CONF_DIR/current_country" 2>/dev/null || echo "cn"
 }
 
 get_wan_gateway() {
-    ip route | grep "^default" | head -1 | awk '{print $3}'
+    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $3}'
 }
 
 get_wan_device() {
-    ip route | grep "^default" | head -1 | awk '{print $5}'
+    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $5}'
 }
 
 enable_split() {
@@ -33,41 +36,57 @@ enable_split() {
         return 1
     fi
 
-    # Clean up old routes first
+    if [ -z "$wan_gw" ] || [ -z "$wan_dev" ]; then
+        logger -t vipin-routing "Cannot find WAN gateway"
+        return 1
+    fi
+
+    # Clean up first
     disable_split 2>/dev/null
 
-    # NAT masquerade for VPN traffic
-    nft add table inet vipin_split 2>/dev/null
-    nft add chain inet vipin_split postrouting '{ type nat hook postrouting priority srcnat; }' 2>/dev/null
-    nft add rule inet vipin_split postrouting oifname "vpn_vipin" masquerade 2>/dev/null
+    # Create nft table
+    nft add table inet vipin_split
+    nft add set inet vipin_split domestic '{ type ipv4_addr; flags interval; }'
 
-    # Add domestic IPs as specific routes via WAN (more specific = higher priority than 0/1)
-    local count=0
+    # Load domestic IPs into nft set
+    local batch_file="/tmp/vipin_nft_batch.nft"
+    echo "flush set inet vipin_split domestic" > "$batch_file"
     grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
         [ -z "$cidr" ] && continue
-        ip route add "$cidr" via "$wan_gw" dev "$wan_dev" 2>/dev/null
-        count=$((count + 1))
+        echo "add element inet vipin_split domestic { $cidr }" >> "$batch_file"
     done
+    nft -f "$batch_file" 2>/dev/null
+    rm -f "$batch_file"
+
+    # Also add private networks to domestic set
+    nft add element inet vipin_split domestic '{ 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 }' 2>/dev/null
+
+    # Mark domestic traffic for direct routing (prerouting for LAN clients, output for router itself)
+    nft add chain inet vipin_split prerouting '{ type filter hook prerouting priority mangle; }'
+    nft add rule inet vipin_split prerouting ip daddr @domestic meta mark set $MARK_DIRECT
+
+    nft add chain inet vipin_split output '{ type route hook output priority mangle; }'
+    nft add rule inet vipin_split output oifname "vpn_vipin" return
+    nft add rule inet vipin_split output oifname "lo" return
+    nft add rule inet vipin_split output ip daddr @domestic meta mark set $MARK_DIRECT
+
+    # NAT masquerade for VPN traffic
+    nft add chain inet vipin_split postrouting '{ type nat hook postrouting priority srcnat; }'
+    nft add rule inet vipin_split postrouting oifname "vpn_vipin" masquerade
+
+    # Policy route: marked domestic traffic bypasses VPN via WAN
+    ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
+    ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
+    ip rule add fwmark $MARK_DIRECT table $TABLE_ID pri 100 2>/dev/null
 
     local ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
-    logger -t vipin-routing "Split tunnel enabled: $country ($ip_count domestic routes direct via $wan_dev)"
+    logger -t vipin-routing "Split tunnel enabled: $country ($ip_count domestic IPs, direct via $wan_dev)"
 }
 
 disable_split() {
-    local wan_gw=$(get_wan_gateway)
-    local wan_dev=$(get_wan_device)
-
-    # Remove domestic IP routes (routes added via WAN that aren't default)
-    # Find routes we added: specific CIDRs via wan_gw
-    if [ -n "$wan_gw" ]; then
-        ip route show | grep "via $wan_gw dev $wan_dev" | grep -v "^default" | while read -r route; do
-            ip route del $route 2>/dev/null
-        done
-    fi
-
-    # Remove nft table
+    ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
+    ip route flush table $TABLE_ID 2>/dev/null
     nft delete table inet vipin_split 2>/dev/null
-
     logger -t vipin-routing "Split tunnel disabled"
 }
 
@@ -90,10 +109,11 @@ case "$1" in
         if nft list tables 2>/dev/null | grep -q "vipin_split"; then
             country=$(get_current_country)
             domestic_file="$CONF_DIR/${country}.txt"
-            count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
+            count=$(nft list set inet vipin_split domestic 2>/dev/null | grep -c "elements")
+            ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
             echo "Split tunnel: enabled"
             echo "Country: $country"
-            echo "Domestic routes: $count"
+            echo "Domestic IPs: $ip_count"
         else
             echo "Split tunnel: disabled"
         fi
