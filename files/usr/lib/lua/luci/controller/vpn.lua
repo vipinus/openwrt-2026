@@ -1446,22 +1446,34 @@ end
 function api_set_server()
     local http = require("luci.http")
     local json = require("cjson")
-    
+    local util = require("luci.util")
+
     local server = luci.http.formvalue("server") or ""
-    
+
     local success = false
+    local reconnected = false
     if server and server ~= "" then
         luci.model.uci:set("vipin", "vpn", "server", server)
         luci.model.uci:save("vipin")
         luci.model.uci:commit("vipin")
         success = true
+
+        -- If VPN is running, reconnect to new server
+        local vpn_running = util.exec("pgrep -x openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+        if vpn_running == "1" then
+            util.exec("/etc/init.d/vipin-vpn stop 2>&1")
+            util.exec("sleep 1")
+            util.exec("/etc/init.d/vipin-vpn start 2>&1")
+            reconnected = true
+        end
     end
-    
+
     local result = {
         success = success,
-        server = server
+        server = server,
+        reconnected = reconnected
     }
-    
+
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
