@@ -1364,6 +1364,8 @@ local i18n = {
 local t = i18n[lang] or i18n["en"]
 %>
 
+<%+header%>
+
 <style>
 #vpn-status-badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; font-weight:bold; }
 #vpn-status-badge.connected { background:#dff0d8; color:#3c763d; border:1px solid #d6e9c6; }
@@ -1817,3 +1819,5 @@ window.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<%+footer%>
