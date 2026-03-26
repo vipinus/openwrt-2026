@@ -427,8 +427,8 @@ case "$1" in
         result=$(authenticate "$2" "$3" "$router_mac")
         
         if echo "$result" | grep -q '"status": "valid"'; then
-            user_type=$(echo "$result" | grep -o '"type":"[^"]*"' | cut -d'"' -f4)
-            expiration=$(echo "$result" | grep -o '"expiration":"[^"]*"' | cut -d'"' -f4)
+            user_type=$(echo "$result" | grep -o '"type": *"[^"]*"' | cut -d'"' -f4)
+            expiration=$(echo "$result" | grep -o '"expiration": *"[^"]*"' | cut -d'"' -f4)
             save_auth "$2" "$3" "$user_type" "$expiration" "$router_mac"
         fi
         
