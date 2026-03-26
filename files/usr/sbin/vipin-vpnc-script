@@ -16,9 +16,14 @@ case "$reason" in
             ip route add "$VPNGATEWAY" via "$DEFAULT_GW" dev "$DEFAULT_DEV" 2>/dev/null
         fi
 
-        # Add default route via VPN (split into two /1 routes to override default)
-        ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
-        ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+        # Check if split tunnel is enabled
+        SPLIT=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
+        if [ "$SPLIT" != "1" ]; then
+            # No split tunnel: route ALL traffic through VPN
+            ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+            ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+        fi
+        # When split tunnel is enabled, vipin-vpn-routing handles routing via policy table
 
         # DNS - add VPN DNS servers
         if [ -n "$INTERNAL_IP4_DNS" ]; then
@@ -43,6 +48,9 @@ case "$reason" in
         ip route del 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route del 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route del "$VPNGATEWAY" 2>/dev/null
+
+        # Disable split tunnel routing
+        /usr/sbin/vipin-vpn-routing disable 2>/dev/null
 
         # Restore DNS
         if [ -f /etc/resolv.conf.vipin-backup ]; then
