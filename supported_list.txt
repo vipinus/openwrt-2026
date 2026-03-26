@@ -778,15 +778,8 @@ elecom-wmc-m1267gst2|ELECOM_WMC_M1267GST2.config
 elecom-wmc-s1267gs2|ELECOM_WMC_S1267GS2.config
 elecom-wmc-x1800gst|ELECOM_WMC_X1800GST.config
 elecom-wrc-1167ghbk2-s|ELECOM_WRC_1167GHBK2_S.config
-elecom-wrc-1167gs2-b|ELECOM_WRC_1167GS2_B.config
 elecom-wrc-1167gst2|ELECOM_WRC_1167GST2.config
-elecom-wrc-1750gs|ELECOM_WRC_1750GS.config
 elecom-wrc-1750gst2|ELECOM_WRC_1750GST2.config
-elecom-wrc-1750gsv|ELECOM_WRC_1750GSV.config
-elecom-wrc-1900gst|ELECOM_WRC_1900GST.config
-elecom-wrc-2533ghbk-i|ELECOM_WRC_2533GHBK_I.config
-elecom-wrc-2533gs2|ELECOM_WRC_2533GS2.config
-elecom-wrc-2533gst|ELECOM_WRC_2533GST.config
 elecom-wrc-2533gst2|ELECOM_WRC_2533GST2.config
 elecom-wrc-x1800gs|ELECOM_WRC_X1800GS.config
 elecom-wsc-x1800gs|ELECOM_WSC_X1800GS.config
@@ -836,7 +829,6 @@ hongdian-h8922-v30|HONGDIAN_H8922_V30.config
 huasifei-ws1208v2|HUASIFEI_WS1208V2.config
 humax-e10|HUMAX_E10.config
 iij-sa-w2|IIJ_SA_W2.config
-iodata-wnpr2600g|IODATA_WNPR2600G.config
 iodata-wn-ax1167gr|IODATA_WN_AX1167GR.config
 iodata-wn-ax1167gr2|IODATA_WN_AX1167GR2.config
 iodata-wn-ax2033gr|IODATA_WN_AX2033GR.config
@@ -962,7 +954,6 @@ radxa-rock-5c|RADXA_ROCK_5C.config
 radxa-rock-5t|RADXA_ROCK_5T.config
 radxa-rock-5-itx|RADXA_ROCK_5_ITX.config
 raisecom-msg1500-x-00|RAISECOM_MSG1500_X_00.config
-ravpower-rp-wd009|RAVPOWER_RP_WD009.config
 renkforce-ws-wn530hp3-a|RENKFORCE_WS_WN530HP3_A.config
 rostelecom-rt-fe-1a|ROSTELECOM_RT_FE_1A.config
 rostelecom-rt-sf-1|ROSTELECOM_RT_SF_1.config
@@ -1000,15 +991,12 @@ tplink-archer-c6-v2-us|TPLINK_ARCHER_C6_V2_US.config
 tplink-archer-c6-v3|TPLINK_ARCHER_C6_V3.config
 tplink-archer-mr200-v6|TPLINK_ARCHER_MR200_V6.config
 tplink-deco-m4r-v4|TPLINK_DECO_M4R_V4.config
-tplink-eap613-v1|TPLINK_EAP613_V1.config
 tplink-eap615-wall-v1|TPLINK_EAP615_WALL_V1.config
 tplink-ec330-g5u-v1|TPLINK_EC330_G5U_V1.config
 tplink-er605-v2|TPLINK_ER605_V2.config
 tplink-ex220-v1|TPLINK_EX220_V1.config
 tplink-ex220-v2|TPLINK_EX220_V2.config
 tplink-mr600-v2-eu|TPLINK_MR600_V2_EU.config
-tplink-re500-v1|TPLINK_RE500_V1.config
-tplink-re650-v1|TPLINK_RE650_V1.config
 tplink-tl-wa1201-v2|TPLINK_TL_WA1201_V2.config
 tplink-tl-wr1043n-v5|TPLINK_TL_WR1043N_V5.config
 ubnt-edgerouter-x|UBNT_EDGEROUTER_X.config
