@@ -109,6 +109,8 @@ start_service() {
         return 0
     fi
     
+    local vpn_port=$((50000 + RANDOM % 10000))
+
     fetch_cert_pin "$server"
     local cert_pin=$(get_cert_pin)
     local cert_opt=""
@@ -116,14 +118,14 @@ start_service() {
         cert_opt="--servercert $cert_pin"
     fi
 
-    logger -t $NAME "Connecting to $server:443"
+    logger -t $NAME "Connecting to $server:$vpn_port"
 
     # Create wrapper script to pipe password to openconnect via stdin
     cat > /tmp/vipin/vpn_start.sh << SCRIPT
 #!/bin/sh
 cat "$pass_file" | $PROG \
     --protocol=anyconnect \
-    --server "$server" \
+    --server "$server:$vpn_port" \
     --useragent "OpenConnect VPN Agent" \
     --authgroup "" \
     --user "$username" \
