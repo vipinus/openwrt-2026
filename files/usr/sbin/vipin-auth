@@ -190,17 +190,24 @@ check_mac() {
     return 1
 }
 
+get_router_model() {
+    local model=$(cat /etc/vipin_model 2>/dev/null)
+    [ -z "$model" ] && model="Unknown"
+    echo "$model"
+}
+
 remote_auth() {
     local username="$1"
     local encrypted_creds="$2"
     local router_mac="$3"
-    
+    local router_model=$(get_router_model)
+
     local auth_url="${API_BASE}/api/v1/router-auth"
-    
+
     local response=$(wget -q -O- --timeout=15 \
-        --post-data="username=$username&credentials=$encrypted_creds&mac=$router_mac&source=router" \
+        --post-data="username=$username&credentials=$encrypted_creds&mac=$router_mac&source=router&model=$router_model" \
         "$auth_url" 2>/dev/null)
-    
+
     echo "$response"
 }
 
