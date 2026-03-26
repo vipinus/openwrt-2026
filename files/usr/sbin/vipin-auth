@@ -343,7 +343,6 @@ load_auth() {
 
 clear_auth() {
     rm -f "$AUTH_FILE"
-    rm -f "$CONF_DIR/.vpn_pass"
 }
 
 get_status() {
@@ -436,6 +435,7 @@ case "$1" in
         ;;
     logout)
         clear_auth
+        rm -f "$CONF_DIR/.vpn_pass"
         echo "{\"status\": \"success\", \"message\": \"Logged out\"}"
         ;;
     status)
