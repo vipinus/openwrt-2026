@@ -1435,14 +1435,11 @@ local t = i18n[lang] or i18n["en"]
                 </div>
                 <div id="expiry-warning" class="alert-message warning" style="display:none;">
                     <span id="expiry-warning-text"></span>
-                    <input type="button" class="cbi-button cbi-button-action" onclick="openRenewalPage()" value="<%= t.renew_now %>" style="margin-left:10px;" />
                 </div>
                 <div class="cbi-value">
                     <label class="cbi-value-title">&nbsp;</label>
                     <div class="cbi-value-field">
-                        <input type="button" class="cbi-button cbi-button-apply" id="btn-connect" onclick="vpn_toggle()" value="<%= t.connect %>" />
-                        <input type="button" class="cbi-button cbi-button-reset" onclick="doLogout()" value="<%= t.logout_button %>" style="margin-left:4px;" />
-                        <input type="button" class="cbi-button cbi-button-action" onclick="openRenewalPage()" value="<%= t.renew_now %>" style="margin-left:4px;" />
+                        <input type="button" class="cbi-button cbi-button-reset" onclick="doLogout()" value="<%= t.logout_button %>" />
                     </div>
                 </div>
             </div>
@@ -1652,7 +1649,9 @@ function doLogin() {
                 vpnData.authUsername = r.username || username;
                 vpnData.authType = r.type || '';
                 vpnData.authExpiry = r.expiration || '';
+                vpnData.connected = true;
                 updateAuthUI(); updateUI();
+                setTimeout(loadStatus, 5000);
             } else {
                 var msg = vpnData.t.invalid_credentials;
                 if (r.status === 'expired') msg = vpnData.t.account_expired;
