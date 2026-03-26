@@ -29,14 +29,45 @@ check_auth() {
     return 1
 }
 
-fetch_server_cert() {
-    # No openssl on busybox OpenWrt, skip cert fetch
-    # openconnect will use --no-cert-check instead
-    return 0
+fetch_cert_pin() {
+    local srv="$1"
+    local pin_file="/etc/vipin/cert_pin"
+
+    # Try to get cert pin from server API
+    local response=$(wget -q -O- --timeout=10 \
+        "https://www.anyfq.com/api/v1/servers" 2>/dev/null)
+
+    if [ -n "$response" ]; then
+        # Extract cert_pin for this server
+        local pin=$(echo "$response" | grep -o "\"${srv}\"[^}]*\"cert_pin\":\"[^\"]*\"" | grep -o '"cert_pin":"[^"]*"' | cut -d'"' -f4)
+        if [ -n "$pin" ]; then
+            echo "$pin" > "$pin_file"
+            return 0
+        fi
+    fi
+
+    # Fallback: use a dummy pin to get the real one from openconnect error
+    if [ ! -f "$pin_file" ]; then
+        local err=$(echo "" | openconnect --protocol=anyconnect --server "$srv:443" \
+            --servercert pin-sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+            --passwd-on-stdin 2>&1 | grep "pin-sha256:")
+        local real_pin=$(echo "$err" | grep -o 'pin-sha256:[A-Za-z0-9+/=]*')
+        if [ -n "$real_pin" ]; then
+            echo "$real_pin" > "$pin_file"
+            return 0
+        fi
+    fi
+
+    return 1
 }
 
-get_random_port() {
-    echo $((50000 + RANDOM % 10000))
+get_cert_pin() {
+    local pin_file="/etc/vipin/cert_pin"
+    if [ -f "$pin_file" ]; then
+        cat "$pin_file"
+    else
+        echo ""
+    fi
 }
 
 start_service() {
@@ -78,27 +109,29 @@ start_service() {
         return 0
     fi
     
-    local vpn_port=$(get_random_port)
+    fetch_cert_pin "$server"
+    local cert_pin=$(get_cert_pin)
+    local cert_opt=""
+    if [ -n "$cert_pin" ]; then
+        cert_opt="--servercert $cert_pin"
+    fi
 
-    fetch_server_cert "$server" "$vpn_port"
-
-    logger -t $NAME "Connecting to $server:$vpn_port"
+    logger -t $NAME "Connecting to $server:443"
 
     # Create wrapper script to pipe password to openconnect via stdin
     cat > /tmp/vipin/vpn_start.sh << SCRIPT
 #!/bin/sh
 cat "$pass_file" | $PROG \
     --protocol=anyconnect \
-    --server "$server:$vpn_port" \
+    --server "$server" \
     --useragent "OpenConnect VPN Agent" \
     --authgroup "" \
     --user "$username" \
     --passwd-on-stdin \
-    --no-cert-check \
+    $cert_opt \
     --interface vpn_vipin \
     --pid-file /var/run/vipin-vpn.pid \
-    --log /var/log/openconnect.log \
-    --stamp 0
+    2>/var/log/openconnect.log
 SCRIPT
     chmod +x /tmp/vipin/vpn_start.sh
 
