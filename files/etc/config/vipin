@@ -1,0 +1,6 @@
+config vpn 'vpn'
+	option enabled '0'
+	option server ''
+	option username ''
+	option split_tunnel '1'
+	option country 'cn'
