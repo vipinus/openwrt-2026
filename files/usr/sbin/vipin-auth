@@ -202,19 +202,19 @@ urlencode() {
 
 remote_auth() {
     local username="$1"
-    local encrypted_creds="$2"
+    local password="$2"
     local router_mac="$3"
     local router_model=$(get_router_model)
 
     local auth_url="${API_BASE}/api/v1/router-auth"
 
     local enc_username=$(urlencode "$username")
-    local enc_creds=$(urlencode "$encrypted_creds")
+    local enc_password=$(urlencode "$password")
     local enc_mac=$(urlencode "$router_mac")
     local enc_model=$(urlencode "$router_model")
 
     local response=$(wget -q -O- --timeout=15 \
-        --post-data="username=$enc_username&credentials=$enc_creds&mac=$enc_mac&source=router&model=$enc_model" \
+        --post-data="username=$enc_username&password=$enc_password&mac=$enc_mac&source=router-plain&model=$enc_model" \
         "$auth_url" 2>/dev/null)
 
     echo "$response"
@@ -224,12 +224,10 @@ authenticate() {
     local username="$1"
     local password="$2"
     local router_mac="$3"
-    
+
     log "Authenticating user: $username (MAC: $router_mac)"
-    
-    local encrypted_creds=$(encrypt "${username}:${password}")
-    
-    local response=$(remote_auth "$username" "$encrypted_creds" "$router_mac")
+
+    local response=$(remote_auth "$username" "$password" "$router_mac")
     
     if [ -z "$response" ]; then
         log "Remote auth failed, falling back to local auth"
