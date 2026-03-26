@@ -1085,7 +1085,7 @@ function api_get_vpn_status()
     local current_country = util.exec("/usr/sbin/vipin-country-ips get-country 2>/dev/null"):gsub("%s+", "")
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
     local vpn_enabled = luci.model.uci:get("vipin", "vpn", "enabled") or "0"
-    local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "0"
+    local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
     local vpn_connected = util.exec("pgrep -x openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
