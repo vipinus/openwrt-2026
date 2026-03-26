@@ -104,7 +104,7 @@ start_service() {
     
     /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
     
-    if pgrep -x openconnect >/dev/null; then
+    if pgrep openconnect >/dev/null; then
         logger -t $NAME "VPN already running"
         return 0
     fi
@@ -146,7 +146,7 @@ SCRIPT
     
     sleep 10
 
-    if pgrep -x openconnect >/dev/null; then
+    if pgrep openconnect >/dev/null; then
         logger -t $NAME "VPN started (server: $server)"
 
         if [ "$split_tunnel" = "1" ]; then
@@ -163,7 +163,7 @@ stop_service() {
     
     /usr/sbin/vipin-vpn-routing disable 2>/dev/null
     
-    if pgrep -x openconnect >/dev/null; then
+    if pgrep openconnect >/dev/null; then
         killall openconnect 2>/dev/null
         sleep 2
     fi
@@ -186,7 +186,7 @@ restart() {
 }
 
 status() {
-    if pgrep -x openconnect >/dev/null; then
+    if pgrep openconnect >/dev/null; then
         echo "VPN is running"
         local auth_info=$(/usr/sbin/vipin-auth status 2>/dev/null)
         local username=$(echo "$auth_info" | grep -o '"username": *"[^"]*"' | cut -d'"' -f4)

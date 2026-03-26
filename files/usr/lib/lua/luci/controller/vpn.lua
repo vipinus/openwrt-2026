@@ -1086,7 +1086,7 @@ function api_get_vpn_status()
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
     local vpn_enabled = luci.model.uci:get("vipin", "vpn", "enabled") or "0"
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
-    local vpn_connected = util.exec("pgrep -x openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+    local vpn_connected = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
     local detected = false
@@ -1179,7 +1179,7 @@ function api_connect()
     
     if action == "connect" then
         local output = util.exec("/etc/init.d/vipin-vpn start 2>&1")
-        result.success = (util.exec("pgrep -x openconnect >/dev/null && echo 1 || echo 0"):gsub("%s+", "") == "1")
+        result.success = (util.exec("pgrep openconnect >/dev/null && echo 1 || echo 0"):gsub("%s+", "") == "1")
     elseif action == "disconnect" then
         util.exec("/etc/init.d/vipin-vpn stop 2>&1")
         result.success = true
@@ -1429,7 +1429,7 @@ function api_set_server()
         success = true
 
         -- If VPN is running, reconnect to new server
-        local vpn_running = util.exec("pgrep -x openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+        local vpn_running = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
         if vpn_running == "1" then
             util.exec("/etc/init.d/vipin-vpn stop 2>&1")
             util.exec("sleep 1")

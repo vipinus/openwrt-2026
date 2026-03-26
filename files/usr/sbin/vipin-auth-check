@@ -28,7 +28,7 @@ is_vpn_enabled() {
 }
 
 is_vpn_running() {
-    pgrep -x openconnect >/dev/null
+    pgrep openconnect >/dev/null
 }
 
 has_auth_file() {
