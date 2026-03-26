@@ -319,11 +319,8 @@ save_auth() {
 
     mkdir -p "$CONF_DIR"
 
-    local encrypted_pass=$(encrypt "$password")
-
     cat > "$AUTH_FILE" << EOF
 username="$username"
-password="$encrypted_pass"
 type="$user_type"
 expiration="$expiration"
 mac="$mac"
@@ -367,19 +364,18 @@ get_status() {
         echo "{\"logged_in\": false}"
         return
     fi
-    
-    if is_expired "$username"; then
-        clear_auth
-        echo "{\"logged_in\": false, \"reason\": \"expired\"}"
-        return
+
+    # Check expiration from saved auth info (no DB needed)
+    if [ -n "$expiration" ]; then
+        local exp_ts=$(date -d "$expiration" +%s 2>/dev/null || echo "0")
+        local now_ts=$(date +%s)
+        if [ "$exp_ts" -gt 0 ] && [ "$exp_ts" -lt "$now_ts" ]; then
+            clear_auth
+            echo "{\"logged_in\": false, \"reason\": \"expired\"}"
+            return
+        fi
     fi
-    
-    if ! is_vip "$username"; then
-        clear_auth
-        echo "{\"logged_in\": false, \"reason\": \"not_vip\"}"
-        return
-    fi
-    
+
     echo "{\"logged_in\": true, \"username\": \"$username\", \"type\": \"$user_type\", \"expiration\": \"$expiration\", \"auth_time\": \"$auth_time\", \"mac\": \"$mac\"}"
 }
 
@@ -452,30 +448,42 @@ case "$1" in
         fetch_encryption_key
         ;;
     check)
-        if [ -z "$2" ]; then
-            username=$(echo "$(load_auth)" | grep "^username=" | cut -d'"' -f2)
-        else
-            username="$2"
-        fi
-        
+        auth_info=$(load_auth)
+        username=$(echo "$auth_info" | grep "^username=" | cut -d'"' -f2)
+
         if [ -z "$username" ]; then
             echo "{\"valid\": false, \"reason\": \"not_logged_in\"}"
             exit 0
         fi
-        
-        if is_expired "$username"; then
-            clear_auth
-            echo "{\"valid\": false, \"reason\": \"expired\", \"username\": \"$username\"}"
-            exit 1
-        fi
-        
-        if ! is_vip "$username"; then
-            clear_auth
-            echo "{\"valid\": false, \"reason\": \"not_vip\", \"username\": \"$username\"}"
-            exit 1
-        fi
-        
-        echo "{\"valid\": true, \"username\": \"$username\", \"type\": \"$(get_user_type $username)\"}"
+
+        # Use remote API to verify account validity
+        enc_user=$(urlencode "$username")
+        verify_resp=$(wget -q -O- --timeout=10 \
+            --post-data="username=$enc_user&source=verify" \
+            "${API_BASE}/api/v1/router-auth" 2>/dev/null)
+        verify_status=$(echo "$verify_resp" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+
+        case "$verify_status" in
+            valid)
+                user_type=$(echo "$auth_info" | grep "^type=" | cut -d'"' -f2)
+                echo "{\"valid\": true, \"username\": \"$username\", \"type\": \"$user_type\"}"
+                ;;
+            expired)
+                clear_auth
+                echo "{\"valid\": false, \"reason\": \"expired\", \"username\": \"$username\"}"
+                exit 1
+                ;;
+            not_vip)
+                clear_auth
+                echo "{\"valid\": false, \"reason\": \"not_vip\", \"username\": \"$username\"}"
+                exit 1
+                ;;
+            *)
+                # API unreachable, trust local saved state
+                user_type=$(echo "$auth_info" | grep "^type=" | cut -d'"' -f2)
+                echo "{\"valid\": true, \"username\": \"$username\", \"type\": \"$user_type\"}"
+                ;;
+        esac
         ;;
     renewal-url)
         get_renewal_url
