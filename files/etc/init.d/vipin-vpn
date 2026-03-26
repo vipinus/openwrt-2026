@@ -144,18 +144,17 @@ SCRIPT
     procd_set_param stderr 1
     procd_close_instance
     
-    sleep 3
-    
+    sleep 10
+
     if pgrep -x openconnect >/dev/null; then
         logger -t $NAME "VPN started (server: $server)"
-        
+
         if [ "$split_tunnel" = "1" ]; then
             /usr/sbin/vipin-vpn-routing enable "$country"
         fi
     else
         logger -t $NAME "Failed to start VPN"
         cat /var/log/openconnect.log 2>/dev/null | tail -5 | logger -t $NAME
-        return 1
     fi
 }
 
