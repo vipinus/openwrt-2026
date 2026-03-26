@@ -35,7 +35,8 @@ config dhcp 'wan'
 EOF
 }
 
-# Configure dnsmasq to use dnscrypt-proxy
+# Configure dnsmasq to use dnscrypt-proxy exclusively
+uci -q set dhcp.@dnsmasq[0].noresolv='1'
 uci -q del_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
 uci -q add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
 uci -q commit dhcp
