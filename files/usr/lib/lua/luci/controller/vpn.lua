@@ -1031,9 +1031,28 @@ local i18n = {
 
 function get_lang()
     local uci = require("luci.model.uci").cursor()
-    local lang = uci:get("luci", "main", "lang") or "en"
+    local lang = uci:get("luci", "main", "lang") or "auto"
     lang = lang:gsub("%s+", "")
-    if lang == "" or lang == "auto" then lang = "en" end
+
+    if lang == "" or lang == "auto" then
+        local accept = luci.http.getenv("HTTP_ACCEPT_LANGUAGE") or ""
+        local primary = accept:match("^([^,;]+)")
+        if primary then
+            primary = primary:gsub("%s+", ""):lower()
+            local browser_map = {
+                zh = "zh-CN", ["zh-cn"] = "zh-CN", ["zh-hans"] = "zh-CN",
+                ["zh-tw"] = "zh-TW", ["zh-hk"] = "zh-TW", ["zh-hant"] = "zh-TW",
+                ja = "ja", ko = "ko", de = "de", fr = "fr", es = "es",
+                pt = "pt", ru = "ru", ar = "ar", fa = "fa", hi = "hi",
+                id = "id", th = "th", tr = "tr", vi = "vi"
+            }
+            local short = primary:match("^(%a+%-?%a*)")
+            lang = browser_map[short] or browser_map[short:match("^(%a+)")] or "en"
+        else
+            lang = "en"
+        end
+    end
+
     local lang_map = {
         zh_Hans = "zh-CN", zh_Hant = "zh-TW",
         ["zh-cn"] = "zh-CN", ["zh-tw"] = "zh-TW"

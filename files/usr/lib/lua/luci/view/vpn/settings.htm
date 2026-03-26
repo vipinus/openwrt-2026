@@ -5,9 +5,31 @@ local json = require("cjson")
 
 -- Get language from LuCI system setting
 local uci = require("luci.model.uci").cursor()
-local lang = uci:get("luci", "main", "lang") or "en"
+local lang = uci:get("luci", "main", "lang") or "auto"
 lang = lang:match("^%s*(.-)%s*$")
-if lang == "" or lang == "auto" then lang = "en" end
+
+-- When "auto", detect from browser Accept-Language header
+if lang == "" or lang == "auto" then
+    local accept = http.getenv("HTTP_ACCEPT_LANGUAGE") or ""
+    -- Parse first preferred language (e.g. "zh-CN,zh;q=0.9,en;q=0.8")
+    local primary = accept:match("^([^,;]+)")
+    if primary then
+        primary = primary:match("^%s*(.-)%s*$")
+        -- Map browser lang codes
+        local browser_map = {
+            zh = "zh-CN", ["zh-cn"] = "zh-CN", ["zh-hans"] = "zh-CN",
+            ["zh-tw"] = "zh-TW", ["zh-hk"] = "zh-TW", ["zh-hant"] = "zh-TW",
+            ja = "ja", ko = "ko", de = "de", fr = "fr", es = "es",
+            pt = "pt", ru = "ru", ar = "ar", fa = "fa", hi = "hi",
+            id = "id", th = "th", tr = "tr", vi = "vi"
+        }
+        local short = primary:lower():match("^(%a+%-?%a*)")
+        lang = browser_map[short] or browser_map[short:match("^(%a+)")] or "en"
+    else
+        lang = "en"
+    end
+end
+
 -- Map LuCI lang codes to our i18n keys
 local lang_map = {
     zh_Hans = "zh-CN", zh_Hant = "zh-TW",
