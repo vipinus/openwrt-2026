@@ -53,7 +53,7 @@ start_service() {
     mkdir -p /tmp/vipin
     
     local auth_info=$(/usr/sbin/vipin-auth status 2>/dev/null)
-    local username=$(echo "$auth_info" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+    local username=$(echo "$auth_info" | grep -o '"username": *"[^"]*"' | cut -d'"' -f4)
     local pass_file="/etc/vipin/.vpn_pass"
 
     if [ -z "$server" ] || [ -z "$username" ]; then
@@ -154,7 +154,7 @@ status() {
     if pgrep -x openconnect >/dev/null; then
         echo "VPN is running"
         local auth_info=$(/usr/sbin/vipin-auth status 2>/dev/null)
-        local username=$(echo "$auth_info" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+        local username=$(echo "$auth_info" | grep -o '"username": *"[^"]*"' | cut -d'"' -f4)
         if [ -n "$username" ]; then
             echo "User: $username"
         fi
