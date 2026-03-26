@@ -434,8 +434,6 @@ case "$1" in
         echo "$result"
         ;;
     logout)
-        rm -f "$AUTH_FILE"
-        rm -f "$CONF_DIR/.vpn_pass"
         echo "{\"status\": \"success\", \"message\": \"Logged out\"}"
         ;;
     status)
