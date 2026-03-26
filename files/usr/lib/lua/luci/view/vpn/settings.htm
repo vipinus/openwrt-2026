@@ -1772,7 +1772,35 @@ function loadServerList() {
 }
 
 function refreshServerList() {
-    loadServerList();
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/cgi-bin/luci/admin/services/vpn/api_servers', true);
+    xhr.timeout = 10000;
+    xhr.onload = function() {
+        try {
+            var servers = JSON.parse(xhr.responseText);
+            if (Array.isArray(servers) && servers.length > 0) {
+                servers.sort(function(a, b) { return a.name.localeCompare(b.name); });
+                ['server-select', 'server-select-loggedin'].forEach(function(id) {
+                    var sel = document.getElementById(id);
+                    if (!sel) return;
+                    var cur = sel.value;
+                    sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
+                    servers.forEach(function(s) {
+                        var opt = document.createElement('option');
+                        opt.value = s.server;
+                        opt.textContent = (s.flag || '') + ' ' + (s.name || s.server);
+                        if (s.server === cur) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                });
+                return;
+            }
+        } catch (e) {}
+        loadServerList();
+    };
+    xhr.onerror = function() { loadServerList(); };
+    xhr.ontimeout = function() { loadServerList(); };
+    xhr.send();
 }
 
 function saveServerSelection(selectEl) {

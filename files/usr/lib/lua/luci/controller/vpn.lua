@@ -1398,61 +1398,19 @@ end
 
 function api_get_servers()
     local http = require("luci.http")
-    local json = require("cjson")
     local util = require("luci.util")
-    local io = require("io")
-    
-    local servers = {}
-    
-    local countries = {
-        {code = "ar", name = "Argentina", flag = "🇦🇷"},
-        {code = "au", name = "Australia", flag = "🇦🇺"},
-        {code = "at", name = "Austria", flag = "🇦🇹"},
-        {code = "br", name = "Brazil", flag = "🇧🇷"},
-        {code = "ca", name = "Canada", flag = "🇨🇦"},
-        {code = "cn", name = "China", flag = "🇨🇳"},
-        {code = "dk", name = "Denmark", flag = "🇩🇰"},
-        {code = "fr", name = "France", flag = "🇫🇷"},
-        {code = "de", name = "Germany", flag = "🇩🇪"},
-        {code = "hk", name = "Hong Kong", flag = "🇭🇰"},
-        {code = "in", name = "India", flag = "🇮🇳"},
-        {code = "it", name = "Italy", flag = "🇮🇹"},
-        {code = "jp", name = "Japan", flag = "🇯🇵"},
-        {code = "kr", name = "Korea", flag = "🇰🇷"},
-        {code = "nl", name = "Netherland", flag = "🇳🇱"},
-        {code = "nz", name = "New Zealand", flag = "🇳🇿"},
-        {code = "pt", name = "Portugal", flag = "🇵🇹"},
-        {code = "sg", name = "Singapore", flag = "🇸🇬"},
-        {code = "es", name = "Spain", flag = "🇪🇸"},
-        {code = "ch", name = "Switzerland", flag = "🇨🇭"},
-        {code = "tw", name = "Taiwan", flag = "🇹🇼"},
-        {code = "th", name = "Thailand", flag = "🇹🇭"},
-        {code = "uk", name = "United Kingdom", flag = "🇬🇧"},
-        {code = "us", name = "United States", flag = "🇺🇸"}
-    }
-    
-    local base_domain = luci.model.uci:get("vipin", "vpn", "base_domain") or "fanq.in"
-    
-    for _, c in ipairs(countries) do
-        local server_domain = c.code .. "." .. base_domain
-        local output = util.exec("wget -q -O- --timeout=3 https://" .. server_domain .. " 2>/dev/null")
-        
-        table.insert(servers, {
-            code = c.code,
-            name = c.name,
-            flag = c.flag,
-            server = server_domain,
-            available = (output and output ~= "")
-        })
+
+    -- Fetch server list from website API (public, no auth needed)
+    local response = util.exec("wget -q -O- --timeout=10 'https://www.anyfq.com/api/v1/servers/list' 2>/dev/null")
+
+    if response and response ~= "" then
+        http.prepare_content("application/json")
+        http.write(response)
+    else
+        -- Fallback: return empty array, frontend will use local data
+        http.prepare_content("application/json")
+        http.write("[]")
     end
-    
-    local result = {
-        servers = servers,
-        base_domain = base_domain
-    }
-    
-    http.prepare_content("application/json")
-    http.write(json.encode(result))
 end
 
 function api_set_server()
