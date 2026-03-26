@@ -1098,7 +1098,7 @@ function api_get_vpn_status()
         detected_ip = string.match(detect_info, '"ip":"([^"]*)"') or ""
         detected_country = string.match(detect_info, '"country":"([^"]*)"') or ""
         detect_time = string.match(detect_info, '"detect_time":"([^"]*)"') or ""
-        detected = string.match(detect_info, '"detected":true') ~= nil
+        detected = string.match(detect_info, '"detected":%s*true') ~= nil
     end
     
     if detected_country == "" then
@@ -1344,12 +1344,12 @@ function api_auth_status()
     
     local status_json = util.exec("/usr/sbin/vipin-auth status 2>/dev/null")
     
-    local logged_in = string.match(status_json, '"logged_in":true') ~= nil
-    local reason = string.match(status_json, '"reason":"([^"]+)"') or ""
-    local username = string.match(status_json, '"username":"([^"]+)"') or ""
-    local user_type = string.match(status_json, '"type":"([^"]+)"') or ""
-    local expiration = string.match(status_json, '"expiration":"([^"]+)"') or ""
-    local auth_time = string.match(status_json, '"auth_time":"([^"]+)"') or ""
+    local logged_in = string.match(status_json, '"logged_in":%s*true') ~= nil
+    local reason = string.match(status_json, '"reason":%s*"([^"]+)"') or ""
+    local username = string.match(status_json, '"username":%s*"([^"]+)"') or ""
+    local user_type = string.match(status_json, '"type":%s*"([^"]+)"') or ""
+    local expiration = string.match(status_json, '"expiration":%s*"([^"]+)"') or ""
+    local auth_time = string.match(status_json, '"auth_time":%s*"([^"]+)"') or ""
     
     local result = {
         logged_in = logged_in,

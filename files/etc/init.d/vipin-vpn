@@ -21,7 +21,7 @@ get_config() {
 check_auth() {
     local status=$(/usr/sbin/vipin-auth status 2>/dev/null)
     
-    if echo "$status" | grep -q '"logged_in":true'; then
+    if echo "$status" | grep -q '"logged_in": *true'; then
         return 0
     fi
     
