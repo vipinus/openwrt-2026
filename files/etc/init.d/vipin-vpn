@@ -180,11 +180,13 @@ status() {
 
 boot() {
     get_config
-    
+
     [ "$enabled" = "1" ] && {
+        # Wait for network to be ready
         sleep 30
+        # Start auth monitor (handles reconnection)
         /etc/init.d/vipin-auth start 2>/dev/null
-        sleep 5
+        # Start VPN
         start_service
     }
 }

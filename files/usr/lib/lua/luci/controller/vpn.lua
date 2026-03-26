@@ -1289,6 +1289,11 @@ function api_login()
     }
     
     if success then
+        -- Enable auto-connect on boot
+        luci.model.uci:set("vipin", "vpn", "enabled", "1")
+        luci.model.uci:save("vipin")
+        luci.model.uci:commit("vipin")
+        -- Start VPN and auth monitor
         util.exec("/etc/init.d/vipin-vpn start 2>&1")
         util.exec("/etc/init.d/vipin-auth start 2>&1")
     end
@@ -1302,9 +1307,15 @@ function api_logout()
     local json = require("cjson")
     local util = require("luci.util")
     
-    util.exec("/usr/sbin/vipin-auth logout 2>/dev/null")
+    -- Disable auto-connect
+    luci.model.uci:set("vipin", "vpn", "enabled", "0")
+    luci.model.uci:save("vipin")
+    luci.model.uci:commit("vipin")
+    -- Stop services
     util.exec("/etc/init.d/vipin-vpn stop 2>&1")
-    
+    util.exec("/etc/init.d/vipin-auth stop 2>&1")
+    util.exec("/usr/sbin/vipin-auth logout 2>/dev/null")
+
     local result = {
         success = true,
         message = "Logged out successfully"
