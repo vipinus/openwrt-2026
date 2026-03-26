@@ -42,8 +42,14 @@ enable_split() {
     nft add chain inet vipin_split postrouting '{ type nat hook postrouting priority srcnat; }' 2>/dev/null
     nft add rule inet vipin_split postrouting oifname "vpn_vipin" masquerade 2>/dev/null
 
+    # Get VPN server IP (for exclusion)
+    local vpn_server_ip=$(ip route | grep -v "^default\|^0\.\|^128\.\|^10\.\|^192\." | grep "via.*dev" | head -1 | awk '{print $1}')
+
     # Create routing table: default via VPN
     ip route add default dev vpn_vipin table $TABLE_ID 2>/dev/null
+
+    # VPN server must always go via WAN
+    [ -n "$vpn_server_ip" ] && ip route add "$vpn_server_ip" via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
 
     # Add domestic IPs to route via WAN directly (bypass VPN)
     local count=0
@@ -63,7 +69,14 @@ enable_split() {
     nft add rule inet vipin_split prerouting iifname "br-lan" meta mark set $MARK 2>/dev/null
 
     # Mark local outgoing packets (router itself) for policy routing
+    # Exclude: VPN tunnel traffic, loopback, LAN, and established connections
+    local vpn_gw="$VPNGATEWAY"
+    [ -z "$vpn_gw" ] && vpn_gw=$(ip route | grep "dev vpn_vipin" | grep -v "^default\|^0\.\|^128\." | head -1 | awk '{print $1}' | sed 's|/.*||')
     nft add chain inet vipin_split output '{ type route hook output priority mangle; }' 2>/dev/null
+    nft add rule inet vipin_split output oifname "lo" return 2>/dev/null
+    nft add rule inet vipin_split output oifname "br-lan" return 2>/dev/null
+    nft add rule inet vipin_split output oifname "vpn_vipin" return 2>/dev/null
+    [ -n "$vpn_gw" ] && nft add rule inet vipin_split output ip daddr "$vpn_gw" return 2>/dev/null
     nft add rule inet vipin_split output meta mark set $MARK 2>/dev/null
 
     # Apply policy route for marked packets
