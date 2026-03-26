@@ -416,11 +416,11 @@ case "$1" in
             exit 1
         fi
         
-        local router_mac="$4"
+        router_mac="$4"
         if [ -z "$router_mac" ]; then
             router_mac=$(get_router_mac)
         fi
-        
+
         result=$(authenticate "$2" "$3" "$router_mac")
         
         if echo "$result" | grep -q '"status": "valid"'; then
