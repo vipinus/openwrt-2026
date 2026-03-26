@@ -62,6 +62,10 @@ enable_split() {
     nft add chain inet vipin_split prerouting '{ type filter hook prerouting priority mangle; }' 2>/dev/null
     nft add rule inet vipin_split prerouting iifname "br-lan" meta mark set $MARK 2>/dev/null
 
+    # Mark local outgoing packets (router itself) for policy routing
+    nft add chain inet vipin_split output '{ type route hook output priority mangle; }' 2>/dev/null
+    nft add rule inet vipin_split output meta mark set $MARK 2>/dev/null
+
     # Apply policy route for marked packets
     ip rule del fwmark $MARK table $TABLE_ID 2>/dev/null
     ip rule add fwmark $MARK table $TABLE_ID pri 100 2>/dev/null
