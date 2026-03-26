@@ -35,7 +35,7 @@ get_country_by_ip() {
     local country=""
     
     for url in \
-        "https://ip-api.com/json/$ip?fields=countryCode,country" \
+        "http://ip-api.com/json/$ip?fields=countryCode,country" \
         "https://ipinfo.io/$ip/json"; do
         
         local response=$(wget -q -O- --timeout=5 "$url" 2>/dev/null || curl -s --max-time 5 "$url" 2>/dev/null)
