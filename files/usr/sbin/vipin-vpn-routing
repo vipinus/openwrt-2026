@@ -43,7 +43,7 @@ enable_split() {
     # Clean up first
     disable_split 2>/dev/null
 
-    # Build nftables include file for fw4
+    # Build nftables include file for fw4 (inside inet fw4 table context)
     mkdir -p /etc/nftables.d
 
     # Build elements list
@@ -51,36 +51,37 @@ enable_split() {
     elements=$(grep -v "^#" "$domestic_file" | grep -v "^$" | tr '\n' ',' | sed 's/,$//')
 
     cat > "$NFT_RULES" << EOF
-table inet vipin_split {
-    set domestic {
-        type ipv4_addr
-        flags interval
-        elements = { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, $elements }
-    }
+set vipin_domestic {
+    type ipv4_addr
+    flags interval
+    elements = { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, $elements }
+}
 
-    chain vipin_prerouting {
-        type filter hook prerouting priority mangle;
-        ip daddr @domestic meta mark set $MARK_DIRECT
-    }
+chain vipin_prerouting {
+    type filter hook prerouting priority mangle;
+    ip daddr @vipin_domestic meta mark set $MARK_DIRECT
+}
 
-    chain vipin_output {
-        type route hook output priority mangle;
-        oifname "vpn_vipin" return
-        oifname "lo" return
-        ip daddr @domestic meta mark set $MARK_DIRECT
-    }
+chain vipin_output {
+    type route hook output priority mangle;
+    oifname "vpn_vipin" return
+    oifname "lo" return
+    ip daddr @vipin_domestic meta mark set $MARK_DIRECT
+}
 
-    chain vipin_postrouting {
-        type nat hook postrouting priority srcnat;
-        oifname "vpn_vipin" masquerade
-    }
+chain vipin_postrouting {
+    type nat hook postrouting priority srcnat;
+    oifname "vpn_vipin" masquerade
 }
 EOF
 
-    # Load the rules
-    nft -f "$NFT_RULES" 2>/dev/null
-    if [ $? -ne 0 ]; then
-        logger -t vipin-routing "Failed to load nft rules"
+    # Reload firewall to pick up the include
+    /etc/init.d/firewall reload 2>/dev/null
+    sleep 2
+
+    # Verify rules loaded
+    if ! nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
+        logger -t vipin-routing "Failed to load nft rules into fw4"
         rm -f "$NFT_RULES"
         return 1
     fi
@@ -97,7 +98,11 @@ EOF
 disable_split() {
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
-    nft delete table inet vipin_split 2>/dev/null
+    # Remove our chains and set from fw4
+    nft delete chain inet fw4 vipin_prerouting 2>/dev/null
+    nft delete chain inet fw4 vipin_output 2>/dev/null
+    nft delete chain inet fw4 vipin_postrouting 2>/dev/null
+    nft delete set inet fw4 vipin_domestic 2>/dev/null
     rm -f "$NFT_RULES"
     logger -t vipin-routing "Split tunnel disabled"
 }
@@ -118,7 +123,7 @@ case "$1" in
         fi
         ;;
     status)
-        if nft list tables 2>/dev/null | grep -q "vipin_split"; then
+        if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
             country=$(get_current_country)
             domestic_file="$CONF_DIR/${country}.txt"
             ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
