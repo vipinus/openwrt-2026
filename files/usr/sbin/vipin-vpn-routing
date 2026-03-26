@@ -1,11 +1,10 @@
 #!/bin/sh
 # Split tunneling: domestic IPs go direct, foreign IPs go through VPN
-# Uses nftables set for domestic IPs + policy routing
-# VPN's 0/1 + 128/1 routes stay in main table for all traffic
+# Integrates with OpenWrt fw4 via nftables include to survive firewall reloads
 
 CONF_DIR="/etc/vipin/country-ips"
+NFT_RULES="/etc/nftables.d/vipin-split.nft"
 TABLE_ID=100
-MARK_VPN=0x100
 MARK_DIRECT=0x200
 
 get_current_country() {
@@ -44,35 +43,47 @@ enable_split() {
     # Clean up first
     disable_split 2>/dev/null
 
-    # Create nft table
-    nft add table inet vipin_split
-    nft add set inet vipin_split domestic '{ type ipv4_addr; flags interval; }'
+    # Build nftables include file for fw4
+    mkdir -p /etc/nftables.d
 
-    # Load domestic IPs into nft set
-    local batch_file="/tmp/vipin_nft_batch.nft"
-    echo "flush set inet vipin_split domestic" > "$batch_file"
-    grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
-        [ -z "$cidr" ] && continue
-        echo "add element inet vipin_split domestic { $cidr }" >> "$batch_file"
-    done
-    nft -f "$batch_file" 2>/dev/null
-    rm -f "$batch_file"
+    # Build elements list
+    local elements=""
+    elements=$(grep -v "^#" "$domestic_file" | grep -v "^$" | tr '\n' ',' | sed 's/,$//')
 
-    # Also add private networks to domestic set
-    nft add element inet vipin_split domestic '{ 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 }' 2>/dev/null
+    cat > "$NFT_RULES" << EOF
+table inet vipin_split {
+    set domestic {
+        type ipv4_addr
+        flags interval
+        elements = { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, $elements }
+    }
 
-    # Mark domestic traffic for direct routing (prerouting for LAN clients, output for router itself)
-    nft add chain inet vipin_split prerouting '{ type filter hook prerouting priority mangle; }'
-    nft add rule inet vipin_split prerouting ip daddr @domestic meta mark set $MARK_DIRECT
+    chain vipin_prerouting {
+        type filter hook prerouting priority mangle;
+        ip daddr @domestic meta mark set $MARK_DIRECT
+    }
 
-    nft add chain inet vipin_split output '{ type route hook output priority mangle; }'
-    nft add rule inet vipin_split output oifname "vpn_vipin" return
-    nft add rule inet vipin_split output oifname "lo" return
-    nft add rule inet vipin_split output ip daddr @domestic meta mark set $MARK_DIRECT
+    chain vipin_output {
+        type route hook output priority mangle;
+        oifname "vpn_vipin" return
+        oifname "lo" return
+        ip daddr @domestic meta mark set $MARK_DIRECT
+    }
 
-    # NAT masquerade for VPN traffic
-    nft add chain inet vipin_split postrouting '{ type nat hook postrouting priority srcnat; }'
-    nft add rule inet vipin_split postrouting oifname "vpn_vipin" masquerade
+    chain vipin_postrouting {
+        type nat hook postrouting priority srcnat;
+        oifname "vpn_vipin" masquerade
+    }
+}
+EOF
+
+    # Load the rules
+    nft -f "$NFT_RULES" 2>/dev/null
+    if [ $? -ne 0 ]; then
+        logger -t vipin-routing "Failed to load nft rules"
+        rm -f "$NFT_RULES"
+        return 1
+    fi
 
     # Policy route: marked domestic traffic bypasses VPN via WAN
     ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
@@ -87,6 +98,7 @@ disable_split() {
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
     nft delete table inet vipin_split 2>/dev/null
+    rm -f "$NFT_RULES"
     logger -t vipin-routing "Split tunnel disabled"
 }
 
@@ -109,7 +121,6 @@ case "$1" in
         if nft list tables 2>/dev/null | grep -q "vipin_split"; then
             country=$(get_current_country)
             domestic_file="$CONF_DIR/${country}.txt"
-            count=$(nft list set inet vipin_split domestic 2>/dev/null | grep -c "elements")
             ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
             echo "Split tunnel: enabled"
             echo "Country: $country"
