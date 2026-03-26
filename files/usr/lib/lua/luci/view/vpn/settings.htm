@@ -1661,7 +1661,9 @@ function doLogin() {
             }
         } catch (e) { errorEl.textContent = vpnData.t.error; errorEl.style.display = 'inline'; }
     };
-    xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
+    var serverEl = document.getElementById('server-select');
+    var server = serverEl ? serverEl.value : '';
+    xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password) + '&server=' + encodeURIComponent(server));
 }
 
 function doLogout() {

@@ -30,23 +30,9 @@ check_auth() {
 }
 
 fetch_server_cert() {
-    local srv="$1"
-    local port="${2:-443}"
-    local cert_file="/etc/vipin/vpn.crt"
-
-    mkdir -p /etc/vipin
-
-    echo | openssl s_client -connect "${srv}:${port}" -servername "${srv}" 2>/dev/null | \
-        openssl x509 -outform PEM > "$cert_file" 2>/dev/null
-
-    if [ -s "$cert_file" ]; then
-        logger -t $NAME "Certificate fetched for $srv:$port"
-        return 0
-    else
-        rm -f "$cert_file"
-        logger -t $NAME "Failed to fetch certificate for $srv:$port"
-        return 1
-    fi
+    # No openssl on busybox OpenWrt, skip cert fetch
+    # openconnect will use --no-cert-check instead
+    return 0
 }
 
 get_random_port() {
@@ -108,6 +94,7 @@ cat "$pass_file" | $PROG \
     --authgroup "" \
     --user "$username" \
     --passwd-on-stdin \
+    --no-cert-check \
     --interface vpn_vipin \
     --pid-file /var/run/vipin-vpn.pid \
     --log /var/log/openconnect.log \

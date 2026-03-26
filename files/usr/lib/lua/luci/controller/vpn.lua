@@ -1293,8 +1293,16 @@ function api_login()
     }
     
     if success then
-        -- Enable auto-connect on boot
+        local server = luci.http.formvalue("server") or ""
+        -- Ensure vipin config section exists
+        if not luci.model.uci:get("vipin", "vpn") then
+            luci.model.uci:set("vipin", "vpn", "vpn")
+        end
         luci.model.uci:set("vipin", "vpn", "enabled", "1")
+        luci.model.uci:set("vipin", "vpn", "username", username)
+        if server ~= "" then
+            luci.model.uci:set("vipin", "vpn", "server", server)
+        end
         luci.model.uci:save("vipin")
         luci.model.uci:commit("vipin")
         -- Start VPN and auth monitor
