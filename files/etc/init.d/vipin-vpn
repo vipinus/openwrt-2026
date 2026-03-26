@@ -130,6 +130,7 @@ cat "$pass_file" | $PROG \
     --authgroup "" \
     --user "$username" \
     --passwd-on-stdin \
+    --script /usr/sbin/vipin-vpnc-script \
     $cert_opt \
     --interface vpn_vipin \
     --pid-file /var/run/vipin-vpn.pid \

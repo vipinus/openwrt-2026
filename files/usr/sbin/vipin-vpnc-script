@@ -1,0 +1,58 @@
+#!/bin/sh
+# Custom vpnc-script for OpenWrt - configures VPN interface and routing
+
+case "$reason" in
+    pre-init)
+        ;;
+    connect)
+        # Configure the tunnel interface
+        ip link set dev "$TUNDEV" up
+        ip addr add "$INTERNAL_IP4_ADDRESS/32" dev "$TUNDEV"
+
+        # Add route to VPN gateway via current default route
+        DEFAULT_GW=$(ip route | grep "^default" | awk '{print $3}')
+        DEFAULT_DEV=$(ip route | grep "^default" | awk '{print $5}')
+        if [ -n "$DEFAULT_GW" ] && [ -n "$DEFAULT_DEV" ]; then
+            ip route add "$VPNGATEWAY" via "$DEFAULT_GW" dev "$DEFAULT_DEV" 2>/dev/null
+        fi
+
+        # Add default route via VPN (split into two /1 routes to override default)
+        ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+        ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+
+        # DNS - add VPN DNS servers
+        if [ -n "$INTERNAL_IP4_DNS" ]; then
+            cp /etc/resolv.conf /etc/resolv.conf.vipin-backup 2>/dev/null
+            : > /tmp/resolv.conf.vpn
+            for dns in $INTERNAL_IP4_DNS; do
+                echo "nameserver $dns" >> /tmp/resolv.conf.vpn
+            done
+            # Keep original DNS as fallback
+            cat /etc/resolv.conf >> /tmp/resolv.conf.vpn
+            cp /tmp/resolv.conf.vpn /etc/resolv.conf
+        fi
+
+        # Configure IPv6 if available
+        if [ -n "$INTERNAL_IP6_ADDRESS" ]; then
+            ip -6 addr add "$INTERNAL_IP6_ADDRESS/$INTERNAL_IP6_NETMASK" dev "$TUNDEV" 2>/dev/null
+            ip -6 route add default dev "$TUNDEV" metric 1 2>/dev/null
+        fi
+        ;;
+    disconnect)
+        # Remove VPN routes
+        ip route del 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+        ip route del 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
+        ip route del "$VPNGATEWAY" 2>/dev/null
+
+        # Restore DNS
+        if [ -f /etc/resolv.conf.vipin-backup ]; then
+            cp /etc/resolv.conf.vipin-backup /etc/resolv.conf
+            rm -f /etc/resolv.conf.vipin-backup
+        fi
+
+        # Bring down interface
+        ip link set dev "$TUNDEV" down
+        ;;
+esac
+
+exit 0
