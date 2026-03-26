@@ -42,5 +42,9 @@ uci -q commit dhcp
 
 /etc/init.d/dnsmasq restart 2>/dev/null
 
+# Enable dnscrypt-proxy on boot
+/etc/init.d/dnscrypt-proxy enable 2>/dev/null
+/etc/init.d/dnscrypt-proxy start 2>/dev/null
+
 rm -f /etc/uci-defaults/luci-dns-dnscrypt
 exit 0
