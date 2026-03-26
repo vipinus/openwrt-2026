@@ -74,27 +74,16 @@ remote_verify() {
 
 disable_and_stop() {
     local reason="$1"
-    log "Disabling VPN: $reason"
-
-    # Stop VPN
-    /etc/init.d/vipin-vpn stop 2>/dev/null
-
-    # Disable auto-connect
-    uci set vipin.vpn.enabled=0
-    uci commit vipin
-
-    # Clear auth
-    /usr/sbin/vipin-auth logout 2>/dev/null
-
-    log "VPN stopped and auto-connect disabled"
+    log "VPN issue: $reason — will retry next cycle"
 }
 
 reconnect_vpn() {
     log "VPN process died, reconnecting..."
-    /etc/init.d/vipin-vpn stop 2>/dev/null
+    killall openconnect 2>/dev/null
+    ip link delete vpn_vipin 2>/dev/null
     sleep 2
     /etc/init.d/vipin-vpn start 2>/dev/null
-    sleep 5
+    sleep 10
 
     if is_vpn_running; then
         log "VPN reconnected successfully"
@@ -131,10 +120,7 @@ while true; do
         reconnect_vpn
         if ! is_vpn_running; then
             reconnect_fails=$((reconnect_fails + 1))
-            if [ "$reconnect_fails" -ge "$MAX_RECONNECT_FAILS" ]; then
-                disable_and_stop "Too many reconnect failures ($reconnect_fails)"
-                reconnect_fails=0
-            fi
+            log "Reconnect attempt $reconnect_fails failed, will retry"
             sleep $RECONNECT_INTERVAL
             continue
         else
@@ -147,12 +133,10 @@ while true; do
     if [ "$elapsed" -ge "$CHECK_INTERVAL" ]; then
         last_verify=$now
         username=$(get_saved_username)
-        password=$(get_saved_password)
 
-        if [ -n "$username" ] && [ -n "$password" ]; then
-            if ! remote_verify "$username" "$password"; then
-                disable_and_stop "Account no longer valid for $username"
-                continue
+        if [ -n "$username" ]; then
+            if ! remote_verify "$username"; then
+                log "Account verification failed for $username"
             fi
         fi
     fi
