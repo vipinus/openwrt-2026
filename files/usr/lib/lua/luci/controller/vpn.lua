@@ -1030,11 +1030,15 @@ local i18n = {
     }
 
 function get_lang()
-    local lang = nixio.fs.readfile("/etc/vipin_lang")
-    if not lang or lang == "" then
-        lang = "en"
-    end
-    return lang:gsub("%s+", "")
+    local uci = require("luci.model.uci").cursor()
+    local lang = uci:get("luci", "main", "lang") or "en"
+    lang = lang:gsub("%s+", "")
+    if lang == "" or lang == "auto" then lang = "en" end
+    local lang_map = {
+        zh_Hans = "zh-CN", zh_Hant = "zh-TW",
+        ["zh-cn"] = "zh-CN", ["zh-tw"] = "zh-TW"
+    }
+    return lang_map[lang] or lang
 end
 
 function get_country_name(code)
