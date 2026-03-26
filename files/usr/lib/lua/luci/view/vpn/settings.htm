@@ -1752,14 +1752,18 @@ function populateServerSelect(selectEl) {
     if (!selectEl) return;
     var currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
     selectEl.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
-    for (var code in serverCountries) {
-        var s = serverCountries[code];
+    var sorted = Object.keys(serverCountries).map(function(code) {
+        return serverCountries[code];
+    }).sort(function(a, b) {
+        return a.name.localeCompare(b.name);
+    });
+    sorted.forEach(function(s) {
         var opt = document.createElement('option');
         opt.value = s.server;
         opt.textContent = s.flag + ' ' + s.name;
         if (s.server === currentServer) opt.selected = true;
         selectEl.appendChild(opt);
-    }
+    });
 }
 
 function loadServerList() {
@@ -1768,30 +1772,7 @@ function loadServerList() {
 }
 
 function refreshServerList() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '/cgi-bin/luci/admin/services/vpn/api_servers', true);
-    xhr.onload = function() {
-        try {
-            var resp = JSON.parse(xhr.responseText);
-            var servers = Array.isArray(resp) ? resp : (resp && resp.servers ? resp.servers : []);
-            if (servers && servers.length > 0) {
-                ['server-select', 'server-select-loggedin'].forEach(function(id) {
-                    var sel = document.getElementById(id);
-                    if (!sel) return;
-                    var cur = sel.value;
-                    sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
-                    servers.forEach(function(s) {
-                        var opt = document.createElement('option');
-                        opt.value = s.server;
-                        opt.textContent = (s.flag || '') + ' ' + (s.name || s.server);
-                        if (s.server === cur) opt.selected = true;
-                        sel.appendChild(opt);
-                    });
-                });
-            }
-        } catch (e) { console.error(e); }
-    };
-    xhr.send();
+    loadServerList();
 }
 
 function saveServerSelection(selectEl) {
