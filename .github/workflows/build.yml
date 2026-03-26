@@ -130,9 +130,30 @@ jobs:
           echo "${VERSION:-20260405}" > files/etc/vipin_version
           echo "${TARGET:-Unknown}" > files/etc/vipin_model
           echo "${FINAL_LANG}" > files/etc/vipin_language
-          chmod +x files/etc.init.d/* 2>/dev/null || true
+          chmod +x files/etc/init.d/* 2>/dev/null || true
           chmod +x files/usr/sbin/* 2>/dev/null || true
           chmod +x files/etc/uci-defaults/* 2>/dev/null || true
+
+          # Map FINAL_LANG to our locale directory name
+          OUR_LANG="${LUCI_LANG:-en}"
+          case "$OUR_LANG" in
+            zh_Hans) OUR_LANG="zh-CN" ;;
+            zh_Hant) OUR_LANG="zh-TW" ;;
+          esac
+
+          # Remove unused locale directories (keep only en + selected language)
+          LOCALE_DIR="files/usr/share/luci/locale"
+          if [ -d "$LOCALE_DIR" ]; then
+            for dir in "$LOCALE_DIR"/*/; do
+              lang_dir=$(basename "$dir")
+              if [ "$lang_dir" != "en" ] && [ "$lang_dir" != "$OUR_LANG" ]; then
+                rm -rf "$dir"
+              fi
+            done
+            echo "=== Kept locales ==="
+            ls "$LOCALE_DIR"/
+          fi
+
           echo "=== Custom files ==="
           find files -type f | head -30
 
