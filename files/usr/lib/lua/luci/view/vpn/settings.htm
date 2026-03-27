@@ -1387,33 +1387,6 @@ local i18n = {
 
 local t = i18n[lang] or i18n["en"]
 
--- Country names in current language
-local country_i18n = {
-    en = {ar="Argentina",au="Australia",at="Austria",br="Brazil",ca="Canada",cn="China",dk="Denmark",fr="France",de="Germany",hk="Hong Kong",["in"]="India",it="Italy",jp="Japan",kr="Korea",nl="Netherlands",nz="New Zealand",pt="Portugal",sg="Singapore",es="Spain",ch="Switzerland",tw="Taiwan",th="Thailand",uk="United Kingdom",us="United States"},
-    ["zh-CN"] = {ar="阿根廷",au="澳大利亚",at="奥地利",br="巴西",ca="加拿大",cn="中国",dk="丹麦",fr="法国",de="德国",hk="香港",["in"]="印度",it="意大利",jp="日本",kr="韩国",nl="荷兰",nz="新西兰",pt="葡萄牙",sg="新加坡",es="西班牙",ch="瑞士",tw="台湾",th="泰国",uk="英国",us="美国"},
-    ["zh-TW"] = {ar="阿根廷",au="澳洲",at="奧地利",br="巴西",ca="加拿大",cn="中國",dk="丹麥",fr="法國",de="德國",hk="香港",["in"]="印度",it="義大利",jp="日本",kr="韓國",nl="荷蘭",nz="紐西蘭",pt="葡萄牙",sg="新加坡",es="西班牙",ch="瑞士",tw="台灣",th="泰國",uk="英國",us="美國"},
-    ja = {ar="アルゼンチン",au="オーストラリア",at="オーストリア",br="ブラジル",ca="カナダ",cn="中国",dk="デンマーク",fr="フランス",de="ドイツ",hk="香港",["in"]="インド",it="イタリア",jp="日本",kr="韓国",nl="オランダ",nz="ニュージーランド",pt="ポルトガル",sg="シンガポール",es="スペイン",ch="スイス",tw="台湾",th="タイ",uk="イギリス",us="アメリカ"},
-    ko = {ar="아르헨티나",au="호주",at="오스트리아",br="브라질",ca="캐나다",cn="중국",dk="덴마크",fr="프랑스",de="독일",hk="홍콩",["in"]="인도",it="이탈리아",jp="일본",kr="한국",nl="네덜란드",nz="뉴질랜드",pt="포르투갈",sg="싱가포르",es="스페인",ch="스위스",tw="대만",th="태국",uk="영국",us="미국"},
-    de = {ar="Argentinien",au="Australien",at="Österreich",br="Brasilien",ca="Kanada",cn="China",dk="Dänemark",fr="Frankreich",de="Deutschland",hk="Hongkong",["in"]="Indien",it="Italien",jp="Japan",kr="Korea",nl="Niederlande",nz="Neuseeland",pt="Portugal",sg="Singapur",es="Spanien",ch="Schweiz",tw="Taiwan",th="Thailand",uk="Vereinigtes Königreich",us="Vereinigte Staaten"},
-    fr = {ar="Argentine",au="Australie",at="Autriche",br="Brésil",ca="Canada",cn="Chine",dk="Danemark",fr="France",de="Allemagne",hk="Hong Kong",["in"]="Inde",it="Italie",jp="Japon",kr="Corée",nl="Pays-Bas",nz="Nouvelle-Zélande",pt="Portugal",sg="Singapour",es="Espagne",ch="Suisse",tw="Taïwan",th="Thaïlande",uk="Royaume-Uni",us="États-Unis"},
-    es = {ar="Argentina",au="Australia",at="Austria",br="Brasil",ca="Canadá",cn="China",dk="Dinamarca",fr="Francia",de="Alemania",hk="Hong Kong",["in"]="India",it="Italia",jp="Japón",kr="Corea",nl="Países Bajos",nz="Nueva Zelanda",pt="Portugal",sg="Singapur",es="España",ch="Suiza",tw="Taiwán",th="Tailandia",uk="Reino Unido",us="Estados Unidos"},
-    pt = {ar="Argentina",au="Austrália",at="Áustria",br="Brasil",ca="Canadá",cn="China",dk="Dinamarca",fr="França",de="Alemanha",hk="Hong Kong",["in"]="Índia",it="Itália",jp="Japão",kr="Coreia",nl="Países Baixos",nz="Nova Zelândia",pt="Portugal",sg="Singapura",es="Espanha",ch="Suíça",tw="Taiwan",th="Tailândia",uk="Reino Unido",us="Estados Unidos"},
-    ru = {ar="Аргентина",au="Австралия",at="Австрия",br="Бразилия",ca="Канада",cn="Китай",dk="Дания",fr="Франция",de="Германия",hk="Гонконг",["in"]="Индия",it="Италия",jp="Япония",kr="Корея",nl="Нидерланды",nz="Новая Зеландия",pt="Португалия",sg="Сингапур",es="Испания",ch="Швейцария",tw="Тайвань",th="Таиланд",uk="Великобритания",us="США"},
-    ar = {ar="الأرجنتين",au="أستراليا",at="النمسا",br="البرازيل",ca="كندا",cn="الصين",dk="الدنمارك",fr="فرنسا",de="ألمانيا",hk="هونغ كونغ",["in"]="الهند",it="إيطاليا",jp="اليابان",kr="كوريا",nl="هولندا",nz="نيوزيلندا",pt="البرتغال",sg="سنغافورة",es="إسبانيا",ch="سويسرا",tw="تايوان",th="تايلاند",uk="المملكة المتحدة",us="الولايات المتحدة"},
-    fa = {ar="آرژانتین",au="استرالیا",at="اتریش",br="برزیل",ca="کانادا",cn="چین",dk="دانمارک",fr="فرانسه",de="آلمان",hk="هنگ کنگ",["in"]="هند",it="ایتالیا",jp="ژاپن",kr="کره",nl="هلند",nz="نیوزیلند",pt="پرتغال",sg="سنگاپور",es="اسپانیا",ch="سوئیس",tw="تایوان",th="تایلند",uk="بریتانیا",us="ایالات متحده"},
-    hi = {ar="अर्जेंटीना",au="ऑस्ट्रेलिया",at="ऑस्ट्रिया",br="ब्राज़ील",ca="कनाडा",cn="चीन",dk="डेनमार्क",fr="फ़्रांस",de="जर्मनी",hk="हांगकांग",["in"]="भारत",it="इटली",jp="जापान",kr="कोरिया",nl="नीदरलैंड",nz="न्यूज़ीलैंड",pt="पुर्तगाल",sg="सिंगापुर",es="स्पेन",ch="स्विट्ज़रलैंड",tw="ताइवान",th="थाईलैंड",uk="ब्रिटेन",us="संयुक्त राज्य"},
-    id = {ar="Argentina",au="Australia",at="Austria",br="Brasil",ca="Kanada",cn="Tiongkok",dk="Denmark",fr="Prancis",de="Jerman",hk="Hong Kong",["in"]="India",it="Italia",jp="Jepang",kr="Korea",nl="Belanda",nz="Selandia Baru",pt="Portugal",sg="Singapura",es="Spanyol",ch="Swiss",tw="Taiwan",th="Thailand",uk="Inggris",us="Amerika Serikat"},
-    th = {ar="อาร์เจนตินา",au="ออสเตรเลีย",at="ออสเตรีย",br="บราซิล",ca="แคนาดา",cn="จีน",dk="เดนมาร์ก",fr="ฝรั่งเศส",de="เยอรมนี",hk="ฮ่องกง",["in"]="อินเดีย",it="อิตาลี",jp="ญี่ปุ่น",kr="เกาหลี",nl="เนเธอร์แลนด์",nz="นิวซีแลนด์",pt="โปรตุเกส",sg="สิงคโปร์",es="สเปน",ch="สวิตเซอร์แลนด์",tw="ไต้หวัน",th="ไทย",uk="สหราชอาณาจักร",us="สหรัฐอเมริกา"},
-    tr = {ar="Arjantin",au="Avustralya",at="Avusturya",br="Brezilya",ca="Kanada",cn="Çin",dk="Danimarka",fr="Fransa",de="Almanya",hk="Hong Kong",["in"]="Hindistan",it="İtalya",jp="Japonya",kr="Kore",nl="Hollanda",nz="Yeni Zelanda",pt="Portekiz",sg="Singapur",es="İspanya",ch="İsviçre",tw="Tayvan",th="Tayland",uk="Birleşik Krallık",us="ABD"},
-    vi = {ar="Argentina",au="Úc",at="Áo",br="Brazil",ca="Canada",cn="Trung Quốc",dk="Đan Mạch",fr="Pháp",de="Đức",hk="Hồng Kông",["in"]="Ấn Độ",it="Ý",jp="Nhật Bản",kr="Hàn Quốc",nl="Hà Lan",nz="New Zealand",pt="Bồ Đào Nha",sg="Singapore",es="Tây Ban Nha",ch="Thụy Sĩ",tw="Đài Loan",th="Thái Lan",uk="Anh",us="Hoa Kỳ"}
-}
-local cn = country_i18n[lang] or country_i18n["en"]
--- Build countries table for JS
-local countries_js = {}
-for code, name in pairs(cn) do
-    countries_js[code] = {name = name}
-end
-t.countries = countries_js
 %>
 
 <%+header%>
@@ -1830,46 +1803,32 @@ function loadStatus() {
     xhr.send();
 }
 
-var serverCountries = <%= util.serialize_json(t.countries or {
-    ar = {name = "Argentina"},
-    au = {name = "Australia"},
-    at = {name = "Austria"},
-    br = {name = "Brazil"},
-    ca = {name = "Canada"},
-    cn = {name = "China"},
-    dk = {name = "Denmark"},
-    fr = {name = "France"},
-    de = {name = "Germany"},
-    hk = {name = "Hong Kong"},
-    ["in"] = {name = "India"},
-    it = {name = "Italy"},
-    jp = {name = "Japan"},
-    kr = {name = "Korea"},
-    nl = {name = "Netherlands"},
-    nz = {name = "New Zealand"},
-    pt = {name = "Portugal"},
-    sg = {name = "Singapore"},
-    es = {name = "Spain"},
-    ch = {name = "Switzerland"},
-    tw = {name = "Taiwan"},
-    th = {name = "Thailand"},
-    uk = {name = "United Kingdom"},
-    us = {name = "United States"}
-}) %>;
-// Add flag and server to each country
-var countryFlags = {
-    ar:"\ud83c\udde6\ud83c\uddf7",au:"\ud83c\udde6\ud83c\uddfa",at:"\ud83c\udde6\ud83c\uddf9",
-    br:"\ud83c\udde7\ud83c\uddf7",ca:"\ud83c\udde8\ud83c\udde6",cn:"\ud83c\udde8\ud83c\uddf3",
-    dk:"\ud83c\udde9\ud83c\uddf0",fr:"\ud83c\uddeb\ud83c\uddf7",de:"\ud83c\udde9\ud83c\uddea",
-    hk:"\ud83c\udded\ud83c\uddf0","in":"\ud83c\uddee\ud83c\uddf3",it:"\ud83c\uddee\ud83c\uddf9",
-    jp:"\ud83c\uddef\ud83c\uddf5",kr:"\ud83c\uddf0\ud83c\uddf7",nl:"\ud83c\uddf3\ud83c\uddf1",
-    nz:"\ud83c\uddf3\ud83c\uddff",pt:"\ud83c\uddf5\ud83c\uddf9",sg:"\ud83c\uddf8\ud83c\uddec",
-    es:"\ud83c\uddea\ud83c\uddf8",ch:"\ud83c\udde8\ud83c\udded",tw:"\ud83c\uddf9\ud83c\uddfc",
-    th:"\ud83c\uddf9\ud83c\udded",uk:"\ud83c\uddec\ud83c\udde7",us:"\ud83c\uddfa\ud83c\uddf8"
+// Server country code to ISO 3166-1 alpha-2 mapping (for Intl.DisplayNames)
+var codeToISO = {
+    ar:"AR",au:"AU",at:"AT",br:"BR",ca:"CA",cn:"CN",dk:"DK",fr:"FR",de:"DE",
+    hk:"HK","in":"IN",it:"IT",jp:"JP",kr:"KR",nl:"NL",nz:"NZ",pt:"PT",sg:"SG",
+    es:"ES",ch:"CH",tw:"TW",th:"TH",uk:"GB",us:"US"
 };
-for (var code in serverCountries) {
-    serverCountries[code].flag = countryFlags[code] || '';
-    serverCountries[code].server = code + '.fanq.in';
+
+// Generate flag emoji from ISO country code
+function codeToFlag(iso) {
+    return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+}
+
+// Get localized country name using browser's Intl API
+var countryNames = null;
+try { countryNames = new Intl.DisplayNames(navigator.language, {type: 'region'}); } catch(e) {}
+
+var serverCountries = {};
+for (var code in codeToISO) {
+    var iso = codeToISO[code];
+    var name = code;
+    try { name = countryNames ? countryNames.of(iso) : iso; } catch(e) {}
+    serverCountries[code] = {
+        name: name,
+        flag: codeToFlag(iso),
+        server: code + '.fanq.in'
+    };
 }
 
 function populateServerSelect(selectEl) {
@@ -1903,16 +1862,26 @@ function refreshServerList() {
         try {
             var servers = JSON.parse(xhr.responseText);
             if (Array.isArray(servers) && servers.length > 0) {
-                servers.sort(function(a, b) { return a.name.localeCompare(b.name); });
+                // Update serverCountries from API and localize names
+                serverCountries = {};
+                servers.forEach(function(s) {
+                    var code = s.code || s.server.split('.')[0];
+                    var iso = codeToISO[code] || code.toUpperCase();
+                    var localName = s.name;
+                    try { if (countryNames) localName = countryNames.of(iso) || s.name; } catch(e) {}
+                    serverCountries[code] = { name: localName, flag: codeToFlag(iso), server: s.server };
+                });
                 ['server-select', 'server-select-loggedin'].forEach(function(id) {
                     var sel = document.getElementById(id);
                     if (!sel) return;
                     var cur = sel.value;
                     sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
-                    servers.forEach(function(s) {
+                    var sorted = Object.keys(serverCountries).map(function(c) { return serverCountries[c]; })
+                        .sort(function(a, b) { return a.name.localeCompare(b.name); });
+                    sorted.forEach(function(s) {
                         var opt = document.createElement('option');
                         opt.value = s.server;
-                        opt.textContent = (s.flag || '') + ' ' + (s.name || s.server);
+                        opt.textContent = s.flag + ' ' + s.name;
                         if (s.server === cur) opt.selected = true;
                         sel.appendChild(opt);
                     });
