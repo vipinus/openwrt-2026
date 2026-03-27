@@ -1427,7 +1427,7 @@ if pass_file then pass_file:close() end
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.select_server %></label>
                     <div class="cbi-value-field">
-                        <select id="server-select" class="cbi-input-select">
+                        <select id="server-select" class="cbi-input-select" size="1" onfocus="this.size=10" onblur="this.size=1" onchange="this.size=1;this.blur();" style="position:relative;z-index:100;">
                             <option value="">-- <%= t.select_server %> --</option>
                         </select>
                         <input type="button" class="cbi-button cbi-button-neutral" id="btn-refresh-servers" onclick="refreshServerList()" value="&#x21bb;" title="<%= t.refresh_servers %>" style="margin-left:4px;" />
@@ -1465,7 +1465,7 @@ if pass_file then pass_file:close() end
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.select_server %></label>
                     <div class="cbi-value-field">
-                        <select id="server-select-loggedin" class="cbi-input-select">
+                        <select id="server-select-loggedin" class="cbi-input-select" size="1" onfocus="this.size=10" onblur="this.size=1" onchange="this.size=1;this.blur();" style="position:relative;z-index:100;">
                             <option value="">-- <%= t.select_server %> --</option>
                         </select>
                         <input type="button" class="cbi-button cbi-button-neutral" id="btn-refresh-servers-loggedin" onclick="refreshServerList()" value="&#x21bb;" title="<%= t.refresh_servers %>" style="margin-left:4px;" />
