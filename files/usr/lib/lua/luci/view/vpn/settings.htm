@@ -1684,7 +1684,7 @@ function showLoginProgress() {
     if (progress) progress.style.display = 'block';
     var pct = 0;
     loginProgressTimer = setInterval(function() {
-        pct += 5;
+        pct += 3;
         if (pct > 95) pct = 95;
         if (bar) bar.style.width = pct + '%';
         if (text) text.textContent = pct + '%';
