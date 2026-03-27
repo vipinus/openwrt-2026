@@ -1698,8 +1698,6 @@ function doLogout() {
     xhr.onload = function() {
         vpnData.authLoggedIn = false; vpnData.authUsername = ''; vpnData.authType = '';
         vpnData.authExpiry = ''; vpnData.connected = false;
-        document.getElementById('login-username').value = '';
-        document.getElementById('login-password').value = '';
         updateAuthUI(); updateUI();
     };
     xhr.send();
