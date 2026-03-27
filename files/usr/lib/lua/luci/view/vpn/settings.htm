@@ -1912,7 +1912,8 @@ window.addEventListener('DOMContentLoaded', function() {
     loadAuthStatus();
     loadStatus();
     loadServerList();
-    setTimeout(auto_detect, 1000);
+    // Only auto-detect if not already detected by loadStatus
+    setTimeout(function() { if (!vpnData.detected) auto_detect(); }, 2000);
     ['server-select', 'server-select-loggedin'].forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.addEventListener('change', function() { saveServerSelection(this); });
