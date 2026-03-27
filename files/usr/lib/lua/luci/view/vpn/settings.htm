@@ -1397,13 +1397,13 @@ local t = i18n[lang] or i18n["en"]
 #vpn-status-badge.disconnected { background:#f2dede; color:#a94442; border:1px solid #ebccd1; }
 .cbi-value-description { font-size:90%; color:#999; }
 .server-picker { position:relative; display:inline-block; }
-.server-picker-btn { padding:4px 8px; border:1px solid #ccc; background:#fff; cursor:pointer; min-width:200px; text-align:left; border-radius:3px; }
-.server-picker-btn:hover { border-color:#999; }
-.server-picker-dropdown { display:none; position:absolute; top:100%; left:0; z-index:999; background:#fff; border:1px solid #ccc; border-radius:3px; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:6px; max-height:320px; overflow-y:auto; }
-.server-picker-dropdown.open { display:grid; grid-template-columns:1fr 1fr; gap:2px; min-width:360px; }
-.server-picker-item { padding:4px 8px; cursor:pointer; border-radius:2px; white-space:nowrap; font-size:13px; }
-.server-picker-item:hover { background:#e8f0fe; }
-.server-picker-item.selected { background:#007bff; color:#fff; }
+.server-picker-btn { padding:3px 6px; border:1px solid #ccc; background:#fff; cursor:pointer; min-width:200px; text-align:left; font-size:inherit; font-family:inherit; line-height:1.5; color:#333; }
+.server-picker-btn:focus { border-color:#5e9ed6; outline:0; }
+.server-picker-dropdown { display:none; position:absolute; top:100%; left:0; z-index:999; background:#fff; border:1px solid #ccc; padding:4px; max-height:320px; overflow-y:auto; margin-top:1px; }
+.server-picker-dropdown.open { display:grid; grid-template-columns:1fr 1fr; gap:1px; min-width:360px; }
+.server-picker-item { padding:3px 6px; cursor:pointer; white-space:nowrap; font-size:inherit; color:#333; }
+.server-picker-item:hover { background:#f5f5f5; }
+.server-picker-item.selected { background:#5e9ed6; color:#fff; }
 </style>
 
 <div class="cbi-map">
