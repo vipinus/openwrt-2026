@@ -38,6 +38,12 @@ case "$reason" in
             ip -6 addr add "$INTERNAL_IP6_ADDRESS/$INTERNAL_IP6_NETMASK" dev "$TUNDEV" 2>/dev/null
             ip -6 route add default dev "$TUNDEV" metric 1 2>/dev/null
         fi
+
+        # Enable split tunnel if configured
+        SPLIT=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
+        if [ "$SPLIT" = "1" ]; then
+            /usr/sbin/vipin-vpn-routing enable 2>/dev/null &
+        fi
         ;;
     disconnect)
         # Remove VPN routes

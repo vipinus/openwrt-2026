@@ -148,10 +148,7 @@ SCRIPT
 
     if pgrep openconnect >/dev/null; then
         logger -t $NAME "VPN started (server: $server)"
-
-        if [ "$split_tunnel" = "1" ]; then
-            /usr/sbin/vipin-vpn-routing enable "$country"
-        fi
+        # Split tunnel is enabled by vipin-vpnc-script on connect callback
     else
         logger -t $NAME "Failed to start VPN"
         cat /var/log/openconnect.log 2>/dev/null | tail -5 | logger -t $NAME
