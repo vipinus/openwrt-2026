@@ -1652,7 +1652,6 @@ function updateAuthUI() {
         loginForm.style.display = 'none';
         userInfo.style.display = 'block';
         document.getElementById('user-name').textContent = vpnData.authUsername;
-        document.getElementById('user-type').innerHTML = '<strong style="color:#3c763d;">' + vpnData.authType.toUpperCase() + '</strong>';
         var isExpired = vpnData.authExpiry && new Date(vpnData.authExpiry) < new Date();
         var expiryEl = document.getElementById('user-expiry');
         var warnEl = document.getElementById('expiry-warning');
