@@ -1116,9 +1116,9 @@ function api_get_vpn_status()
     local detect_time = ""
     
     if detect_info and detect_info ~= "" then
-        detected_ip = string.match(detect_info, '"ip":"([^"]*)"') or ""
-        detected_country = string.match(detect_info, '"country":"([^"]*)"') or ""
-        detect_time = string.match(detect_info, '"detect_time":"([^"]*)"') or ""
+        detected_ip = string.match(detect_info, '"ip":%s*"([^"]*)"') or ""
+        detected_country = string.match(detect_info, '"country":%s*"([^"]*)"') or ""
+        detect_time = string.match(detect_info, '"detect_time":%s*"([^"]*)"') or ""
         detected = string.match(detect_info, '"detected":%s*true') ~= nil
     end
     
