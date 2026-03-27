@@ -1241,11 +1241,11 @@ function api_auto_detect()
     
     local output = util.exec("/usr/sbin/vipin-detect auto 2>&1")
     
-    local success = string.match(output, '"success":true') ~= nil
-    local detected_ip = string.match(output, '"ip":"([^"]*)"') or ""
-    local country_code = string.match(output, '"country_code":"([^"]*)"') or ""
-    local country = string.match(output, '"country":"([^"]*)"') or ""
-    local ip_count = tonumber(string.match(output, '"ip_count":([0-9]+)')) or 0
+    local success = string.match(output, '"success":%s*true') ~= nil
+    local detected_ip = string.match(output, '"ip":%s*"([^"]*)"') or ""
+    local country_code = string.match(output, '"country_code":%s*"([^"]*)"') or ""
+    local country = string.match(output, '"country":%s*"([^"]*)"') or ""
+    local ip_count = tonumber(string.match(output, '"ip_count":%s*([0-9]+)')) or 0
     
     local result = {
         success = success,
@@ -1399,11 +1399,11 @@ function api_get_renewal_url()
     
     local result_json = util.exec("/usr/sbin/vipin-auth renewal-url 2>/dev/null")
     
-    local success = string.match(result_json, '"success":true') ~= nil
-    local error_msg = string.match(result_json, '"error":"([^"]+)"') or ""
-    local url = string.match(result_json, '"url":"([^"]+)"') or ""
-    local username = string.match(result_json, '"username":"([^"]+)"') or ""
-    local token = string.match(result_json, '"token":"([^"]+)"') or ""
+    local success = string.match(result_json, '"success":%s*true') ~= nil
+    local error_msg = string.match(result_json, '"error":%s*"([^"]+)"') or ""
+    local url = string.match(result_json, '"url":%s*"([^"]+)"') or ""
+    local username = string.match(result_json, '"username":%s*"([^"]+)"') or ""
+    local token = string.match(result_json, '"token":%s*"([^"]+)"') or ""
     
     local result = {
         success = success,
