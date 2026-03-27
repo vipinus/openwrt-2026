@@ -74,7 +74,17 @@ remote_verify() {
 
 disable_and_stop() {
     local reason="$1"
-    log "VPN issue: $reason — will retry next cycle"
+    log "Stopping VPN: $reason"
+
+    # Stop VPN
+    killall openconnect 2>/dev/null
+    ip link delete vpn_vipin 2>/dev/null
+
+    # Disable auto-connect
+    uci set vipin.vpn.enabled=0
+    uci commit vipin
+
+    log "VPN stopped, auto-connect disabled. User needs to renew subscription."
 }
 
 reconnect_vpn() {
@@ -136,7 +146,7 @@ while true; do
 
         if [ -n "$username" ]; then
             if ! remote_verify "$username"; then
-                log "Account verification failed for $username"
+                disable_and_stop "Account expired or invalid for $username"
             fi
         fi
     fi
