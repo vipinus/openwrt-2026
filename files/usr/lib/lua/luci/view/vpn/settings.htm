@@ -1841,7 +1841,7 @@ function populateServerSelect(selectEl) {
     var sorted = Object.keys(serverCountries).map(function(code) {
         return serverCountries[code];
     }).sort(function(a, b) {
-        return a.name.localeCompare(b.name, uiLang);
+        return a.name.localeCompare(b.name, uiLang, {sensitivity: 'base', usage: 'sort'});
     });
     sorted.forEach(function(s) {
         var opt = document.createElement('option');
@@ -1880,7 +1880,7 @@ function refreshServerList() {
                     var cur = sel.value;
                     sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
                     var sorted = Object.keys(serverCountries).map(function(c) { return serverCountries[c]; })
-                        .sort(function(a, b) { return a.name.localeCompare(b.name, uiLang); });
+                        .sort(function(a, b) { return a.name.localeCompare(b.name, uiLang, {sensitivity: 'base', usage: 'sort'}); });
                     sorted.forEach(function(s) {
                         var opt = document.createElement('option');
                         opt.value = s.server;
