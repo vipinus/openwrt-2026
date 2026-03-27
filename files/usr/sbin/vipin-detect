@@ -25,29 +25,23 @@ get_public_ip() {
 
     ip link show vpn_vipin >/dev/null 2>&1 && vpn_active=1
 
-    # IP detection services (use IP addresses to avoid DNS-through-VPN issues)
-    # 208.95.112.1 = ip-api.com, resolved once
-    local targets="208.95.112.1 64.185.227.155 34.117.59.81"
+    if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ] && [ -n "$wan_dev" ]; then
+        # VPN active: use DNS-based IP detection (bypasses VPN routing)
+        # OpenDNS resolver returns your public IP via special DNS query
+        # Route DNS query directly via WAN
+        ip route add 208.67.222.222/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
+        ip=$(nslookup myip.opendns.com 208.67.222.222 2>/dev/null | grep "Address:" | tail -1 | awk '{print $2}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+        ip route del 208.67.222.222/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
 
-    for target_ip in $targets; do
-        # Add temporary direct route via WAN if VPN is active
-        if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ]; then
-            ip route add "$target_ip" via "$wan_gw" dev "$wan_dev" 2>/dev/null
+        # Fallback: Google DNS method
+        if [ -z "$ip" ]; then
+            ip route add 216.239.32.10/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
+            ip=$(nslookup -type=TXT o-o.myaddr.l.google.com 216.239.32.10 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ip route del 216.239.32.10/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
         fi
+    fi
 
-        ip=$(wget -q -O- --timeout=5 "http://$target_ip" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-
-        # Remove temporary route
-        if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ]; then
-            ip route del "$target_ip" via "$wan_gw" dev "$wan_dev" 2>/dev/null
-        fi
-
-        if [ -n "$ip" ]; then
-            break
-        fi
-    done
-
-    # Fallback: use HTTPS services with hostname
+    # No VPN or DNS method failed: use HTTP
     if [ -z "$ip" ]; then
         for url in \
             "https://api.ipify.org" \
