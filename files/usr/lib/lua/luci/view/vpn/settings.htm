@@ -1409,7 +1409,7 @@ local t = i18n[lang] or i18n["en"]
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.username %></label>
                     <div class="cbi-value-field">
-                        <input type="text" id="login-username" class="cbi-input-text" />
+                        <input type="text" id="login-username" class="cbi-input-text" value="<%= luci.model.uci:get("vipin", "vpn", "username") or "" %>" />
                     </div>
                 </div>
                 <div class="cbi-value">
@@ -1740,6 +1740,9 @@ function doLogin() {
 }
 
 function doLogout() {
+    // Save credentials before logout
+    var savedUser = vpnData.authUsername || document.getElementById('login-username').value;
+    var savedPass = document.getElementById('login-password').value;
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_logout', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -1747,6 +1750,9 @@ function doLogout() {
         vpnData.authLoggedIn = false; vpnData.authUsername = ''; vpnData.authType = '';
         vpnData.authExpiry = ''; vpnData.connected = false;
         updateAuthUI(); updateUI();
+        // Restore credentials
+        document.getElementById('login-username').value = savedUser;
+        document.getElementById('login-password').value = savedPass;
     };
     xhr.send();
 }
