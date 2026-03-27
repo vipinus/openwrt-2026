@@ -1431,8 +1431,18 @@ local t = i18n[lang] or i18n["en"]
                 <div class="cbi-value">
                     <label class="cbi-value-title">&nbsp;</label>
                     <div class="cbi-value-field">
-                        <input type="button" class="cbi-button cbi-button-apply" onclick="doLogin()" value="<%= t.login_button %>" />
+                        <input type="button" class="cbi-button cbi-button-apply" id="btn-login" onclick="doLogin()" value="<%= t.login_button %>" />
                         <span id="login-error" style="color:#a94442;margin-left:10px;display:none;"></span>
+                        <div id="login-progress" style="display:none;margin-top:8px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span>⏳</span>
+                                <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
+                                    <div id="login-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
+                                </div>
+                                <span id="login-progress-text" style="font-size:12px;color:#666;">0%</span>
+                            </div>
+                            <p style="font-size:12px;color:#666;margin:4px 0 0;"><%= t.connecting %>...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1658,12 +1668,47 @@ function updateAuthUI() {
     }
 }
 
+var loginProgressTimer = null;
+
+function showLoginProgress() {
+    var btn = document.getElementById('btn-login');
+    var progress = document.getElementById('login-progress');
+    var bar = document.getElementById('login-progress-bar');
+    var text = document.getElementById('login-progress-text');
+    if (btn) { btn.disabled = true; btn.value = '⏳ ' + vpnData.t.connecting + '...'; }
+    if (progress) progress.style.display = 'block';
+    var pct = 0;
+    loginProgressTimer = setInterval(function() {
+        pct += 5;
+        if (pct > 95) pct = 95;
+        if (bar) bar.style.width = pct + '%';
+        if (text) text.textContent = pct + '%';
+    }, 500);
+}
+
+function hideLoginProgress(success) {
+    var btn = document.getElementById('btn-login');
+    var progress = document.getElementById('login-progress');
+    var bar = document.getElementById('login-progress-bar');
+    var text = document.getElementById('login-progress-text');
+    if (loginProgressTimer) { clearInterval(loginProgressTimer); loginProgressTimer = null; }
+    if (success) {
+        if (bar) bar.style.width = '100%';
+        if (text) text.textContent = '100%';
+        setTimeout(function() { if (progress) progress.style.display = 'none'; }, 1000);
+    } else {
+        if (progress) progress.style.display = 'none';
+    }
+    if (btn) { btn.disabled = false; btn.value = vpnData.t.login_button; }
+}
+
 function doLogin() {
     var username = document.getElementById('login-username').value;
     var password = document.getElementById('login-password').value;
     var errorEl = document.getElementById('login-error');
     if (!username || !password) { errorEl.textContent = vpnData.t.invalid_credentials; errorEl.style.display = 'inline'; return; }
     errorEl.style.display = 'none';
+    showLoginProgress();
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_login', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -1676,16 +1721,19 @@ function doLogin() {
                 vpnData.authType = r.type || '';
                 vpnData.authExpiry = r.expiration || '';
                 vpnData.connected = true;
+                hideLoginProgress(true);
                 updateAuthUI(); updateUI();
                 setTimeout(loadStatus, 5000);
             } else {
+                hideLoginProgress(false);
                 var msg = vpnData.t.invalid_credentials;
                 if (r.status === 'expired') msg = vpnData.t.account_expired;
                 if (r.status === 'not_vip') msg = vpnData.t.not_vip_account;
                 errorEl.textContent = msg; errorEl.style.display = 'inline';
             }
-        } catch (e) { errorEl.textContent = vpnData.t.error; errorEl.style.display = 'inline'; }
+        } catch (e) { hideLoginProgress(false); errorEl.textContent = vpnData.t.error; errorEl.style.display = 'inline'; }
     };
+    xhr.onerror = function() { hideLoginProgress(false); errorEl.textContent = vpnData.t.error; errorEl.style.display = 'inline'; };
     var serverEl = document.getElementById('server-select');
     var server = serverEl ? serverEl.value : '';
     xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password) + '&server=' + encodeURIComponent(server));
