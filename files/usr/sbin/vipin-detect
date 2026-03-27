@@ -9,24 +9,38 @@ log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DETECT_LOG"
 }
 
+get_wan_device() {
+    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $5}'
+}
+
+get_wan_gateway() {
+    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $3}'
+}
+
 get_public_ip() {
     local ip=""
-    
+    local wan_dev=$(get_wan_device)
+    local bind_opt=""
+
+    # If VPN is active, bind to WAN interface to get real IP
+    if [ -n "$wan_dev" ] && ip link show vpn_vipin >/dev/null 2>&1; then
+        bind_opt="--bind-address=$(ip -4 addr show dev $wan_dev 2>/dev/null | grep -o 'inet [0-9.]*' | awk '{print $2}' | head -1)"
+    fi
+
     for url in \
         "https://api.ipify.org" \
         "https://icanhazip.com" \
         "https://ifconfig.me/ip" \
         "https://checkip.amazonaws.com" \
-        "https://ipinfo.io/ip" \
-        "https://myip.dnsomatic.com"; do
-        
-        ip=$(wget -q -O- --timeout=5 "$url" 2>/dev/null || curl -s --max-time 5 "$url" 2>/dev/null)
+        "https://ipinfo.io/ip"; do
+
+        ip=$(wget -q -O- --timeout=5 $bind_opt "$url" 2>/dev/null)
         ip=$(echo "$ip" | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
         if [ -n "$ip" ]; then
             break
         fi
     done
-    
+
     echo "$ip"
 }
 
