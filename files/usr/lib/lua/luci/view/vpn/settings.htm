@@ -1415,7 +1415,12 @@ local t = i18n[lang] or i18n["en"]
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.password %></label>
                     <div class="cbi-value-field">
-                        <input type="password" id="login-password" class="cbi-input-text" />
+<%
+local pass_file = io.open("/etc/vipin/.vpn_pass", "r")
+local saved_pass = pass_file and pass_file:read("*all") or ""
+if pass_file then pass_file:close() end
+%>
+                        <input type="password" id="login-password" class="cbi-input-text" value="<%= saved_pass %>" />
                     </div>
                 </div>
                 <div class="cbi-value">
