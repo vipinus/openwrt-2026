@@ -1396,7 +1396,14 @@ local t = i18n[lang] or i18n["en"]
 #vpn-status-badge.connected { background:#dff0d8; color:#3c763d; border:1px solid #d6e9c6; }
 #vpn-status-badge.disconnected { background:#f2dede; color:#a94442; border:1px solid #ebccd1; }
 .cbi-value-description { font-size:90%; color:#999; }
-.cbi-map { min-height: 100vh; padding-bottom: 400px; }
+.server-picker { position:relative; display:inline-block; }
+.server-picker-btn { padding:4px 8px; border:1px solid #ccc; background:#fff; cursor:pointer; min-width:200px; text-align:left; border-radius:3px; }
+.server-picker-btn:hover { border-color:#999; }
+.server-picker-dropdown { display:none; position:absolute; top:100%; left:0; z-index:999; background:#fff; border:1px solid #ccc; border-radius:3px; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:6px; max-height:320px; overflow-y:auto; }
+.server-picker-dropdown.open { display:grid; grid-template-columns:1fr 1fr; gap:2px; min-width:360px; }
+.server-picker-item { padding:4px 8px; cursor:pointer; border-radius:2px; white-space:nowrap; font-size:13px; }
+.server-picker-item:hover { background:#e8f0fe; }
+.server-picker-item.selected { background:#007bff; color:#fff; }
 </style>
 
 <div class="cbi-map">
@@ -1428,9 +1435,11 @@ if pass_file then pass_file:close() end
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.select_server %></label>
                     <div class="cbi-value-field">
-                        <select id="server-select" class="cbi-input-select">
-                            <option value="">-- <%= t.select_server %> --</option>
-                        </select>
+                        <div class="server-picker" id="server-picker-login">
+                            <button type="button" class="server-picker-btn" onclick="toggleServerPicker('login')">-- <%= t.select_server %> --</button>
+                            <div class="server-picker-dropdown" id="server-dropdown-login"></div>
+                            <input type="hidden" id="server-select" value="" />
+                        </div>
                         <input type="button" class="cbi-button cbi-button-neutral" id="btn-refresh-servers" onclick="refreshServerList()" value="&#x21bb;" title="<%= t.refresh_servers %>" style="margin-left:4px;" />
                         <br/><span id="server-status" class="cbi-value-description"></span>
                     </div>
@@ -1466,9 +1475,11 @@ if pass_file then pass_file:close() end
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.select_server %></label>
                     <div class="cbi-value-field">
-                        <select id="server-select-loggedin" class="cbi-input-select">
-                            <option value="">-- <%= t.select_server %> --</option>
-                        </select>
+                        <div class="server-picker" id="server-picker-loggedin">
+                            <button type="button" class="server-picker-btn" onclick="toggleServerPicker('loggedin')">-- <%= t.select_server %> --</button>
+                            <div class="server-picker-dropdown" id="server-dropdown-loggedin"></div>
+                            <input type="hidden" id="server-select-loggedin" value="" />
+                        </div>
                         <input type="button" class="cbi-button cbi-button-neutral" id="btn-refresh-servers-loggedin" onclick="refreshServerList()" value="&#x21bb;" title="<%= t.refresh_servers %>" style="margin-left:4px;" />
                     </div>
                 </div>
@@ -1830,27 +1841,67 @@ for (var code in codeToISO) {
     };
 }
 
-function populateServerSelect(selectEl) {
-    if (!selectEl) return;
-    var currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
-    selectEl.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
+function populateServerPicker(pickerId) {
+    var dropdown = document.getElementById('server-dropdown-' + pickerId);
+    var hiddenInput = document.getElementById(pickerId === 'login' ? 'server-select' : 'server-select-loggedin');
+    var btn = dropdown ? dropdown.parentElement.querySelector('.server-picker-btn') : null;
+    if (!dropdown) return;
+
+    var currentServer = hiddenInput ? hiddenInput.value : '';
+    if (!currentServer) currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
+
+    dropdown.innerHTML = '';
     var sorted = Object.keys(serverCountries).map(function(code) {
         return serverCountries[code];
     }).sort(function(a, b) {
         return a.name.localeCompare(b.name, uiLang, {sensitivity: 'base', usage: 'sort'});
     });
+
     sorted.forEach(function(s) {
-        var opt = document.createElement('option');
-        opt.value = s.server;
-        opt.textContent = s.flag + ' ' + s.name;
-        if (s.server === currentServer) opt.selected = true;
-        selectEl.appendChild(opt);
+        var item = document.createElement('div');
+        item.className = 'server-picker-item' + (s.server === currentServer ? ' selected' : '');
+        item.textContent = s.flag + ' ' + s.name;
+        item.onclick = function() {
+            if (hiddenInput) hiddenInput.value = s.server;
+            if (btn) btn.textContent = s.flag + ' ' + s.name;
+            dropdown.classList.remove('open');
+            // Sync both pickers
+            var otherId = pickerId === 'login' ? 'loggedin' : 'login';
+            var otherInput = document.getElementById(otherId === 'login' ? 'server-select' : 'server-select-loggedin');
+            var otherBtn = document.querySelector('#server-picker-' + otherId + ' .server-picker-btn');
+            if (otherInput) otherInput.value = s.server;
+            if (otherBtn) otherBtn.textContent = s.flag + ' ' + s.name;
+            saveServerSelection(s.server);
+        };
+        dropdown.appendChild(item);
     });
+
+    // Set initial button text
+    if (btn && currentServer) {
+        var cur = serverCountries[Object.keys(serverCountries).find(function(c) { return serverCountries[c].server === currentServer; })];
+        if (cur) btn.textContent = cur.flag + ' ' + cur.name;
+    }
 }
 
+function toggleServerPicker(pickerId) {
+    var dropdown = document.getElementById('server-dropdown-' + pickerId);
+    if (!dropdown) return;
+    var isOpen = dropdown.classList.contains('open');
+    // Close all dropdowns first
+    document.querySelectorAll('.server-picker-dropdown').forEach(function(d) { d.classList.remove('open'); });
+    if (!isOpen) dropdown.classList.add('open');
+}
+
+// Close picker when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.server-picker')) {
+        document.querySelectorAll('.server-picker-dropdown').forEach(function(d) { d.classList.remove('open'); });
+    }
+});
+
 function loadServerList() {
-    populateServerSelect(document.getElementById('server-select'));
-    populateServerSelect(document.getElementById('server-select-loggedin'));
+    populateServerPicker('login');
+    populateServerPicker('loggedin');
 }
 
 function refreshServerList() {
@@ -1870,21 +1921,7 @@ function refreshServerList() {
                     try { if (countryNames) localName = countryNames.of(iso) || s.name; } catch(e) {}
                     serverCountries[code] = { name: localName, flag: codeToFlag(iso), server: s.server };
                 });
-                ['server-select', 'server-select-loggedin'].forEach(function(id) {
-                    var sel = document.getElementById(id);
-                    if (!sel) return;
-                    var cur = sel.value;
-                    sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
-                    var sorted = Object.keys(serverCountries).map(function(c) { return serverCountries[c]; })
-                        .sort(function(a, b) { return a.name.localeCompare(b.name, uiLang, {sensitivity: 'base', usage: 'sort'}); });
-                    sorted.forEach(function(s) {
-                        var opt = document.createElement('option');
-                        opt.value = s.server;
-                        opt.textContent = s.flag + ' ' + s.name;
-                        if (s.server === cur) opt.selected = true;
-                        sel.appendChild(opt);
-                    });
-                });
+                loadServerList();
                 return;
             }
         } catch (e) {}
@@ -1895,18 +1932,13 @@ function refreshServerList() {
     xhr.send();
 }
 
-function saveServerSelection(selectEl) {
-    if (!selectEl || !selectEl.value) return;
-    // Sync both selects
-    ['server-select', 'server-select-loggedin'].forEach(function(id) {
-        var s = document.getElementById(id);
-        if (s && s !== selectEl) s.value = selectEl.value;
-    });
+function saveServerSelection(server) {
+    if (!server) return;
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_set_server', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {};
-    xhr.send('server=' + encodeURIComponent(selectEl.value));
+    xhr.send('server=' + encodeURIComponent(server));
 }
 
 window.addEventListener('DOMContentLoaded', function() {
@@ -1915,10 +1947,6 @@ window.addEventListener('DOMContentLoaded', function() {
     loadServerList();
     // Only auto-detect if not already detected by loadStatus
     setTimeout(function() { if (!vpnData.detected) auto_detect(); }, 2000);
-    ['server-select', 'server-select-loggedin'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('change', function() { saveServerSelection(this); });
-    });
 });
 </script>
 
