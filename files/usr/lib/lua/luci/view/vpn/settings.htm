@@ -1815,9 +1815,12 @@ function codeToFlag(iso) {
     return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
 }
 
-// Get localized country name using browser's Intl API
+// Get localized country name using Intl API with LuCI's current language
+var uiLang = '<%= lang %>';
 var countryNames = null;
-try { countryNames = new Intl.DisplayNames(navigator.language, {type: 'region'}); } catch(e) {}
+try { countryNames = new Intl.DisplayNames(uiLang, {type: 'region'}); } catch(e) {
+    try { countryNames = new Intl.DisplayNames(navigator.language, {type: 'region'}); } catch(e2) {}
+}
 
 var serverCountries = {};
 for (var code in codeToISO) {
@@ -1838,7 +1841,7 @@ function populateServerSelect(selectEl) {
     var sorted = Object.keys(serverCountries).map(function(code) {
         return serverCountries[code];
     }).sort(function(a, b) {
-        return a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name, uiLang);
     });
     sorted.forEach(function(s) {
         var opt = document.createElement('option');
@@ -1877,7 +1880,7 @@ function refreshServerList() {
                     var cur = sel.value;
                     sel.innerHTML = '<option value="">-- ' + vpnData.t.select_server + ' --</option>';
                     var sorted = Object.keys(serverCountries).map(function(c) { return serverCountries[c]; })
-                        .sort(function(a, b) { return a.name.localeCompare(b.name); });
+                        .sort(function(a, b) { return a.name.localeCompare(b.name, uiLang); });
                     sorted.forEach(function(s) {
                         var opt = document.createElement('option');
                         opt.value = s.server;
