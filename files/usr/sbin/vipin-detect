@@ -19,27 +19,47 @@ get_wan_gateway() {
 
 get_public_ip() {
     local ip=""
+    local wan_gw=$(get_wan_gateway)
     local wan_dev=$(get_wan_device)
-    local bind_opt=""
+    local vpn_active=0
 
-    # If VPN is active, bind to WAN interface to get real IP
-    if [ -n "$wan_dev" ] && ip link show vpn_vipin >/dev/null 2>&1; then
-        bind_opt="--bind-address=$(ip -4 addr show dev $wan_dev 2>/dev/null | grep -o 'inet [0-9.]*' | awk '{print $2}' | head -1)"
-    fi
+    ip link show vpn_vipin >/dev/null 2>&1 && vpn_active=1
 
-    for url in \
-        "https://api.ipify.org" \
-        "https://icanhazip.com" \
-        "https://ifconfig.me/ip" \
-        "https://checkip.amazonaws.com" \
-        "https://ipinfo.io/ip"; do
+    # IP detection services (use IP addresses to avoid DNS-through-VPN issues)
+    # 208.95.112.1 = ip-api.com, resolved once
+    local targets="208.95.112.1 64.185.227.155 34.117.59.81"
 
-        ip=$(wget -q -O- --timeout=5 $bind_opt "$url" 2>/dev/null)
-        ip=$(echo "$ip" | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+    for target_ip in $targets; do
+        # Add temporary direct route via WAN if VPN is active
+        if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ]; then
+            ip route add "$target_ip" via "$wan_gw" dev "$wan_dev" 2>/dev/null
+        fi
+
+        ip=$(wget -q -O- --timeout=5 "http://$target_ip" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+
+        # Remove temporary route
+        if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ]; then
+            ip route del "$target_ip" via "$wan_gw" dev "$wan_dev" 2>/dev/null
+        fi
+
         if [ -n "$ip" ]; then
             break
         fi
     done
+
+    # Fallback: use HTTPS services with hostname
+    if [ -z "$ip" ]; then
+        for url in \
+            "https://api.ipify.org" \
+            "https://icanhazip.com" \
+            "https://checkip.amazonaws.com"; do
+            ip=$(wget -q -O- --timeout=5 "$url" 2>/dev/null)
+            ip=$(echo "$ip" | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+            if [ -n "$ip" ]; then
+                break
+            fi
+        done
+    fi
 
     echo "$ip"
 }
