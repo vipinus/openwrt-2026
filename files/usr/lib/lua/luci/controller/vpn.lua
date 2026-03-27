@@ -1055,7 +1055,9 @@ function get_lang()
 
     local lang_map = {
         zh_Hans = "zh-CN", zh_Hant = "zh-TW",
-        ["zh-cn"] = "zh-CN", ["zh-tw"] = "zh-TW"
+        ["zh-cn"] = "zh-CN", ["zh-tw"] = "zh-TW",
+        zh_cn = "zh-CN", zh_tw = "zh-TW",
+        pt_br = "pt", pt_BR = "pt"
     }
     return lang_map[lang] or lang
 end
