@@ -154,6 +154,19 @@ jobs:
             ls "$LOCALE_DIR"/
           fi
 
+          # Remove unused VPN i18n files (keep only en + selected language)
+          VPN_I18N_DIR="files/usr/lib/lua/luci/view/vpn/i18n"
+          if [ -d "$VPN_I18N_DIR" ]; then
+            for f in "$VPN_I18N_DIR"/*.lua; do
+              fname=$(basename "$f" .lua)
+              if [ "$fname" != "en" ] && [ "$fname" != "$OUR_LANG" ]; then
+                rm -f "$f"
+              fi
+            done
+            echo "=== Kept VPN i18n ==="
+            ls "$VPN_I18N_DIR"/
+          fi
+
           echo "=== Custom files ==="
           find files -type f | head -30
 
