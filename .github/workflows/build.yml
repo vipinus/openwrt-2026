@@ -71,53 +71,76 @@ jobs:
             echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
           fi
 
-      - name: Find Config File
+      - name: Find and Parse Config File
         run: |
           CONFIG_FILE="${{ github.workspace }}/configs/${TARGET}.config"
           if [ ! -f "$CONFIG_FILE" ]; then
             CONFIG_FILE="${{ github.workspace }}/configs/$(echo $TARGET | tr 'A-Z' 'a-z' | tr '_' '-').config"
           fi
-          if [ -f "$CONFIG_FILE" ]; then
-            echo "Config: $CONFIG_FILE ($(wc -l < "$CONFIG_FILE") lines)"
-          else
+          if [ ! -f "$CONFIG_FILE" ]; then
             echo "ERROR: No config found for: $TARGET"
             ls "${{ github.workspace }}/configs/" | head -20
             exit 1
           fi
+          echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
+          echo "Config: $CONFIG_FILE ($(wc -l < "$CONFIG_FILE") lines)"
 
-      - name: Prepare Build Environment
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential ccache flex bison g++ gcc libc-dev \
-            python3 python3-pip python3-setuptools python3-wheel \
-            libncurses-dev libssl-dev zlib1g-dev libelf-dev autoconf \
-            automake libtool pkg-config unzip rsync wget git curl \
-            subversion bc findutils tar bzip2 gzip help2man
+          # Parse target and subtarget from config
+          TARGET_ARCH=$(grep '^CONFIG_TARGET_' "$CONFIG_FILE" | head -1 | sed 's/CONFIG_TARGET_//;s/=y//')
+          SUBTARGET=$(grep '^CONFIG_TARGET_.*=y' "$CONFIG_FILE" | sed -n '2p' | sed 's/CONFIG_TARGET_//;s/=y//')
+          # Extract just the subtarget part (e.g., ramips_mt7621 -> mt7621)
+          SUBTARGET_SHORT=$(echo "$SUBTARGET" | sed "s/${TARGET_ARCH}_//")
 
-      - name: Check Available Resources
-        run: |
-          echo "=== System Resources ==="
-          nproc
-          free -h
-          df -h /tmp /home
-          echo "=== Setting build limits ==="
-          echo "Reducing parallel jobs to prevent OOM on 7GB RAM runner"
-          echo "MAKE_JOBS=4" >> $GITHUB_ENV
-          echo "PARALLEL_JOBS=4" >> $GITHUB_ENV
+          echo "TARGET_ARCH=$TARGET_ARCH" >> $GITHUB_ENV
+          echo "SUBTARGET_SHORT=$SUBTARGET_SHORT" >> $GITHUB_ENV
+          echo "Parsed: arch=$TARGET_ARCH subtarget=$SUBTARGET_SHORT"
 
-      - name: Clone OpenWRT
+          # Parse DEVICE profile name from config
+          DEVICE_LINE=$(grep 'CONFIG_TARGET_.*DEVICE_' "$CONFIG_FILE" | head -1)
+          if [ -n "$DEVICE_LINE" ]; then
+            PROFILE=$(echo "$DEVICE_LINE" | sed 's/.*DEVICE_//;s/=y//')
+          else
+            # Fallback for configs using CONFIG_TARGET_PROFILE
+            PROFILE=$(grep 'CONFIG_TARGET_PROFILE' "$CONFIG_FILE" | sed 's/.*="DEVICE_//;s/"//')
+          fi
+          echo "IB_PROFILE=$PROFILE" >> $GITHUB_ENV
+          echo "Device profile: $PROFILE"
+
+          # Parse packages from config (skip TARGET_, LUCI_LANG_, and comment lines)
+          PACKAGES=""
+          while IFS= read -r line; do
+            pkg=$(echo "$line" | sed 's/CONFIG_PACKAGE_//;s/=y//')
+            # Skip packages known to not exist in Image Builder
+            case "$pkg" in
+              kmod-bridge|kmod-mt7628) continue ;;
+            esac
+            PACKAGES="$PACKAGES $pkg"
+          done < <(grep '^CONFIG_PACKAGE_' "$CONFIG_FILE")
+          echo "IB_PACKAGES=$PACKAGES" >> $GITHUB_ENV
+          echo "Packages:$PACKAGES"
+
+      - name: Install Dependencies
         run: |
-          rm -rf /tmp/openwrt
-          git clone --depth 1 --branch v${{ env.OPENWRT_VERSION }} \
-            https://github.com/openwrt/openwrt.git /tmp/openwrt
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq wget file gawk unzip rsync zstd
+
+      - name: Download Image Builder
+        run: |
+          IB_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET_ARCH}/${SUBTARGET_SHORT}/openwrt-imagebuilder-${OPENWRT_VERSION}-${TARGET_ARCH}-${SUBTARGET_SHORT}.Linux-x86_64.tar.zst"
+          echo "Downloading: $IB_URL"
+          wget -q "$IB_URL" -O /tmp/imagebuilder.tar.zst
+          cd /tmp
+          tar --zstd -xf imagebuilder.tar.zst
+          IB_DIR=$(ls -d openwrt-imagebuilder-* | head -1)
+          echo "IB_DIR=/tmp/$IB_DIR" >> $GITHUB_ENV
+          echo "Image Builder: $IB_DIR"
 
       - name: Setup Custom Files
         run: |
-          cd /tmp/openwrt
-          mkdir -p files
-          cp -r "${{ github.workspace }}/files/"* files/ 2>/dev/null || true
-          
+          cd "$IB_DIR"
+          mkdir -p custom-files
+          cp -r "${{ github.workspace }}/files/"* custom-files/
+
           # Map language code
           FINAL_LANG="${LUCI_LANG:-en}"
           case "$FINAL_LANG" in
@@ -126,36 +149,23 @@ jobs:
             pt-BR|pt_BR) FINAL_LANG="pt_BR" ;;
           esac
           echo "FINAL_LANG=${FINAL_LANG}" >> $GITHUB_ENV
-          
-          echo "${VERSION:-20260405}" > files/etc/vipin_version
-          echo "${TARGET:-Unknown}" > files/etc/vipin_model
-          echo "${FINAL_LANG}" > files/etc/vipin_language
-          chmod +x files/etc/init.d/* 2>/dev/null || true
-          chmod +x files/usr/sbin/* 2>/dev/null || true
-          chmod +x files/etc/uci-defaults/* 2>/dev/null || true
 
-          # Map FINAL_LANG to our locale directory name
+          echo "${VERSION:-20260405}" > custom-files/etc/vipin_version
+          echo "${TARGET:-Unknown}" > custom-files/etc/vipin_model
+          echo "${FINAL_LANG}" > custom-files/etc/vipin_language
+          chmod +x custom-files/etc/init.d/* 2>/dev/null || true
+          chmod +x custom-files/usr/sbin/* 2>/dev/null || true
+          chmod +x custom-files/etc/uci-defaults/* 2>/dev/null || true
+
+          # Map FINAL_LANG to our i18n file names
           OUR_LANG="${LUCI_LANG:-en}"
           case "$OUR_LANG" in
             zh_Hans) OUR_LANG="zh-CN" ;;
             zh_Hant) OUR_LANG="zh-TW" ;;
           esac
 
-          # Remove unused locale directories (keep only en + selected language)
-          LOCALE_DIR="files/usr/share/luci/locale"
-          if [ -d "$LOCALE_DIR" ]; then
-            for dir in "$LOCALE_DIR"/*/; do
-              lang_dir=$(basename "$dir")
-              if [ "$lang_dir" != "en" ] && [ "$lang_dir" != "$OUR_LANG" ]; then
-                rm -rf "$dir"
-              fi
-            done
-            echo "=== Kept locales ==="
-            ls "$LOCALE_DIR"/
-          fi
-
           # Remove unused VPN i18n files (keep only en + selected language)
-          VPN_I18N_DIR="files/usr/lib/lua/luci/view/vpn/i18n"
+          VPN_I18N_DIR="custom-files/usr/lib/lua/luci/view/vpn/i18n"
           if [ -d "$VPN_I18N_DIR" ]; then
             for f in "$VPN_I18N_DIR"/*.lua; do
               fname=$(basename "$f" .lua)
@@ -168,103 +178,44 @@ jobs:
           fi
 
           echo "=== Custom files ==="
-          find files -type f | head -30
+          find custom-files -type f | head -30
 
-      - name: Update Feeds
+      - name: Add Language Packages
         run: |
-          cd /tmp/openwrt
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: Copy Configuration
-        run: |
-          cd /tmp/openwrt
-          CONFIG_FILE="${{ github.workspace }}/configs/${TARGET}.config"
-          if [ ! -f "$CONFIG_FILE" ]; then
-            CONFIG_FILE="${{ github.workspace }}/configs/$(echo $TARGET | tr 'A-Z' 'a-z' | tr '_' '-').config"
-          fi
-          if [ -f "$CONFIG_FILE" ]; then
-            cp "$CONFIG_FILE" .config
-            echo "=== Config loaded ($(wc -l < .config) lines) ==="
-            head -5 .config
-          else
-            echo "ERROR: Config not found: $CONFIG_FILE"
-            exit 1
-          fi
-
-      - name: Add Language Pack
-        run: |
-          cd /tmp/openwrt
           LANG_CODE="${FINAL_LANG:-en}"
-          
-          # Skip if English (default)
-          if [ "$LANG_CODE" = "en" ]; then
-            echo "Default English language, no additional pack needed"
-            exit 0
-          fi
-          
-          # Check if language directory exists
-          if [ ! -d "feeds/luci/modules/luci-base/po/${LANG_CODE}" ]; then
-            echo "WARNING: Language directory not found: ${LANG_CODE}, falling back to English"
-            exit 0
-          fi
-          
-          echo "Adding language pack: $LANG_CODE"
-          
-          # Add language support to config
-          echo "CONFIG_LUCI_LANG_${LANG_CODE}=y" >> .config
-          
-          # Base language packages
-          echo "CONFIG_PACKAGE_luci-i18n-base-${LANG_CODE}=y" >> .config
-          echo "CONFIG_PACKAGE_luci-i18n-compat-${LANG_CODE}=y" >> .config
-          
-          # Application language packages
-          for pkg in firewall opkg; do
-            if [ -d "feeds/luci/applications/luci-app-${pkg}/po/${LANG_CODE}" ]; then
-              echo "CONFIG_PACKAGE_luci-i18n-${pkg}-${LANG_CODE}=y" >> .config
-            fi
-          done
-          
-          # Theme language (if available)
-          if [ -d "feeds/luci/themes/luci-theme-bootstrap/po/${LANG_CODE}" ]; then
-            echo "CONFIG_PACKAGE_luci-i18n-bootstrap-${LANG_CODE}=y" >> .config
-          fi
-          
-          echo "=== Language pack added for: ${LANG_CODE} ==="
+          LANG_PACKAGES=""
 
-      - name: Ensure Config Validity
-        run: |
-          cd /tmp/openwrt
-          make defconfig 2>&1 | tail -5
+          if [ "$LANG_CODE" != "en" ]; then
+            LANG_PACKAGES="luci-i18n-base-${LANG_CODE}"
+            # Add app language packs if available
+            for pkg in firewall opkg; do
+              LANG_PACKAGES="$LANG_PACKAGES luci-i18n-${pkg}-${LANG_CODE}"
+            done
+            echo "Adding language packages: $LANG_PACKAGES"
+          fi
 
-      - name: Download Sources
-        run: |
-          cd /tmp/openwrt
-          make download -j$(nproc)
+          echo "LANG_PACKAGES=$LANG_PACKAGES" >> $GITHUB_ENV
 
       - name: Build Firmware
         id: build
-        shell: bash
         run: |
-          cd /tmp/openwrt
-          mkdir -p artifacts
-          set -o pipefail
-          echo "=== Pre-build resource check ==="
-          free -m
-          df -h /tmp
-          echo "=== Starting build with -j${PARALLEL_JOBS:-4} (limited for OOM prevention) ==="
-          make -j${PARALLEL_JOBS:-4} world V=sc 2>&1 | tee build.log
+          cd "$IB_DIR"
+
+          ALL_PACKAGES="${IB_PACKAGES} ${LANG_PACKAGES}"
+          echo "=== Building image ==="
+          echo "Profile: $IB_PROFILE"
+          echo "Packages: $ALL_PACKAGES"
+
+          make image \
+            PROFILE="$IB_PROFILE" \
+            PACKAGES="$ALL_PACKAGES" \
+            FILES=custom-files/ \
+            2>&1 | tee build.log
+
           BUILD_EXIT=${PIPESTATUS[0]}
-          echo "=== Post-build resource check ==="
-          free -m
-          df -h /tmp
           if [ "$BUILD_EXIT" -ne 0 ]; then
-            echo "ERROR: make world failed with exit code $BUILD_EXIT"
-            echo "=== Last 50 errors/warnings ==="
-            grep -i "error\|failed\|kconfig" build.log | tail -50 || true
-            echo "=== Last 100 lines of build log ==="
-            tail -100 build.log
-            cp build.log artifacts/
+            echo "ERROR: Image Builder failed with exit code $BUILD_EXIT"
+            tail -30 build.log
             echo "BUILD_STATUS=failed" >> $GITHUB_ENV
           else
             echo "BUILD_STATUS=success" >> $GITHUB_ENV
@@ -272,55 +223,21 @@ jobs:
 
       - name: Collect Artifacts
         run: |
-          cd /tmp/openwrt
-          mkdir -p artifacts
-          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" artifacts/; done
-          echo "=== Artifacts found ==="
-          ls -la artifacts/ || echo "No artifacts"
-
-      - name: Check Build Result
-        run: |
-          echo "Checking if firmware was built..."
-          ARTIFACTS=$(find /tmp/openwrt/bin -type f \( -name "*-sysupgrade.bin" -o -name "*-factory.bin" -o -name "*-initramfs.bin" -o -name "*.img" \) 2>/dev/null | wc -l)
-          if [ "$ARTIFACTS" -eq 0 ]; then
-            echo "WARNING: No firmware files found!"
-            echo "=== Check build log for errors ==="
-            grep -i "error\|failed\|kconfig" /tmp/openwrt/build.log | tail -20 || true
-            echo "=== Config after defconfig ==="
-            head -10 /tmp/openwrt/.config || true
-            echo "=== Check bin directory ==="
-            find /tmp/openwrt/bin -type f 2>/dev/null | head -10 || echo "bin/ not found"
-          else
-            echo "Found $ARTIFACTS firmware files!"
-            echo "=== Firmware files ==="
-            find /tmp/openwrt/bin -type f \( -name "*-sysupgrade.bin" -o -name "*-factory.bin" -o -name "*-initramfs.bin" -o -name "*.img" \) 2>/dev/null
-          fi
-
-      - name: Create Firmware Package
-        run: |
-          cd /tmp/openwrt
+          cd "$IB_DIR"
           mkdir -p firmware-only
           find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
           find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          find ./bin -name "*-factory.img" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
           find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          find ./bin -name "*.img" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          find ./bin -name "openwrt-*.tar.gz" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          if [ ! "$(ls -A firmware-only/)" ]; then
-            echo "No firmware files found"
-            echo "BUILD_STATUS=failed" >> $GITHUB_ENV
-          fi
+          find ./bin -name "*.img.gz" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          echo "=== Firmware files ==="
+          ls -lh firmware-only/ || echo "No artifacts"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: openwrt-${{ env.TARGET }}-firmware
-          path: |
-            /tmp/openwrt/firmware-only/
-            /tmp/openwrt/firmware-*.zip
+          path: ${{ env.IB_DIR }}/firmware-only/
           retention-days: 7
 
       - name: Upload to Release
@@ -328,11 +245,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            /tmp/openwrt/firmware-only/*.bin
-            /tmp/openwrt/firmware-only/*.img
-            /tmp/openwrt/firmware-only/*-sysupgrade.bin
-            /tmp/openwrt/firmware-only/openwrt-*.tar.gz
-            /tmp/openwrt/firmware-*.zip
+            ${{ env.IB_DIR }}/firmware-only/*
           draft: true
           name: OpenWRT ${{ env.OPENWRT_VERSION }} - ${{ env.TARGET }}
           body: |
