@@ -90,7 +90,12 @@ i18n["en"] = load_i18n("en") or {
         vip_user = "VIP User",
         valid_until = "Valid Until",
         auto_connect = "Auto-connect when VIP",
-        checking_status = "Checking status..."
+        checking_status = "Checking status...",
+        renew_now = "Renew Now",
+        select_server = "Select Server",
+        refresh_servers = "Refresh Servers",
+        servers_updated = "Servers updated",
+        servers_count = "servers"
 }
 -- END of inline en fallback; other languages loaded on-demand from i18n/*.lua
 
@@ -121,14 +126,6 @@ i18n["en"] = load_i18n("en") or {
         {code = "au", name = "Australia", flag = "🇦🇺"},
         {code = "ca", name = "Canada", flag = "🇨🇦"},
         {code = "br", name = "Brazil", flag = "🇧🇷"}
-    }
-
-    local i18n_extra = {
-        en = {
-            detected_success = "Location detected: %s (%s)",
-            detection_failed = "Failed to detect location",
-            vpn_ip = "VPN IP (after connect)"
-        }
     }
 
 function get_lang()
@@ -448,13 +445,16 @@ function api_auth_status()
         type = user_type,
         expiration = expiration,
         auth_time = auth_time,
-        i18n = {
-            logged_in = i18n[get_lang()].logged_in or "Logged In",
-            logged_out = i18n[get_lang()].logged_out or "Not Logged In",
-            expired = i18n[get_lang()].expired or "Expired",
-            not_vip = i18n[get_lang()].not_vip or "Not VIP",
-            login_required = i18n[get_lang()].login_required or "Login Required"
-        }
+        i18n = (function()
+            local t = i18n[get_lang()] or i18n["en"]
+            return {
+                logged_in = t.logged_in or "Logged In",
+                logged_out = t.logged_out or "Not Logged In",
+                expired = t.expired or "Expired",
+                not_vip = t.not_vip or "Not VIP",
+                login_required = t.login_required or "Login Required"
+            }
+        end)()
     }
     
     http.prepare_content("application/json")

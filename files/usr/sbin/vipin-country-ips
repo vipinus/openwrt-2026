@@ -37,7 +37,7 @@ get_ips_apnic() {
         return 1
     fi
     
-    grep "|$country|" "$temp_file" | awk -F'|' '$3 == "ipv4" {print $4 "/" 32-log($5)/log(2)}' > "$CONF_DIR/$country.txt"
+    grep "|$country|" "$temp_file" | awk -F'|' '$3 == "ipv4" {print $4 "/" int(32-log($5)/log(2))}' > "$CONF_DIR/$country.txt"
     
     rm -f "$temp_file" "$LOCK_FILE"
     
