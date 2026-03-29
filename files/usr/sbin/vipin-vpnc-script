@@ -49,6 +49,15 @@ case "$reason" in
                     VPN_SERVER=$(uci get vipin.vpn.server 2>/dev/null || echo "")
                     SERVER_COUNTRY=$(echo "$VPN_SERVER" | cut -d. -f1)
                     /usr/sbin/vipin-vpn-routing enable "$SERVER_COUNTRY" reverse 2>/dev/null
+                    # Reverse mode: use VPN DNS so domains resolve to server-country IPs
+                    if [ -n "$INTERNAL_IP4_DNS" ]; then
+                        VPN_DNS=$(echo "$INTERNAL_IP4_DNS" | awk '{print $1}')
+                        uci set dhcp.@dnsmasq[0].noresolv='1'
+                        uci set dhcp.@dnsmasq[0].server="$VPN_DNS"
+                        uci commit dhcp
+                        /etc/init.d/dnsmasq restart 2>/dev/null
+                        logger -t vipin-vpnc "Reverse mode: dnsmasq DNS switched to VPN ($VPN_DNS)"
+                    fi
                 else
                     /usr/sbin/vipin-vpn-routing enable "" forward 2>/dev/null
                 fi
@@ -63,6 +72,16 @@ case "$reason" in
 
         # Disable split tunnel routing
         /usr/sbin/vipin-vpn-routing disable 2>/dev/null
+
+        # Restore dnsmasq to dnscrypt-proxy if it was changed by reverse mode
+        CURRENT_DNS=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
+        if [ "$CURRENT_DNS" != "127.0.0.1#5353" ]; then
+            uci set dhcp.@dnsmasq[0].noresolv='1'
+            uci set dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+            uci commit dhcp
+            /etc/init.d/dnsmasq restart 2>/dev/null
+            logger -t vipin-vpnc "DNS restored to dnscrypt-proxy"
+        fi
 
         # Restore DNS
         if [ -f /etc/resolv.conf.vipin-backup ]; then
