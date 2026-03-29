@@ -1,6 +1,6 @@
 #!/bin/sh
-# Wait for dnscrypt-proxy to be ready after WAN comes up, then restart dnsmasq
-# Fixes: dnsmasq starts before dnscrypt-proxy is listening on 127.0.0.1:5353
+# Ensure dnscrypt-proxy is running after WAN comes up, then restart dnsmasq
+# Fixes: dnscrypt-proxy fails to start at boot due to no network, procd gives up
 
 [ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "wan" ] || exit 0
 
@@ -8,19 +8,30 @@
 FLAG="/tmp/.dnscrypt-ready-done"
 [ -f "$FLAG" ] && exit 0
 
-logger -t dnscrypt-ready "WAN up, waiting for dnscrypt-proxy on 127.0.0.1:5353..."
+logger -t dnscrypt-ready "WAN up, checking dnscrypt-proxy..."
 
-# Wait up to 60 seconds for dnscrypt-proxy to listen
+# If dnscrypt-proxy is not running, start it
+if ! pgrep -x dnscrypt-proxy >/dev/null 2>&1; then
+    logger -t dnscrypt-ready "dnscrypt-proxy not running, starting..."
+    /etc/init.d/dnscrypt-proxy start 2>/dev/null
+fi
+
+# Wait up to 90 seconds for dnscrypt-proxy to listen on 5353
 i=0
-while [ $i -lt 60 ]; do
+while [ $i -lt 90 ]; do
     if netstat -tlnup 2>/dev/null | grep -q '127.0.0.1:5353'; then
         logger -t dnscrypt-ready "dnscrypt-proxy ready, restarting dnsmasq"
         /etc/init.d/dnsmasq restart
         touch "$FLAG"
         exit 0
     fi
-    sleep 1
-    i=$((i + 1))
+    # If process died, restart it
+    if ! pgrep -x dnscrypt-proxy >/dev/null 2>&1; then
+        logger -t dnscrypt-ready "dnscrypt-proxy died, restarting..."
+        /etc/init.d/dnscrypt-proxy start 2>/dev/null
+    fi
+    sleep 2
+    i=$((i + 2))
 done
 
 logger -t dnscrypt-ready "Timeout waiting for dnscrypt-proxy"
