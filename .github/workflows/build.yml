@@ -185,9 +185,15 @@ jobs:
           LANG_CODE="${FINAL_LANG:-en}"
           LANG_PACKAGES=""
 
+          # Map LuCI lang codes to Image Builder package names
+          case "$LANG_CODE" in
+            zh_Hans) LANG_CODE="zh-cn" ;;
+            zh_Hant) LANG_CODE="zh-tw" ;;
+            pt_BR)   LANG_CODE="pt-br" ;;
+          esac
+
           if [ "$LANG_CODE" != "en" ]; then
             LANG_PACKAGES="luci-i18n-base-${LANG_CODE}"
-            # Add app language packs if available
             for pkg in firewall opkg; do
               LANG_PACKAGES="$LANG_PACKAGES luci-i18n-${pkg}-${LANG_CODE}"
             done
