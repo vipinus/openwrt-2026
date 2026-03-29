@@ -231,9 +231,17 @@ function api_get_vpn_status()
         detected_country = current_country
     end
     
+    -- VPN server country (extracted from server domain, e.g. "cn" from "cn.fanq.in")
+    local server = luci.model.uci:get("vipin", "vpn", "server") or ""
+    local server_country = server:match("^([^.]+)") or ""
+    local server_ip_count = 0
+    if server_country ~= "" then
+        server_ip_count = tonumber(util.exec("/usr/sbin/vipin-country-ips count " .. server_country .. " 2>/dev/null"):gsub("%s+", "")) or 0
+    end
+
     local lang_key = get_lang()
     local extra = i18n[lang_key] or i18n["en"]
-    
+
     local status = {
         vpn_enabled = (vpn_enabled == "1"),
         vpn_connected = (vpn_connected == "1"),
@@ -250,6 +258,10 @@ function api_get_vpn_status()
         detected_country_name = get_country_name(detected_country),
         detected_country_flag = get_country_flag(detected_country),
         detect_time = detect_time,
+        server_country = server_country,
+        server_country_name = get_country_name(server_country),
+        server_country_flag = get_country_flag(server_country),
+        server_ip_count = server_ip_count,
         translations = i18n[get_lang()] or i18n["en"],
         extra = extra
     }

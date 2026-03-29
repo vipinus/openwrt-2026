@@ -31,7 +31,7 @@ return {
     update_ip_ranges = "更新IP段",
     last_updated = "上次更新",
     never = "从未",
-    count = "数量",
+    count = "路由数量",
     routes_updated = "路由已更新",
     routes_count = "条路由",
     domestic_traffic = "国内流量",

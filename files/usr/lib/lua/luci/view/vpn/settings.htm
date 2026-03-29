@@ -213,6 +213,10 @@ var vpnData = {
     currentCountryName: 'China',
     currentCountryFlag: '',
     ipCount: 0,
+    serverCountry: '',
+    serverCountryName: '',
+    serverCountryFlag: '',
+    serverIpCount: 0,
     detected: false,
     detectedIp: '',
     detectedCountry: '',
@@ -258,18 +262,26 @@ function updateUI() {
         if (countRow) countRow.style.display = 'none';
     } else {
         if (descRow) descRow.style.display = '';
-        if (countryRow) countryRow.style.display = '';
+        if (countryRow) countryRow.style.display = (activeMode === 'forward') ? '' : 'none';
         if (countRow) countRow.style.display = '';
         if (descEl) {
             descEl.textContent = activeMode === 'forward' ? vpnData.t.split_forward_desc : vpnData.t.split_reverse_desc;
         }
     }
 
-    var countryName = vpnData.detected ? vpnData.detectedCountryName : vpnData.currentCountryName;
-    var countryFlag = vpnData.detected ? vpnData.detectedCountryFlag : vpnData.currentCountryFlag;
+    var countryName, countryFlag, ipCount;
+    if (activeMode === 'reverse' && vpnData.serverCountryName) {
+        countryName = vpnData.serverCountryName;
+        countryFlag = vpnData.serverCountryFlag;
+        ipCount = vpnData.serverIpCount;
+    } else {
+        countryName = vpnData.detected ? vpnData.detectedCountryName : vpnData.currentCountryName;
+        countryFlag = vpnData.detected ? vpnData.detectedCountryFlag : vpnData.currentCountryFlag;
+        ipCount = vpnData.ipCount;
+    }
 
     document.getElementById('info-country').textContent = countryFlag + ' ' + countryName;
-    document.getElementById('info-count').textContent = vpnData.ipCount + ' ' + vpnData.t.routes_count;
+    document.getElementById('info-count').textContent = ipCount + ' ' + vpnData.t.routes_count;
 }
 
 function vpn_toggle() {
@@ -497,6 +509,10 @@ function loadStatus() {
             vpnData.currentCountryName = r.current_country_name || 'China';
             vpnData.currentCountryFlag = r.current_country_flag || '';
             vpnData.ipCount = r.ip_count || 0;
+            vpnData.serverCountry = r.server_country || '';
+            vpnData.serverCountryName = r.server_country_name || '';
+            vpnData.serverCountryFlag = r.server_country_flag || '';
+            vpnData.serverIpCount = r.server_ip_count || 0;
             vpnData.detected = r.detected || false;
             vpnData.detectedIp = r.detected_ip || '';
             vpnData.detectedCountry = r.detected_country || '';
