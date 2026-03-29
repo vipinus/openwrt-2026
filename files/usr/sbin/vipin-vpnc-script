@@ -49,15 +49,22 @@ case "$reason" in
                     VPN_SERVER=$(uci get vipin.vpn.server 2>/dev/null || echo "")
                     SERVER_COUNTRY=$(echo "$VPN_SERVER" | cut -d. -f1)
                     /usr/sbin/vipin-vpn-routing enable "$SERVER_COUNTRY" reverse 2>/dev/null
-                    # Reverse mode: use VPN DNS so domains resolve to server-country IPs
-                    if [ -n "$INTERNAL_IP4_DNS" ]; then
-                        VPN_DNS=$(echo "$INTERNAL_IP4_DNS" | awk '{print $1}')
-                        uci set dhcp.@dnsmasq[0].noresolv='1'
-                        uci set dhcp.@dnsmasq[0].server="$VPN_DNS"
-                        uci commit dhcp
-                        /etc/init.d/dnsmasq restart 2>/dev/null
-                        logger -t vipin-vpnc "Reverse mode: dnsmasq DNS switched to VPN ($VPN_DNS)"
-                    fi
+                    # Reverse mode: use DNS servers in the VPN server's country
+                    # so domains resolve to IPs within that country's IP ranges
+                    DNS_SERVERS=""
+                    case "$SERVER_COUNTRY" in
+                        cn) DNS_SERVERS="223.5.5.5 119.29.29.29" ;;  # Alibaba + Tencent
+                        jp) DNS_SERVERS="1.1.1.1 8.8.8.8" ;;
+                        *)  DNS_SERVERS="1.1.1.1 8.8.8.8" ;;
+                    esac
+                    uci set dhcp.@dnsmasq[0].noresolv='1'
+                    uci -q delete dhcp.@dnsmasq[0].server
+                    for dns in $DNS_SERVERS; do
+                        uci add_list dhcp.@dnsmasq[0].server="$dns"
+                    done
+                    uci commit dhcp
+                    /etc/init.d/dnsmasq restart 2>/dev/null
+                    logger -t vipin-vpnc "Reverse mode: dnsmasq DNS switched to $DNS_SERVERS"
                 else
                     /usr/sbin/vipin-vpn-routing enable "" forward 2>/dev/null
                 fi
@@ -77,7 +84,8 @@ case "$reason" in
         CURRENT_DNS=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
         if [ "$CURRENT_DNS" != "127.0.0.1#5353" ]; then
             uci set dhcp.@dnsmasq[0].noresolv='1'
-            uci set dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+            uci -q delete dhcp.@dnsmasq[0].server
+            uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
             uci commit dhcp
             /etc/init.d/dnsmasq restart 2>/dev/null
             logger -t vipin-vpnc "DNS restored to dnscrypt-proxy"

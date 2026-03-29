@@ -222,7 +222,8 @@ restore_dns() {
     current_dns=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
     if [ "$current_dns" != "127.0.0.1#5353" ]; then
         uci set dhcp.@dnsmasq[0].noresolv='1'
-        uci set dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        uci -q delete dhcp.@dnsmasq[0].server
+        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
         uci commit dhcp
         /etc/init.d/dnsmasq restart 2>/dev/null
         logger -t vipin-routing "DNS restored to dnscrypt-proxy"
