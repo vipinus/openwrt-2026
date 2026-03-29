@@ -194,8 +194,13 @@ jobs:
 
           if [ "$LANG_CODE" != "en" ]; then
             LANG_PACKAGES="luci-i18n-base-${LANG_CODE}"
+            # Only add app language packs that exist in Image Builder
             for pkg in firewall opkg; do
-              LANG_PACKAGES="$LANG_PACKAGES luci-i18n-${pkg}-${LANG_CODE}"
+              if ls "$IB_DIR"/packages/*/luci-i18n-${pkg}-${LANG_CODE}_* >/dev/null 2>&1; then
+                LANG_PACKAGES="$LANG_PACKAGES luci-i18n-${pkg}-${LANG_CODE}"
+              else
+                echo "Skipping luci-i18n-${pkg}-${LANG_CODE} (not available)"
+              fi
             done
             echo "Adding language packages: $LANG_PACKAGES"
           fi
