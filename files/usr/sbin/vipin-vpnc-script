@@ -10,8 +10,8 @@ case "$reason" in
         ip addr add "$INTERNAL_IP4_ADDRESS/32" dev "$TUNDEV"
 
         # Add route to VPN gateway via current default route
-        DEFAULT_GW=$(ip route | grep "^default" | awk '{print $3}')
-        DEFAULT_DEV=$(ip route | grep "^default" | awk '{print $5}')
+        DEFAULT_GW=$(ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $3}')
+        DEFAULT_DEV=$(ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $5}')
         if [ -n "$DEFAULT_GW" ] && [ -n "$DEFAULT_DEV" ]; then
             ip route add "$VPNGATEWAY" via "$DEFAULT_GW" dev "$DEFAULT_DEV" 2>/dev/null
         fi

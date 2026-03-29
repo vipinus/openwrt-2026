@@ -108,6 +108,9 @@ start_service() {
         logger -t $NAME "VPN already running"
         return 0
     fi
+
+    # Clean up stale tun device to prevent TUNSETIFF: Resource busy
+    ip link delete vpn_vipin 2>/dev/null
     
     local vpn_port=$((50000 + RANDOM % 10000))
 

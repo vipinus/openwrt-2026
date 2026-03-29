@@ -81,7 +81,7 @@ get_router_mac() {
     local wan_if=$(uci get network.wan.device 2>/dev/null || echo "wan")
     local mac=""
     
-    mac=$(ip - link show "$wan_if" 2>/dev/null | grep ether | awk '{print $2}')
+    mac=$(ip link show "$wan_if" 2>/dev/null | grep ether | awk '{print $2}')
     
     if [ -z "$mac" ] || [ "$mac" = "" ]; then
         mac=$(cat /sys/class/net/eth0/address 2>/dev/null)
@@ -342,7 +342,7 @@ load_auth() {
 }
 
 clear_auth() {
-    return 0
+    rm -f "$CONF_DIR/auth.conf" "$CONF_DIR/.vpn_pass"
 }
 
 get_status() {
@@ -434,6 +434,7 @@ case "$1" in
         echo "$result"
         ;;
     logout)
+        clear_auth
         echo "{\"status\": \"success\", \"message\": \"Logged out\"}"
         ;;
     status)
