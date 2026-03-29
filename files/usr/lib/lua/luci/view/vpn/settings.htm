@@ -53,6 +53,8 @@ if lang ~= "en" then
     i18n[lang] = load_lang(lang)
 end
 local t = i18n[lang] or i18n["en"]
+-- Track which language was actually loaded (for Intl.DisplayNames)
+local active_lang = i18n[lang] and lang or "en"
 
 %>
 
@@ -489,8 +491,8 @@ function codeToFlag(iso) {
     return String.fromCodePoint(...[...iso.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
 }
 
-// Get localized country name using Intl API with LuCI's current language
-var uiLang = '<%= lang %>';
+// Get localized country name using the actually loaded i18n language
+var uiLang = '<%= active_lang %>';
 var countryNames = null;
 try { countryNames = new Intl.DisplayNames(uiLang, {type: 'region'}); } catch(e) {
     try { countryNames = new Intl.DisplayNames(navigator.language, {type: 'region'}); } catch(e2) {}
