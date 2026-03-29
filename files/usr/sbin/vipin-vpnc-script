@@ -6,7 +6,7 @@ case "$reason" in
         ;;
     connect)
         # Configure the tunnel interface
-        ip link set dev "$TUNDEV" up
+        ip link set dev "$TUNDEV" mtu 1300 up
         ip addr add "$INTERNAL_IP4_ADDRESS/32" dev "$TUNDEV"
 
         # Add route to VPN gateway via current default route

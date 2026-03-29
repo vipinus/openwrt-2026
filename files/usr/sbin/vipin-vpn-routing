@@ -73,6 +73,8 @@ chain vipin_output {
 
 chain vipin_forward {
     type filter hook forward priority filter - 1;
+    oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260
+    iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260
     iifname "br-lan" oifname "vpn_vipin" accept
     iifname "vpn_vipin" oifname "br-lan" ct state established,related accept
 }
