@@ -543,10 +543,11 @@ function populateServerPicker(pickerId) {
         dropdown.appendChild(item);
     });
 
-    // Set initial button text
-    if (btn && currentServer) {
+    // Set initial value and button text
+    if (currentServer) {
+        if (hiddenInput && !hiddenInput.value) hiddenInput.value = currentServer;
         var cur = serverCountries[Object.keys(serverCountries).find(function(c) { return serverCountries[c].server === currentServer; })];
-        if (cur) btn.textContent = cur.flag + ' ' + cur.name;
+        if (cur && btn) btn.textContent = cur.flag + ' ' + cur.name;
     }
 }
 

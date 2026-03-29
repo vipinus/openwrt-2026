@@ -1321,9 +1321,11 @@ function api_login()
         end
         luci.model.uci:set("vipin", "vpn", "enabled", "1")
         luci.model.uci:set("vipin", "vpn", "username", username)
-        if server ~= "" then
-            luci.model.uci:set("vipin", "vpn", "server", server)
+        -- Use provided server, existing config, or default
+        if server == "" then
+            server = luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in"
         end
+        luci.model.uci:set("vipin", "vpn", "server", server)
         luci.model.uci:save("vipin")
         luci.model.uci:commit("vipin")
         -- Start VPN and auth monitor
