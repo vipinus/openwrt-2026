@@ -71,6 +71,12 @@ chain vipin_output {
     ip daddr @vipin_domestic meta mark set 0x200
 }
 
+chain vipin_forward {
+    type filter hook forward priority filter - 1;
+    iifname "br-lan" oifname "vpn_vipin" accept
+    iifname "vpn_vipin" oifname "br-lan" ct state established,related accept
+}
+
 chain vipin_postrouting {
     type nat hook postrouting priority srcnat;
     oifname "vpn_vipin" masquerade
