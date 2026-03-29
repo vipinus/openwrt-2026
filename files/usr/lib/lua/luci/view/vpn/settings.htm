@@ -77,12 +77,15 @@ local active_lang = i18n[lang] and lang or "en"
 
 <div class="cbi-map">
     <h2><%= t.vpn_settings %></h2>
-    <div class="cbi-map-descr"><%= t.vpn_status %>: <span id="vpn-status-badge" class="disconnected"><%= t.disconnected %></span></div>
 
     <!-- VPN Account -->
     <fieldset class="cbi-section" id="cbi-vpn-account">
         <legend><%= t.user_status %></legend>
         <div class="cbi-section-node">
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.vpn_status %></label>
+                <div class="cbi-value-field"><span id="vpn-status-badge" class="disconnected"><%= t.disconnected %></span></div>
+            </div>
             <div id="login-form" style="display:none;">
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.username %></label>

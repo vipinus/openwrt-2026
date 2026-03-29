@@ -6,6 +6,33 @@ CONF_DIR="/etc/vipin/country-ips"
 NFT_RULES="/etc/nftables.d/vipin-split.nft"
 TABLE_ID=100
 MARK_DIRECT=0x200
+LOCK_FILE="/tmp/vipin-routing.lock"
+
+acquire_lock() {
+    local wait=0
+    while [ -f "$LOCK_FILE" ]; do
+        # Stale lock check (>120s)
+        if [ -f "$LOCK_FILE" ]; then
+            local lock_age=$(( $(date +%s) - $(date -r "$LOCK_FILE" +%s 2>/dev/null || echo 0) ))
+            if [ "$lock_age" -gt 120 ]; then
+                logger -t vipin-routing "Removing stale lock (${lock_age}s old)"
+                rm -f "$LOCK_FILE"
+                break
+            fi
+        fi
+        wait=$((wait + 1))
+        if [ "$wait" -ge 30 ]; then
+            logger -t vipin-routing "Timeout waiting for lock"
+            return 1
+        fi
+        sleep 1
+    done
+    echo $$ > "$LOCK_FILE"
+}
+
+release_lock() {
+    rm -f "$LOCK_FILE"
+}
 
 get_current_country() {
     cat "$CONF_DIR/current_country" 2>/dev/null || echo "cn"
@@ -47,12 +74,18 @@ enable_split() {
     local wan_dev=$(get_wan_device)
 
     if [ ! -f "$domestic_file" ]; then
-        logger -t vipin-routing "No IP list for $country, downloading..."
-        /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
+        local attempt=1
+        while [ $attempt -le 3 ]; do
+            logger -t vipin-routing "No IP list for $country, downloading (attempt $attempt/3)..."
+            /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
+            [ -f "$domestic_file" ] && break
+            attempt=$((attempt + 1))
+            sleep 5
+        done
     fi
 
     if [ ! -f "$domestic_file" ]; then
-        logger -t vipin-routing "Failed to get IP list for $country"
+        logger -t vipin-routing "Failed to get IP list for $country after 3 attempts"
         return 1
     fi
 
@@ -201,12 +234,17 @@ disable_split() {
 
 case "$1" in
     enable)
+        acquire_lock || exit 1
         enable_split "$2" "$3"
+        release_lock
         ;;
     disable)
+        acquire_lock || exit 1
         disable_split
+        release_lock
         ;;
     reload)
+        acquire_lock || exit 1
         split=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
         if [ "$split" = "1" ]; then
             mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
@@ -214,6 +252,7 @@ case "$1" in
         else
             disable_split
         fi
+        release_lock
         ;;
     status)
         if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
