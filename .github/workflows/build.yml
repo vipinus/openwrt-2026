@@ -223,21 +223,20 @@ jobs:
 
       - name: Collect Artifacts
         run: |
-          cd "$IB_DIR"
-          mkdir -p firmware-only
-          find ./bin -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          find ./bin -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          find ./bin -name "*-factory.img" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          find ./bin -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
-          find ./bin -name "*.img.gz" -type f 2>/dev/null | while read f; do cp "$f" firmware-only/; done
+          mkdir -p ${{ github.workspace }}/firmware-only
+          find "$IB_DIR/bin" -name "*-sysupgrade.bin" -type f 2>/dev/null | while read f; do cp "$f" ${{ github.workspace }}/firmware-only/; done
+          find "$IB_DIR/bin" -name "*-factory.bin" -type f 2>/dev/null | while read f; do cp "$f" ${{ github.workspace }}/firmware-only/; done
+          find "$IB_DIR/bin" -name "*-factory.img" -type f 2>/dev/null | while read f; do cp "$f" ${{ github.workspace }}/firmware-only/; done
+          find "$IB_DIR/bin" -name "*-initramfs.bin" -type f 2>/dev/null | while read f; do cp "$f" ${{ github.workspace }}/firmware-only/; done
+          find "$IB_DIR/bin" -name "*.img.gz" -type f 2>/dev/null | while read f; do cp "$f" ${{ github.workspace }}/firmware-only/; done
           echo "=== Firmware files ==="
-          ls -lh firmware-only/ || echo "No artifacts"
+          ls -lh ${{ github.workspace }}/firmware-only/ || echo "No artifacts"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: openwrt-${{ env.TARGET }}-firmware
-          path: ${{ env.IB_DIR }}/firmware-only/
+          path: firmware-only/
           retention-days: 7
 
       - name: Upload to Release
@@ -245,7 +244,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ${{ env.IB_DIR }}/firmware-only/*
+            firmware-only/*
           draft: true
           name: OpenWRT ${{ env.OPENWRT_VERSION }} - ${{ env.TARGET }}
           body: |
