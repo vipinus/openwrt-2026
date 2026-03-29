@@ -75,5 +75,10 @@ return {
     select_server = "Seleccionar servidor",
     refresh_servers = "Actualizar lista",
     servers_updated = "Servidores actualizados",
-    servers_count = "servidores"
+    servers_count = "servidores",
+    split_off = "Desactivado",
+    split_forward = "División directa",
+    split_forward_desc = "País local directo, resto vía VPN",
+    split_reverse = "División inversa",
+    split_reverse_desc = "Solo el país del servidor VPN vía VPN, resto directo"
 }

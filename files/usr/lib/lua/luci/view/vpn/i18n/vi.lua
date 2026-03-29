@@ -75,5 +75,10 @@ return {
     select_server = "Chon may chu",
     refresh_servers = "Lam moi danh sach",
     servers_updated = "May chu da duoc cap nhat",
-    servers_count = "may chu"
+    servers_count = "may chu",
+    split_off = "Tắt",
+    split_forward = "Chia tách thuận",
+    split_forward_desc = "Quốc gia địa phương trực tiếp, còn lại qua VPN",
+    split_reverse = "Chia tách ngược",
+    split_reverse_desc = "Chỉ quốc gia máy chủ VPN qua VPN, còn lại trực tiếp"
 }

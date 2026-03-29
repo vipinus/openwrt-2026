@@ -75,5 +75,10 @@ return {
     select_server = "選擇伺服器",
     refresh_servers = "重新整理列表",
     servers_updated = "伺服器已更新",
-    servers_count = "個伺服器"
+    servers_count = "個伺服器",
+    split_off = "關閉",
+    split_forward = "正向分流",
+    split_forward_desc = "本地國家直連，其餘走VPN",
+    split_reverse = "反向分流",
+    split_reverse_desc = "只有VPN伺服器國家走VPN，其餘直連"
 }

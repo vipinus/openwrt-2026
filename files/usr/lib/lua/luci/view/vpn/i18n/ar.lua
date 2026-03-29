@@ -75,5 +75,10 @@ return {
     select_server = "اختر خادماً",
     refresh_servers = "تحديث القائمة",
     servers_updated = "تم تحديث الخوادم",
-    servers_count = "خوادم"
+    servers_count = "خوادم",
+    split_off = "إيقاف",
+    split_forward = "تقسيم مباشر",
+    split_forward_desc = "البلد المحلي مباشر، الباقي عبر VPN",
+    split_reverse = "تقسيم عكسي",
+    split_reverse_desc = "فقط بلد خادم VPN عبر VPN، الباقي مباشر"
 }

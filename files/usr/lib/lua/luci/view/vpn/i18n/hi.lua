@@ -75,5 +75,10 @@ return {
     select_server = "सर्वर चुनें",
     refresh_servers = "सूची रिफ्रेश करें",
     servers_updated = "सर्वर अपडेट किए गए",
-    servers_count = "सर्वर"
+    servers_count = "सर्वर",
+    split_off = "बंद",
+    split_forward = "फॉरवर्ड स्प्लिट",
+    split_forward_desc = "स्थानीय देश सीधे, बाकी VPN से",
+    split_reverse = "रिवर्स स्प्लिट",
+    split_reverse_desc = "केवल VPN सर्वर देश VPN से, बाकी सीधे"
 }

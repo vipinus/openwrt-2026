@@ -42,7 +42,15 @@ case "$reason" in
         # Enable split tunnel if configured
         SPLIT=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
         if [ "$SPLIT" = "1" ]; then
-            /usr/sbin/vipin-vpn-routing enable 2>/dev/null &
+            SPLIT_MODE=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
+            if [ "$SPLIT_MODE" = "reverse" ]; then
+                # For reverse mode, extract country from VPN server domain
+                VPN_SERVER=$(uci get vipin.vpn.server 2>/dev/null || echo "")
+                SERVER_COUNTRY=$(echo "$VPN_SERVER" | cut -d. -f1)
+                /usr/sbin/vipin-vpn-routing enable "$SERVER_COUNTRY" reverse 2>/dev/null &
+            else
+                /usr/sbin/vipin-vpn-routing enable "" forward 2>/dev/null &
+            fi
         fi
         ;;
     disconnect)

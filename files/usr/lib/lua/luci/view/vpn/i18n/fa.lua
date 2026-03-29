@@ -75,5 +75,10 @@ return {
     select_server = "انتخاب سرور",
     refresh_servers = "بروزرسانی لیست",
     servers_updated = "سرورها بروزرسانی شد",
-    servers_count = "سرور"
+    servers_count = "سرور",
+    split_off = "خاموش",
+    split_forward = "تقسیم مستقیم",
+    split_forward_desc = "کشور محلی مستقیم، بقیه از طریق VPN",
+    split_reverse = "تقسیم معکوس",
+    split_reverse_desc = "فقط کشور سرور VPN از طریق VPN، بقیه مستقیم"
 }

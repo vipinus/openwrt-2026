@@ -75,5 +75,10 @@ return {
     select_server = "Pilih server",
     refresh_servers = "Segarkan daftar",
     servers_updated = "Server diperbarui",
-    servers_count = "server"
+    servers_count = "server",
+    split_off = "Mati",
+    split_forward = "Split maju",
+    split_forward_desc = "Negara lokal langsung, sisanya lewat VPN",
+    split_reverse = "Split terbalik",
+    split_reverse_desc = "Hanya negara server VPN lewat VPN, sisanya langsung"
 }

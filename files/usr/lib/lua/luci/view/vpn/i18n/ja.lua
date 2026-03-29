@@ -75,5 +75,10 @@ return {
     select_server = "サーバーを選択",
     refresh_servers = "一覧を更新",
     servers_updated = "サーバーを更新しました",
-    servers_count = "サーバー"
+    servers_count = "サーバー",
+    split_off = "オフ",
+    split_forward = "正方向スプリット",
+    split_forward_desc = "国内IPは直接、その他はVPN経由",
+    split_reverse = "逆方向スプリット",
+    split_reverse_desc = "VPNサーバー国のみVPN経由、その他は直接"
 }

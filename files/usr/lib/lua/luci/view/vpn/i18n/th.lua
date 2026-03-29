@@ -75,5 +75,10 @@ return {
     select_server = "เลือกเซิร์ฟเวอร์",
     refresh_servers = "รีเฟรชรายการ",
     servers_updated = "เซิร์ฟเวอร์อัปเดตแล้ว",
-    servers_count = "เซิร์ฟเวอร์"
+    servers_count = "เซิร์ฟเวอร์",
+    split_off = "ปิด",
+    split_forward = "แยกไปข้างหน้า",
+    split_forward_desc = "ประเทศท้องถิ่นตรง ที่เหลือผ่าน VPN",
+    split_reverse = "แยกย้อนกลับ",
+    split_reverse_desc = "เฉพาะประเทศเซิร์ฟเวอร์ VPN ผ่าน VPN ที่เหลือตรง"
 }

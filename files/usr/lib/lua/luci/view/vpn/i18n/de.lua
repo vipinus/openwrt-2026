@@ -75,5 +75,10 @@ return {
     select_server = "Server auswaehlen",
     refresh_servers = "Liste aktualisieren",
     servers_updated = "Server aktualisiert",
-    servers_count = "Server"
+    servers_count = "Server",
+    split_off = "Aus",
+    split_forward = "Vorwärts-Split",
+    split_forward_desc = "Lokales Land direkt, Rest über VPN",
+    split_reverse = "Rückwärts-Split",
+    split_reverse_desc = "Nur VPN-Server-Land über VPN, Rest direkt"
 }

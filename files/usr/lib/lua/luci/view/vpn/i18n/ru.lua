@@ -75,5 +75,10 @@ return {
     select_server = "Vybrat server",
     refresh_servers = "Obnovit spisok",
     servers_updated = "Servery obnovleny",
-    servers_count = "serverov"
+    servers_count = "serverov",
+    split_off = "Выкл",
+    split_forward = "Прямое разделение",
+    split_forward_desc = "Местная страна напрямую, остальное через VPN",
+    split_reverse = "Обратное разделение",
+    split_reverse_desc = "Только страна VPN-сервера через VPN, остальное напрямую"
 }

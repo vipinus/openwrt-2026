@@ -75,5 +75,10 @@ return {
     select_server = "Sunucu seç",
     refresh_servers = "Listeyi yenile",
     servers_updated = "Sunucular güncellendi",
-    servers_count = "sunucu"
+    servers_count = "sunucu",
+    split_off = "Kapalı",
+    split_forward = "İleri bölme",
+    split_forward_desc = "Yerel ülke doğrudan, geri kalanı VPN üzerinden",
+    split_reverse = "Ters bölme",
+    split_reverse_desc = "Sadece VPN sunucu ülkesi VPN üzerinden, geri kalanı doğrudan"
 }

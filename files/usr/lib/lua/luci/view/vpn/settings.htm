@@ -172,11 +172,18 @@ if pass_file then pass_file:close() end
             <div class="cbi-value">
                 <label class="cbi-value-title"><%= t.split_tunnel %></label>
                 <div class="cbi-value-field">
-                    <input type="checkbox" id="split-toggle" onchange="toggle_split(this)" />
-                    <span class="cbi-value-description"><%= t.split_tunnel_desc %></span>
+                    <label style="margin-right:16px;"><input type="radio" name="split-mode" value="off" onchange="setSplitMode('off')" /> <%= t.split_off %></label>
+                    <label style="margin-right:16px;"><input type="radio" name="split-mode" value="forward" onchange="setSplitMode('forward')" /> <%= t.split_forward %></label>
+                    <label><input type="radio" name="split-mode" value="reverse" onchange="setSplitMode('reverse')" /> <%= t.split_reverse %></label>
                 </div>
             </div>
-            <div class="cbi-value">
+            <div class="cbi-value" id="split-mode-desc-row">
+                <label class="cbi-value-title">&nbsp;</label>
+                <div class="cbi-value-field">
+                    <span class="cbi-value-description" id="split-mode-desc"></span>
+                </div>
+            </div>
+            <div class="cbi-value" id="split-country-row">
                 <label class="cbi-value-title"><%= t.your_country %></label>
                 <div class="cbi-value-field">
                     <span id="detection-flag"></span> <span id="detection-title"><%= t.detecting %></span>
@@ -184,7 +191,7 @@ if pass_file then pass_file:close() end
                     <input type="button" class="cbi-button cbi-button-action" id="btn-detect" onclick="auto_detect()" value="<%= t.auto_detect %>" style="margin-left:8px;" />
                 </div>
             </div>
-            <div class="cbi-value">
+            <div class="cbi-value" id="split-count-row">
                 <label class="cbi-value-title"><%= t.count %></label>
                 <div class="cbi-value-field">
                     <span id="info-country">-</span> &mdash; <span id="info-count">-</span>
@@ -198,6 +205,7 @@ if pass_file then pass_file:close() end
 var vpnData = {
     connected: false,
     splitEnabled: false,
+    splitMode: 'forward',
     currentCountry: 'cn',
     currentCountryName: 'China',
     currentCountryFlag: '',
@@ -219,7 +227,6 @@ var vpnData = {
 function updateUI() {
     var badge = document.getElementById('vpn-status-badge');
     var btnConnect = document.getElementById('btn-connect');
-    var splitToggle = document.getElementById('split-toggle');
 
     if (vpnData.connected) {
         badge.className = 'connected';
@@ -231,7 +238,29 @@ function updateUI() {
         if (btnConnect) { btnConnect.value = vpnData.t.connect; btnConnect.className = 'cbi-button cbi-button-apply'; }
     }
 
-    if (splitToggle) splitToggle.checked = vpnData.splitEnabled;
+    // Update split mode radio buttons
+    var activeMode = vpnData.splitEnabled ? vpnData.splitMode : 'off';
+    var radios = document.querySelectorAll('input[name="split-mode"]');
+    radios.forEach(function(r) { r.checked = (r.value === activeMode); });
+
+    // Show/hide description and country rows based on mode
+    var descRow = document.getElementById('split-mode-desc-row');
+    var countryRow = document.getElementById('split-country-row');
+    var countRow = document.getElementById('split-count-row');
+    var descEl = document.getElementById('split-mode-desc');
+
+    if (activeMode === 'off') {
+        if (descRow) descRow.style.display = 'none';
+        if (countryRow) countryRow.style.display = 'none';
+        if (countRow) countRow.style.display = 'none';
+    } else {
+        if (descRow) descRow.style.display = '';
+        if (countryRow) countryRow.style.display = '';
+        if (countRow) countRow.style.display = '';
+        if (descEl) {
+            descEl.textContent = activeMode === 'forward' ? vpnData.t.split_forward_desc : vpnData.t.split_reverse_desc;
+        }
+    }
 
     var countryName = vpnData.detected ? vpnData.detectedCountryName : vpnData.currentCountryName;
     var countryFlag = vpnData.detected ? vpnData.detectedCountryFlag : vpnData.currentCountryFlag;
@@ -258,15 +287,19 @@ function vpn_toggle() {
     xhr.send('action=' + action);
 }
 
-function toggle_split(el) {
-    var enabled = el.checked ? '1' : '0';
+function setSplitMode(mode) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_set_split', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
-        try { JSON.parse(xhr.responseText); vpnData.splitEnabled = el.checked; updateUI(); } catch (e) { console.error(e); }
+        try {
+            JSON.parse(xhr.responseText);
+            vpnData.splitEnabled = (mode !== 'off');
+            vpnData.splitMode = (mode === 'off') ? 'forward' : mode;
+            updateUI();
+        } catch (e) { console.error(e); }
     };
-    xhr.send('enabled=' + enabled);
+    xhr.send('mode=' + encodeURIComponent(mode));
 }
 
 function auto_detect() {
@@ -456,6 +489,7 @@ function loadStatus() {
             var r = JSON.parse(xhr.responseText);
             vpnData.connected = r.vpn_connected;
             vpnData.splitEnabled = r.split_tunnel;
+            vpnData.splitMode = r.split_mode || 'forward';
             vpnData.currentCountry = r.current_country || 'cn';
             vpnData.currentCountryName = r.current_country_name || 'China';
             vpnData.currentCountryFlag = r.current_country_flag || '';

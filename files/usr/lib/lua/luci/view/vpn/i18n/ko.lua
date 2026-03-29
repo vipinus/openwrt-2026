@@ -75,5 +75,10 @@ return {
     select_server = "서버 선택",
     refresh_servers = "목록 새로고침",
     servers_updated = "서버 업데이트됨",
-    servers_count = "개 서버"
+    servers_count = "개 서버",
+    split_off = "끄기",
+    split_forward = "정방향 분할",
+    split_forward_desc = "국내 IP 직접 연결, 나머지는 VPN 경유",
+    split_reverse = "역방향 분할",
+    split_reverse_desc = "VPN 서버 국가만 VPN 경유, 나머지는 직접 연결"
 }

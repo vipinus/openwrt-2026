@@ -95,7 +95,12 @@ i18n["en"] = load_i18n("en") or {
         select_server = "Select Server",
         refresh_servers = "Refresh Servers",
         servers_updated = "Servers updated",
-        servers_count = "servers"
+        servers_count = "servers",
+        split_off = "Off",
+        split_forward = "Forward Split",
+        split_forward_desc = "Local country direct, rest via VPN",
+        split_reverse = "Reverse Split",
+        split_reverse_desc = "Only VPN server country via VPN, rest direct"
 }
 -- END of inline en fallback; other languages loaded on-demand from i18n/*.lua
 
@@ -206,6 +211,7 @@ function api_get_vpn_status()
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
     local vpn_enabled = luci.model.uci:get("vipin", "vpn", "enabled") or "0"
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
+    local split_mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
     local vpn_connected = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
@@ -232,6 +238,7 @@ function api_get_vpn_status()
         vpn_enabled = (vpn_enabled == "1"),
         vpn_connected = (vpn_connected == "1"),
         split_tunnel = (split_enabled == "1"),
+        split_mode = split_mode,
         current_country = current_country,
         current_country_name = get_country_name(current_country),
         current_country_flag = get_country_flag(current_country),
@@ -275,22 +282,28 @@ function api_set_split_tunnel()
     local http = require("luci.http")
     local json = require("cjson")
     local util = require("luci.util")
-    
-    local enabled = luci.http.formvalue("enabled") or "0"
+
+    local mode = luci.http.formvalue("mode") or "off"
     local result = {success = false}
-    
-    luci.model.uci:set("vipin", "vpn", "split_tunnel", enabled)
+
+    if mode == "off" then
+        luci.model.uci:set("vipin", "vpn", "split_tunnel", "0")
+    else
+        luci.model.uci:set("vipin", "vpn", "split_tunnel", "1")
+        luci.model.uci:set("vipin", "vpn", "split_mode", mode)
+    end
     luci.model.uci:save("vipin")
     luci.model.uci:commit("vipin")
-    
-    if enabled == "1" then
-        util.exec("/usr/sbin/vipin-vpn-routing enable 2>&1")
-    else
+
+    if mode == "off" then
         util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")
+    else
+        util.exec("/usr/sbin/vipin-vpn-routing reload 2>&1")
     end
-    
+
     result.success = true
-    
+    result.mode = mode
+
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
