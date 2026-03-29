@@ -307,10 +307,14 @@ function api_set_split_tunnel()
     luci.model.uci:save("vipin")
     luci.model.uci:commit("vipin")
 
-    if mode == "off" then
-        util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")
-    else
-        util.exec("/usr/sbin/vipin-vpn-routing reload 2>&1")
+    -- Only apply routing changes if VPN is connected
+    local vpn_running = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+    if vpn_running == "1" then
+        if mode == "off" then
+            util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")
+        else
+            util.exec("/usr/sbin/vipin-vpn-routing reload 2>&1")
+        end
     end
 
     result.success = true

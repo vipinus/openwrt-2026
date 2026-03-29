@@ -21,7 +21,7 @@ acquire_lock() {
             fi
         fi
         wait=$((wait + 1))
-        if [ "$wait" -ge 30 ]; then
+        if [ "$wait" -ge 60 ]; then
             logger -t vipin-routing "Timeout waiting for lock"
             return 1
         fi
@@ -233,26 +233,26 @@ disable_split() {
 }
 
 case "$1" in
-    enable)
+    enable|disable|reload)
         acquire_lock || exit 1
-        enable_split "$2" "$3"
-        release_lock
-        ;;
-    disable)
-        acquire_lock || exit 1
-        disable_split
-        release_lock
-        ;;
-    reload)
-        acquire_lock || exit 1
-        split=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
-        if [ "$split" = "1" ]; then
-            mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
-            enable_split "" "$mode"
-        else
-            disable_split
-        fi
-        release_lock
+        trap release_lock EXIT
+        case "$1" in
+            enable)
+                enable_split "$2" "$3"
+                ;;
+            disable)
+                disable_split
+                ;;
+            reload)
+                split=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
+                if [ "$split" = "1" ]; then
+                    mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
+                    enable_split "" "$mode"
+                else
+                    disable_split
+                fi
+                ;;
+        esac
         ;;
     status)
         if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
