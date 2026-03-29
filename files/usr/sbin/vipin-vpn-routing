@@ -71,14 +71,6 @@ chain vipin_output {
     ip daddr @vipin_domestic meta mark set 0x200
 }
 
-chain vipin_forward {
-    type filter hook forward priority filter - 1;
-    oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260
-    iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260
-    iifname "br-lan" oifname "vpn_vipin" accept
-    iifname "vpn_vipin" oifname "br-lan" ct state established,related accept
-}
-
 chain vipin_postrouting {
     type nat hook postrouting priority srcnat;
     oifname "vpn_vipin" masquerade
@@ -88,6 +80,12 @@ EOF
     # Reload firewall to create the set and chains
     /etc/init.d/firewall reload 2>/dev/null
     sleep 2
+
+    # Insert VPN forwarding and MSS clamp rules into fw4 forward chain
+    nft insert rule inet fw4 forward iifname "vpn_vipin" oifname "br-lan" ct state established,related accept
+    nft insert rule inet fw4 forward iifname "br-lan" oifname "vpn_vipin" accept
+    nft insert rule inet fw4 forward oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260
+    nft insert rule inet fw4 forward iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260
 
     # Verify set created
     if ! nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
