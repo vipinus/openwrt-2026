@@ -224,6 +224,8 @@ jobs:
       - name: Collect Artifacts
         run: |
           mkdir -p ${{ github.workspace }}/firmware
+          echo "=== All files in IB bin ==="
+          find "$IB_DIR/bin" -type f 2>/dev/null | head -20
           find "$IB_DIR/bin" -type f \( -name "*-sysupgrade.bin" -o -name "*-factory.bin" -o -name "*-factory.img" -o -name "*-initramfs.bin" -o -name "*.img.gz" \) -exec cp {} ${{ github.workspace }}/firmware/ \;
           echo "=== Firmware files ==="
           ls -lh ${{ github.workspace }}/firmware/ || echo "No artifacts"
@@ -232,7 +234,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: openwrt-${{ env.TARGET }}-firmware
-          path: firmware/*
+          path: firmware/
           retention-days: 7
 
       - name: Upload to Release
