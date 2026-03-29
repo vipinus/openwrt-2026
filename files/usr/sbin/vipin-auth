@@ -69,14 +69,6 @@ get_encryption_key() {
     echo "$key"
 }
 
-encrypt() {
-    local plaintext="$1"
-    local key=$(get_encryption_key)
-    local iv="0123456789abcdef0000000000000000"
-
-    echo -n "$plaintext" | openssl enc -aes-256-cbc -K "$key" -iv "$iv" -a -A 2>/dev/null
-}
-
 get_router_mac() {
     local wan_if=$(uci get network.wan.device 2>/dev/null || echo "wan")
     local mac=""
@@ -277,7 +269,14 @@ local_auth() {
     local username="$1"
     local password="$2"
     local router_mac="$3"
-    
+
+    # Local database auth not available on router (no MySQL)
+    # Only remote API auth is supported
+    log "Local auth not available, remote API required"
+    echo "{\"status\": \"error\", \"message\": \"Server unreachable, please check internet connection\"}"
+    return 1
+
+    # Legacy local auth code below (requires MySQL, not available on router)
     if ! check_password "$username" "$password"; then
         log "Local auth failed for: $username"
         echo "{\"status\": \"invalid\", \"message\": \"Invalid username or password\"}"
@@ -378,37 +377,40 @@ get_status() {
     echo "{\"logged_in\": true, \"username\": \"$username\", \"type\": \"$user_type\", \"expiration\": \"$expiration\", \"auth_time\": \"$auth_time\", \"mac\": \"$mac\"}"
 }
 
-generate_token() {
-    local username="$1"
-    local timestamp=$(date +%s)
-    local expires=$((timestamp + 3600))
-    local data="${username}:${expires}"
-    local signature=$(echo -n "$data" | openssl dgst -sha256 -hmac "$SECRET_KEY" 2>/dev/null | cut -d' ' -f2)
-    local token=$(echo -n "${username}:${expires}:${signature}" | base64 -w0 2>/dev/null | tr '/+' '_-' | tr -d '=\n')
-    echo "$token"
-}
-
 get_renewal_url() {
     local auth_info=$(load_auth)
-    
+
     if [ -z "$auth_info" ]; then
         echo "{\"success\": false, \"error\": \"not_logged_in\", \"url\": \"\"}"
         return
     fi
-    
+
     local username=$(echo "$auth_info" | grep "^username=" | cut -d'"' -f2)
-    
+
     if [ -z "$username" ]; then
         echo "{\"success\": false, \"error\": \"no_username\", \"url\": \"\"}"
         return
     fi
-    
-    local token=$(generate_token "$username")
-    local renewal_url="${RENEWAL_URL}?token=${token}&source=router"
-    
-    log "Generated renewal URL for user: $username"
-    
-    echo "{\"success\": true, \"username\": \"$username\", \"token\": \"$token\", \"url\": \"$renewal_url\"}"
+
+    # Request renewal URL from server (token generated server-side, no openssl needed)
+    local enc_user=$(urlencode "$username")
+    local mac=$(get_router_mac)
+    local response=$(wget -q -O- --timeout=10 \
+        "${API_BASE}/api/v1/router/renewal-url?username=${enc_user}&mac=${mac}" 2>/dev/null)
+
+    if [ -n "$response" ]; then
+        local url=$(echo "$response" | grep -o '"url":"[^"]*"' | cut -d'"' -f4)
+        if [ -n "$url" ]; then
+            log "Got renewal URL for user: $username"
+            echo "{\"success\": true, \"username\": \"$username\", \"url\": \"$url\"}"
+            return
+        fi
+    fi
+
+    # Fallback: direct to renewal page with username
+    local renewal_url="${RENEWAL_URL}?username=${enc_user}&source=router"
+    log "Using fallback renewal URL for user: $username"
+    echo "{\"success\": true, \"username\": \"$username\", \"url\": \"$renewal_url\"}"
 }
 
 case "$1" in

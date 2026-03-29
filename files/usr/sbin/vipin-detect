@@ -70,6 +70,11 @@ get_country_by_ip() {
         if [ -n "$response" ]; then
             country=$(echo "$response" | grep -o '"country_code":"[^"]*"' | cut -d'"' -f4)
             [ -z "$country" ] && country=$(echo "$response" | grep -o '"countryCode":"[^"]*"' | cut -d'"' -f4)
+            # ipinfo.io uses "country":"XX" (2-letter code)
+            if [ -z "$country" ]; then
+                local maybe=$(echo "$response" | grep -o '"country":"[^"]*"' | cut -d'"' -f4)
+                [ -n "$maybe" ] && [ ${#maybe} -eq 2 ] && country="$maybe"
+            fi
             
             if [ -n "$country" ] && [ ${#country} -eq 2 ]; then
                 break

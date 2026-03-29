@@ -146,16 +146,16 @@ SCRIPT
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
-    
-    sleep 10
 
-    if pgrep openconnect >/dev/null; then
-        logger -t $NAME "VPN started (server: $server)"
-        # Split tunnel is enabled by vipin-vpnc-script on connect callback
-    else
-        logger -t $NAME "Failed to start VPN"
-        cat /var/log/openconnect.log 2>/dev/null | tail -5 | logger -t $NAME
-    fi
+    # Check connection status in background to avoid blocking procd/LuCI
+    ( sleep 10
+      if pgrep openconnect >/dev/null; then
+          logger -t $NAME "VPN started (server: $server)"
+      else
+          logger -t $NAME "Failed to start VPN"
+          tail -5 /var/log/openconnect.log 2>/dev/null | logger -t $NAME
+      fi
+    ) &
 }
 
 stop_service() {
