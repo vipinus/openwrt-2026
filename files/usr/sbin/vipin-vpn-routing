@@ -55,6 +55,9 @@ set vipin_domestic {
 
 chain vipin_prerouting {
     type filter hook prerouting priority mangle;
+    ip daddr 10.0.0.0/8 return
+    ip daddr 172.16.0.0/12 return
+    ip daddr 192.168.0.0/16 return
     ip daddr @vipin_domestic meta mark set 0x200
 }
 
@@ -62,6 +65,9 @@ chain vipin_output {
     type route hook output priority mangle;
     oifname "vpn_vipin" return
     oifname "lo" return
+    ip daddr 10.0.0.0/8 return
+    ip daddr 172.16.0.0/12 return
+    ip daddr 192.168.0.0/16 return
     ip daddr @vipin_domestic meta mark set 0x200
 }
 
@@ -83,8 +89,6 @@ EOF
     fi
 
     # Populate set using batch add (avoids huge single-line elements)
-    nft add element inet fw4 vipin_domestic '{ 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 }'
-
     local batch="/tmp/vipin_nft_batch.nft"
     : > "$batch"
     grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
