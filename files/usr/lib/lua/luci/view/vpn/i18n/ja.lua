@@ -80,5 +80,5 @@ return {
     split_forward = "正方向スプリット",
     split_forward_desc = "国内IPは直接、その他はVPN経由",
     split_reverse = "逆方向スプリット",
-    split_reverse_desc = "VPNサーバー国のみVPN経由、その他は直接"
+    split_reverse_desc = "VPNサーバー国のIPのみVPN経由、その他は直接。最良の結果を得るには、デバイスのDNSをその国のDNSに設定してください。"
 }

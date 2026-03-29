@@ -217,19 +217,6 @@ FWEOF
     logger -t vipin-routing "Split tunnel enabled: $country, mode=$mode ($ip_count IPs, direct via $wan_dev)"
 }
 
-restore_dns() {
-    local current_dns
-    current_dns=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
-    if [ "$current_dns" != "127.0.0.1#5353" ]; then
-        uci set dhcp.@dnsmasq[0].noresolv='1'
-        uci -q delete dhcp.@dnsmasq[0].server
-        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
-        uci commit dhcp
-        /etc/init.d/dnsmasq restart 2>/dev/null
-        logger -t vipin-routing "DNS restored to dnscrypt-proxy"
-    fi
-}
-
 disable_split() {
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
@@ -242,7 +229,6 @@ disable_split() {
     rm -f /etc/vipin/firewall-include.sh
     uci delete firewall.vipin_include 2>/dev/null
     uci commit firewall 2>/dev/null
-    restore_dns
     logger -t vipin-routing "Split tunnel disabled"
 }
 

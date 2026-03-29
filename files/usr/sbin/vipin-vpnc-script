@@ -49,32 +49,6 @@ case "$reason" in
                     VPN_SERVER=$(uci get vipin.vpn.server 2>/dev/null || echo "")
                     SERVER_COUNTRY=$(echo "$VPN_SERVER" | cut -d. -f1)
                     /usr/sbin/vipin-vpn-routing enable "$SERVER_COUNTRY" reverse 2>/dev/null
-                    # Reverse mode: split DNS - Chinese domains via Chinese DNS,
-                    # rest via dnscrypt. This ensures Chinese sites resolve to
-                    # mainland IPs (in cn set → VPN) while foreign sites work normally.
-                    if [ "$SERVER_COUNTRY" = "cn" ]; then
-                        uci set dhcp.@dnsmasq[0].noresolv='1'
-                        uci -q delete dhcp.@dnsmasq[0].server
-                        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
-                        # Forward Chinese domains to Alibaba DNS (routed through VPN)
-                        for d in baidu.com baidustatic.com bdstatic.com bdimg.com \
-                            taobao.com tmall.com alicdn.com aliyun.com alibaba.com \
-                            qq.com weixin.com tencent.com gtimg.com \
-                            jd.com 360buyimg.com 163.com 126.com netease.com \
-                            sina.com weibo.com sinaimg.com \
-                            douyin.com bytedance.com snssdk.com \
-                            bilibili.com hdslb.com zhihu.com zhimg.com \
-                            sohu.com sogou.com meituan.com dianping.com \
-                            xiaomi.com huawei.com pinduoduo.com \
-                            ctrip.com iqiyi.com youku.com douban.com \
-                            csdn.net cnblogs.com gov.cn edu.cn \
-                            cn com.cn net.cn org.cn; do
-                            uci add_list dhcp.@dnsmasq[0].server="/$d/223.5.5.5"
-                        done
-                        uci commit dhcp
-                        /etc/init.d/dnsmasq restart 2>/dev/null
-                        logger -t vipin-vpnc "Reverse mode: split DNS enabled (Chinese domains via 223.5.5.5)"
-                    fi
                 else
                     /usr/sbin/vipin-vpn-routing enable "" forward 2>/dev/null
                 fi
@@ -89,17 +63,6 @@ case "$reason" in
 
         # Disable split tunnel routing
         /usr/sbin/vipin-vpn-routing disable 2>/dev/null
-
-        # Restore dnsmasq to dnscrypt-proxy if it was changed by reverse mode
-        CURRENT_DNS=$(uci get dhcp.@dnsmasq[0].server 2>/dev/null)
-        if [ "$CURRENT_DNS" != "127.0.0.1#5353" ]; then
-            uci set dhcp.@dnsmasq[0].noresolv='1'
-            uci -q delete dhcp.@dnsmasq[0].server
-            uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
-            uci commit dhcp
-            /etc/init.d/dnsmasq restart 2>/dev/null
-            logger -t vipin-vpnc "DNS restored to dnscrypt-proxy"
-        fi
 
         # Restore DNS
         if [ -f /etc/resolv.conf.vipin-backup ]; then

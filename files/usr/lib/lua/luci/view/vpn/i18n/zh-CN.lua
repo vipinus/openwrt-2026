@@ -80,5 +80,5 @@ return {
     split_forward = "正向分流",
     split_forward_desc = "本地国家直连，其余走VPN",
     split_reverse = "反向分流",
-    split_reverse_desc = "只有VPN服务器国家走VPN，其余直连"
+    split_reverse_desc = "只有VPN服务器国家IP走VPN，其余直连。建议将设备DNS设为该国DNS以获得最佳效果。"
 }

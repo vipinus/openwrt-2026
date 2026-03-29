@@ -80,5 +80,5 @@ return {
     split_forward = "Forward Split",
     split_forward_desc = "Local country direct, rest via VPN",
     split_reverse = "Reverse Split",
-    split_reverse_desc = "Only VPN server country via VPN, rest direct"
+    split_reverse_desc = "Only VPN server country IPs via VPN, rest direct. For best results, set device DNS to a server in that country."
 }
