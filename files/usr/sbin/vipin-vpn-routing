@@ -105,10 +105,10 @@ enable_split() {
             already_correct=1
         fi
         if [ "$already_correct" = "1" ]; then
-            # Rules already match, just re-populate the set with correct country
-            nft flush set inet fw4 vipin_domestic 2>/dev/null
+            # Rules already match, just re-populate the set atomically
+            # Build batch with flush+add in one nft -f call to avoid empty-set gap
             local batch="/tmp/vipin_nft_batch.nft"
-            : > "$batch"
+            echo "flush set inet fw4 vipin_domestic" > "$batch"
             grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
                 echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
             done
