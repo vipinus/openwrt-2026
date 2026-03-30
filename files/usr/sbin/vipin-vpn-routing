@@ -217,17 +217,19 @@ FWEOF
 }
 
 disable_split() {
+    # Clean up policy routing
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
-    # Remove our chains and set from fw4
-    nft delete chain inet fw4 vipin_prerouting 2>/dev/null
-    nft delete chain inet fw4 vipin_output 2>/dev/null
-    nft delete chain inet fw4 vipin_postrouting 2>/dev/null
-    nft delete set inet fw4 vipin_domestic 2>/dev/null
+
+    # Remove nft rules file and firewall include, then reload fw4.
+    # fw4 reload atomically rebuilds the table without our chains/sets,
+    # avoiding a gap where masquerade is gone but VPN routes still exist.
     rm -f "$NFT_RULES"
     rm -f /etc/vipin/firewall-include.sh
     uci delete firewall.vipin_include 2>/dev/null
     uci commit firewall 2>/dev/null
+    /etc/init.d/firewall reload 2>/dev/null
+
     logger -t vipin-routing "Split tunnel disabled"
 }
 
