@@ -94,6 +94,35 @@ enable_split() {
         return 1
     fi
 
+    # Skip firewall reload if same mode is already active with correct country
+    if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
+        local current_has_mark=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "mark set")
+        local current_has_return=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "@vipin_domestic return")
+        local already_correct=0
+        if [ "$mode" = "reverse" ] && [ "$current_has_return" -gt 0 ] && [ "$current_has_mark" -gt 0 ]; then
+            already_correct=1
+        elif [ "$mode" = "forward" ] && [ "$current_has_return" -eq 0 ] && [ "$current_has_mark" -gt 0 ]; then
+            already_correct=1
+        fi
+        if [ "$already_correct" = "1" ]; then
+            # Rules already match, just re-populate the set with correct country
+            nft flush set inet fw4 vipin_domestic 2>/dev/null
+            local batch="/tmp/vipin_nft_batch.nft"
+            : > "$batch"
+            grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
+                echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
+            done
+            nft -f "$batch" 2>/dev/null
+            rm -f "$batch"
+            ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
+            ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
+            ip rule add fwmark $MARK_DIRECT table $TABLE_ID pri 100 2>/dev/null
+            local ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
+            logger -t vipin-routing "Split tunnel refreshed: $country, mode=$mode ($ip_count IPs, direct via $wan_dev)"
+            return 0
+        fi
+    fi
+
     # Write new nftables rules then firewall reload atomically replaces them.
     # No pre-cleanup needed — fw4 reload rebuilds the entire table from
     # /etc/nftables.d/*.nft, so old chains/sets are replaced in one shot.
