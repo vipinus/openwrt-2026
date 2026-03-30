@@ -94,8 +94,14 @@ enable_split() {
         return 1
     fi
 
-    # Clean up first
-    disable_split 2>/dev/null
+    # Clean up nft rules without disrupting connectivity
+    # Only remove chains and set; keep policy routing and masquerade alive
+    # to avoid a gap where VPN traffic has no NAT
+    nft delete chain inet fw4 vipin_prerouting 2>/dev/null
+    nft delete chain inet fw4 vipin_output 2>/dev/null
+    nft delete chain inet fw4 vipin_postrouting 2>/dev/null
+    nft delete set inet fw4 vipin_domestic 2>/dev/null
+    rm -f "$NFT_RULES"
 
     # Build nftables include file for fw4 (inside inet fw4 table context)
     mkdir -p /etc/nftables.d
