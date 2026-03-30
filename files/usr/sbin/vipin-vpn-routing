@@ -257,10 +257,15 @@ case "$1" in
         ;;
     status)
         if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
-            country=$(get_current_country)
+            mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
+            if [ "$mode" = "reverse" ]; then
+                country=$(get_server_country)
+                [ -z "$country" ] && country=$(get_current_country)
+            else
+                country=$(get_current_country)
+            fi
             domestic_file="$CONF_DIR/${country}.txt"
             ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
-            mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
             echo "Split tunnel: enabled"
             echo "Mode: $mode"
             echo "Country: $country"
