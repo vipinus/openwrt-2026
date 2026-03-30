@@ -236,7 +236,8 @@ function api_get_vpn_status()
     local server_country = server:match("^([^.]+)") or ""
     local server_ip_count = 0
     if server_country ~= "" then
-        server_ip_count = tonumber(util.exec("/usr/sbin/vipin-country-ips count " .. server_country .. " 2>/dev/null"):gsub("%s+", "")) or 0
+        local server_ip_str = util.exec("/usr/sbin/vipin-country-ips count " .. server_country .. " 2>/dev/null"):gsub("%s+", "")
+        server_ip_count = tonumber(server_ip_str) or 0
     end
 
     local lang_key = get_lang()
