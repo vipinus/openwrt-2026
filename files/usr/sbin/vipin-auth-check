@@ -91,6 +91,7 @@ reconnect_vpn() {
     log "VPN process died, reconnecting..."
     killall openconnect 2>/dev/null
     ip link delete vpn_vipin 2>/dev/null
+    /usr/sbin/vipin-vpn-routing disable 2>/dev/null
     sleep 2
     /etc/init.d/vipin-vpn start 2>/dev/null
     sleep 10
