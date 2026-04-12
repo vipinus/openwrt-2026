@@ -6,6 +6,33 @@ CONF_DIR="/etc/vipin/country-ips"
 NFT_RULES="/etc/nftables.d/vipin-split.nft"
 TABLE_ID=100
 MARK_DIRECT=0x200
+LOCK_FILE="/tmp/vipin-routing.lock"
+
+acquire_lock() {
+    local wait=0
+    while [ -f "$LOCK_FILE" ]; do
+        # Stale lock check (>120s)
+        if [ -f "$LOCK_FILE" ]; then
+            local lock_age=$(( $(date +%s) - $(date -r "$LOCK_FILE" +%s 2>/dev/null || echo 0) ))
+            if [ "$lock_age" -gt 120 ]; then
+                logger -t vipin-routing "Removing stale lock (${lock_age}s old)"
+                rm -f "$LOCK_FILE"
+                break
+            fi
+        fi
+        wait=$((wait + 1))
+        if [ "$wait" -ge 60 ]; then
+            logger -t vipin-routing "Timeout waiting for lock"
+            return 1
+        fi
+        sleep 1
+    done
+    echo $$ > "$LOCK_FILE"
+}
+
+release_lock() {
+    rm -f "$LOCK_FILE"
+}
 
 get_current_country() {
     cat "$CONF_DIR/current_country" 2>/dev/null || echo "cn"
@@ -23,28 +50,26 @@ get_server_country() {
     local server
     server=$(uci get vipin.vpn.server 2>/dev/null || echo "")
     if [ -n "$server" ]; then
-        echo "$server" | cut -d. -f1
+        local country=$(echo "$server" | cut -d. -f1)
+        # un.fanq.in serves Chinese IPs for overseas users, treat as cn alias
+        [ "$country" = "un" ] && country="cn"
+        echo "$country"
     else
         echo ""
     fi
 }
 
 enable_split() {
-    local country="${1:-}"
+    local country="${1:-$(get_current_country)}"
     local mode="${2:-$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")}"
 
-    # Determine country
-    if [ -n "$country" ]; then
-        # Use provided country
-        :
-    elif [ "$mode" = "reverse" ]; then
-        # Reverse mode: use VPN server country
-        country=$(get_server_country)
-    else
-        # Forward mode: use stored router location (detected when VPN was disconnected)
-        # Do NOT re-detect, use the value saved when VPN was off
-        country=$(get_current_country)
-        [ -z "$country" ] && country=$(get_server_country)
+    # For reverse mode, use VPN server country if no country specified via $1
+    if [ "$mode" = "reverse" ] && [ -z "$1" ]; then
+        local server_country
+        server_country=$(get_server_country)
+        if [ -n "$server_country" ]; then
+            country="$server_country"
+        fi
     fi
 
     local domestic_file="$CONF_DIR/${country}.txt"
@@ -52,12 +77,18 @@ enable_split() {
     local wan_dev=$(get_wan_device)
 
     if [ ! -f "$domestic_file" ]; then
-        logger -t vipin-routing "No IP list for $country, downloading..."
-        /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
+        local attempt=1
+        while [ $attempt -le 3 ]; do
+            logger -t vipin-routing "No IP list for $country, downloading (attempt $attempt/3)..."
+            /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
+            [ -f "$domestic_file" ] && break
+            attempt=$((attempt + 1))
+            sleep 5
+        done
     fi
 
     if [ ! -f "$domestic_file" ]; then
-        logger -t vipin-routing "Failed to get IP list for $country"
+        logger -t vipin-routing "Failed to get IP list for $country after 3 attempts"
         return 1
     fi
 
@@ -66,15 +97,42 @@ enable_split() {
         return 1
     fi
 
-    # Clean up first
-    disable_split 2>/dev/null
+    # Skip firewall reload if same mode is already active with correct country
+    if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
+        local current_has_mark=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "mark set")
+        local current_has_return=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "@vipin_domestic return")
+        local already_correct=0
+        if [ "$mode" = "reverse" ] && [ "$current_has_return" -gt 0 ] && [ "$current_has_mark" -gt 0 ]; then
+            already_correct=1
+        elif [ "$mode" = "forward" ] && [ "$current_has_return" -eq 0 ] && [ "$current_has_mark" -gt 0 ]; then
+            already_correct=1
+        fi
+        if [ "$already_correct" = "1" ]; then
+            # Rules already match, just re-populate the set atomically
+            # Build batch with flush+add in one nft -f call to avoid empty-set gap
+            local batch="/tmp/vipin_nft_batch.nft"
+            echo "flush set inet fw4 vipin_domestic" > "$batch"
+            grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
+                echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
+            done
+            nft -f "$batch" 2>/dev/null
+            rm -f "$batch"
+            ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
+            ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
+            ip rule add fwmark $MARK_DIRECT table $TABLE_ID pri 100 2>/dev/null
+            local ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
+            logger -t vipin-routing "Split tunnel refreshed: $country, mode=$mode ($ip_count IPs, direct via $wan_dev)"
+            return 0
+        fi
+    fi
 
-    # Build nftables include file for fw4 (inside inet fw4 table context)
+    # Write new nftables rules then firewall reload atomically replaces them.
+    # No pre-cleanup needed — fw4 reload rebuilds the entire table from
+    # /etc/nftables.d/*.nft, so old chains/sets are replaced in one shot.
     mkdir -p /etc/nftables.d
 
-    # Generate rules based on mode
     if [ "$mode" = "reverse" ]; then
-        # Reverse: IPs in set -> return (go through VPN), others -> mark direct
+        # Reverse: IPs in set → return (go through VPN), everything else → mark direct
         cat > "$NFT_RULES" << 'EOF'
 set vipin_domestic {
     type ipv4_addr
@@ -107,7 +165,7 @@ chain vipin_postrouting {
 }
 EOF
     else
-        # Forward: IPs in set -> mark direct, others -> VPN
+        # Forward (default): IPs in set → mark direct, everything else → VPN
         cat > "$NFT_RULES" << 'EOF'
 set vipin_domestic {
     type ipv4_addr
@@ -143,13 +201,12 @@ EOF
     mkdir -p /etc/vipin
     cat > /etc/vipin/firewall-include.sh << 'FWEOF'
 #!/bin/sh
-# Insert VPN forwarding and NAT rules into fw4 chains
+# Insert VPN forwarding and MSS clamp rules into fw4 forward chain
 # This script is called by fw4 on every firewall reload
 nft insert rule inet fw4 forward iifname "vpn_vipin" oifname "br-lan" ct state established,related accept 2>/dev/null
 nft insert rule inet fw4 forward iifname "br-lan" oifname "vpn_vipin" accept 2>/dev/null
 nft insert rule inet fw4 forward oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
 nft insert rule inet fw4 forward iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
-nft insert rule inet fw4 srcnat oifname "vpn_vipin" masquerade 2>/dev/null
 FWEOF
     chmod +x /etc/vipin/firewall-include.sh
 
@@ -188,72 +245,56 @@ FWEOF
     ip rule add fwmark $MARK_DIRECT table $TABLE_ID pri 100 2>/dev/null
 
     local ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
-    logger -t vipin-routing "Split tunnel enabled: $country, mode=$mode ($ip_count domestic IPs, direct via $wan_dev)"
+    logger -t vipin-routing "Split tunnel enabled: $country, mode=$mode ($ip_count IPs, direct via $wan_dev)"
 }
 
 disable_split() {
+    # Clean up policy routing
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
-    # Remove our chains and set from fw4
-    nft delete chain inet fw4 vipin_prerouting 2>/dev/null
-    nft delete chain inet fw4 vipin_output 2>/dev/null
-    nft delete chain inet fw4 vipin_postrouting 2>/dev/null
-    nft delete set inet fw4 vipin_domestic 2>/dev/null
+
+    # Remove nft rules file and firewall include, then reload fw4.
+    # fw4 reload atomically rebuilds the table without our chains/sets,
+    # avoiding a gap where masquerade is gone but VPN routes still exist.
     rm -f "$NFT_RULES"
-    
-    # Create firewall-include.sh for VPN NAT/forward rules (survives fw4 reload)
-    # Keep these rules even when split tunnel is disabled, so VPN still works
-    mkdir -p /etc/vipin
-    cat > /etc/vipin/firewall-include.sh << 'FWEOF'
-#!/bin/sh
-# Insert VPN forwarding, NAT and MSS clamp rules into fw4 chains
-nft insert rule inet fw4 forward iifname "vpn_vipin" oifname "br-lan" ct state established,related accept 2>/dev/null
-nft insert rule inet fw4 forward iifname "br-lan" oifname "vpn_vipin" accept 2>/dev/null
-nft insert rule inet fw4 forward oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
-nft insert rule inet fw4 forward iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
-nft insert rule inet fw4 srcnat oifname "vpn_vipin" masquerade 2>/dev/null
-FWEOF
-    chmod +x /etc/vipin/firewall-include.sh
-    
-    # Register as fw4 include
-    uci set firewall.vipin_include=include 2>/dev/null
-    uci set firewall.vipin_include.type='script' 2>/dev/null
-    uci set firewall.vipin_include.path='/etc/vipin/firewall-include.sh' 2>/dev/null
-    uci set firewall.vipin_include.fw4_compatible='1' 2>/dev/null
+    rm -f /etc/vipin/firewall-include.sh
+    uci delete firewall.vipin_include 2>/dev/null
     uci commit firewall 2>/dev/null
-    
     /etc/init.d/firewall reload 2>/dev/null
-    
+
     logger -t vipin-routing "Split tunnel disabled"
 }
 
 case "$1" in
-    enable)
-        mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
-        enable_split "${2:-}" "$mode"
-        ;;
-    disable)
-        disable_split
-        ;;
-    reload)
-        split=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
-        if [ "$split" = "1" ]; then
-            mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
-            country=$(get_current_country)
-            if [ "$mode" = "reverse" ]; then
-                country=$(get_server_country)
-            fi
-            enable_split "$country" "$mode"
-        else
-            disable_split
-        fi
+    enable|disable|reload)
+        acquire_lock || exit 1
+        trap release_lock EXIT
+        case "$1" in
+            enable)
+                enable_split "$2" "$3"
+                ;;
+            disable)
+                disable_split
+                ;;
+            reload)
+                split=$(uci get vipin.vpn.split_tunnel 2>/dev/null || echo "1")
+                if [ "$split" = "1" ]; then
+                    mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
+                    enable_split "" "$mode"
+                else
+                    disable_split
+                fi
+                ;;
+        esac
         ;;
     status)
         if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
             mode=$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")
-            country=$(get_current_country)
             if [ "$mode" = "reverse" ]; then
                 country=$(get_server_country)
+                [ -z "$country" ] && country=$(get_current_country)
+            else
+                country=$(get_current_country)
             fi
             domestic_file="$CONF_DIR/${country}.txt"
             ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)

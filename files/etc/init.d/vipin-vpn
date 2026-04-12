@@ -99,8 +99,17 @@ start_service() {
 
     logger -t $NAME "Starting VPN for user: $username"
     
+    # Detect router's current country
     local current_country=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
     [ -n "$current_country" ] && country="$current_country"
+    
+    # If router is not in China and trying to connect to cn server, switch to un server
+    if [ "$country" != "cn" ] && echo "$server" | grep -q "cn\.fanq\.in"; then
+        logger -t $NAME "Router not in China ($country), switching to un server"
+        server="un.fanq.in"
+        uci set vipin.vpn.server="un.fanq.in"
+        uci commit vpn
+    fi
     
     /usr/sbin/vipin-country-ips update "$country" 2>/dev/null
     

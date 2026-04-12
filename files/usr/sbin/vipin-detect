@@ -25,56 +25,34 @@ get_public_ip() {
 
     ip link show vpn_vipin >/dev/null 2>&1 && vpn_active=1
 
-    # If VPN is not active, use direct HTTP (will go through default route/WAN)
-    if [ "$vpn_active" != "1" ]; then
+    if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ] && [ -n "$wan_dev" ]; then
+        # VPN active: use DNS-based IP detection (bypasses VPN routing)
+        # OpenDNS resolver returns your public IP via special DNS query
+        # Route DNS query directly via WAN
+        ip route add 208.67.222.222/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
+        ip=$(nslookup myip.opendns.com 208.67.222.222 2>/dev/null | grep "Address:" | tail -1 | awk '{print $2}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+        ip route del 208.67.222.222/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
+
+        # Fallback: Google DNS method
+        if [ -z "$ip" ]; then
+            ip route add 216.239.32.10/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
+            ip=$(nslookup -type=TXT o-o.myaddr.l.google.com 216.239.32.10 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ip route del 216.239.32.10/32 via "$wan_gw" dev "$wan_dev" 2>/dev/null
+        fi
+    fi
+
+    # No VPN or DNS method failed: use HTTP
+    if [ -z "$ip" ]; then
         for url in \
-            "http://ip-api.com/json" \
-            "http://icanhazip.com" \
-            "http://ifconfig.me"; do
+            "https://api.ipify.org" \
+            "https://icanhazip.com" \
+            "https://checkip.amazonaws.com"; do
             ip=$(wget -q -O- --timeout=5 "$url" 2>/dev/null)
-            ip=$(echo "$ip" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+            ip=$(echo "$ip" | tr -d '\n\r ' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
             if [ -n "$ip" ]; then
                 break
             fi
         done
-    else
-        # VPN active: detect WAN IP via temporary route through WAN gateway
-        if [ -n "$wan_gw" ] && [ -n "$wan_dev" ]; then
-            # Add temporary route for API server via WAN to bypass VPN
-            for api_ip in 1.2.4.8 1.2.4.9 114.114.114.114; do
-                ip route add "$api_ip/32" via "$wan_gw" dev "$wan_dev" 2>/dev/null
-                result=$(wget -q -O- --timeout=5 "http://$api_ip" 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-                ip route del "$api_ip/32" via "$wan_gw" dev "$wan_dev" 2>/dev/null
-                [ -n "$result" ] && [ "$result" != "69.156.98.67" ] && break
-            done
-            
-            # If API didn't work, try nslookup with OpenDNS via WAN
-            if [ -z "$ip" ]; then
-                ip route add 208.67.222.222 via "$wan_gw" dev "$wan_dev" 2>/dev/null
-                result=$(nslookup myip.opendns.com 208.67.222.222 2>&1 | grep -A1 "Name:" | tail -1 | awk '{print $2}')
-                ip route del 208.67.222.222 via "$wan_gw" dev "$wan_dev" 2>/dev/null
-                
-                # Filter out VPN IP
-                if [ -n "$result" ] && [ "$result" != "69.156.98.67" ]; then
-                    case "$result" in
-                        10.*|172.1[6-9].*|172.2[0-9].*|172.3[0-1].*|192.168.*|127.*)
-                            ;;
-                        *)
-                            ip="$result"
-                            ;;
-                    esac
-                fi
-            fi
-        fi
-        
-        # Fallback: try HTTP anyway (may go through VPN but sometimes works)
-        if [ -z "$ip" ]; then
-            for url in "http://ip-api.com/json" "http://icanhazip.com"; do
-                ip=$(wget -q -O- --timeout=5 "$url" 2>/dev/null)
-                ip=$(echo "$ip" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-                [ -n "$ip" ] && [ "$ip" != "69.156.98.67" ] && break
-            done
-        fi
     fi
 
     echo "$ip"
