@@ -253,12 +253,28 @@ disable_split() {
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
 
-    # Remove nft rules file and firewall include, then reload fw4.
-    # fw4 reload atomically rebuilds the table without our chains/sets,
-    # avoiding a gap where masquerade is gone but VPN routes still exist.
+    # Remove our nft chains and set from fw4
     rm -f "$NFT_RULES"
-    rm -f /etc/vipin/firewall-include.sh
-    uci delete firewall.vipin_include 2>/dev/null
+    /etc/init.d/firewall reload 2>/dev/null
+
+    # Keep firewall-include.sh for VPN NAT/forward rules so VPN still works
+    mkdir -p /etc/vipin
+    cat > /etc/vipin/firewall-include.sh << 'FWEOF'
+#!/bin/sh
+# Insert VPN forwarding, NAT and MSS clamp rules into fw4 chains
+nft insert rule inet fw4 forward iifname "vpn_vipin" oifname "br-lan" ct state established,related accept 2>/dev/null
+nft insert rule inet fw4 forward iifname "br-lan" oifname "vpn_vipin" accept 2>/dev/null
+nft insert rule inet fw4 forward oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
+nft insert rule inet fw4 forward iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
+nft insert rule inet fw4 srcnat oifname "vpn_vipin" masquerade 2>/dev/null
+FWEOF
+    chmod +x /etc/vipin/firewall-include.sh
+
+    # Ensure fw4 include is registered
+    uci set firewall.vipin_include=include 2>/dev/null
+    uci set firewall.vipin_include.type='script' 2>/dev/null
+    uci set firewall.vipin_include.path='/etc/vipin/firewall-include.sh' 2>/dev/null
+    uci set firewall.vipin_include.fw4_compatible='1' 2>/dev/null
     uci commit firewall 2>/dev/null
     /etc/init.d/firewall reload 2>/dev/null
 
