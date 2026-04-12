@@ -81,12 +81,12 @@ case "$reason" in
             rm -f /etc/resolv.conf.vipin-backup
         fi
 
-        # Restore dnsmasq to use local DNS (dnscrypt-proxy)
-        uci set dhcp.@dnsmasq[0].noresolv='1'
-        uci set dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        # Restore dnsmasq to use default upstream DNS (ISP)
+        uci set dhcp.@dnsmasq[0].noresolv='0'
+        uci delete dhcp.@dnsmasq[0].server 2>/dev/null
         uci commit dhcp
         /etc/init.d/dnsmasq reload 2>/dev/null
-        logger -t vpnc-script "Restored dnsmasq to use local DNS"
+        logger -t vpnc-script "Restored dnsmasq to use default DNS"
 
         # Bring down interface
         ip link set dev "$TUNDEV" down
