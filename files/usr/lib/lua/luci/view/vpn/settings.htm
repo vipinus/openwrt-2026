@@ -559,7 +559,7 @@ for (var code in codeToISO) {
     serverCountries[code] = {
         name: name,
         flag: codeToFlag(iso),
-        server: code + '.fanq.in'
+        server: code + '.<%= luci.model.uci:get("vipin", "vpn", "base_domain") or "fanq.in" %>'
     };
 }
 
@@ -570,7 +570,7 @@ function populateServerPicker(pickerId) {
     if (!dropdown) return;
 
     var currentServer = hiddenInput ? hiddenInput.value : '';
-    if (!currentServer) currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in" %>';
+    if (!currentServer) currentServer = '<%= luci.model.uci:get("vipin", "vpn", "server") or ("jp." .. (luci.model.uci:get("vipin", "vpn", "base_domain") or "fanq.in")) %>';
 
     dropdown.innerHTML = '';
     var sorted = Object.keys(serverCountries).map(function(code) {

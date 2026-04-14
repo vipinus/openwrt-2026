@@ -2,7 +2,8 @@
 # VIPIN Server List - Fetch and cache server list
 # Robust JSON parsing using sed
 
-SERVERS_API="https://www.anyfq.com/api/v1/servers"
+SITE_URL=$(uci get vipin.vpn.site_url 2>/dev/null || echo "https://www.anyfq.com")
+SERVERS_API="${SITE_URL}/api/v1/servers"
 CACHE_FILE="/tmp/vipin/servers.json"
 BASE_DOMAIN=$(uci get vipin.vpn.base_domain 2>/dev/null || echo "fanq.in")
 CACHE_TTL=3600

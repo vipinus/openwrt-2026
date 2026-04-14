@@ -7,7 +7,7 @@
 LOG_FILE="/var/log/vipin-auth-check.log"
 CONF_DIR="/etc/vipin"
 AUTH_FILE="$CONF_DIR/auth.conf"
-API_BASE="https://www.anyfq.com"
+API_BASE=$(uci get vipin.vpn.site_url 2>/dev/null || echo "https://www.anyfq.com")
 CHECK_INTERVAL=300
 RECONNECT_INTERVAL=30
 MAX_RECONNECT_FAILS=5

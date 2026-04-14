@@ -4,8 +4,9 @@
 uci set system.@system[0].hostname='202604'
 uci commit system
 
-# Set root password
-echo -e 'www.anyfq.com\nwww.anyfq.com' | passwd root
+# Set root password (reads from UCI, fallback to site domain)
+SITE_DOMAIN=$(uci get vipin.vpn.site_url 2>/dev/null | sed 's|https\?://||;s|/.*||' || echo "www.anyfq.com")
+echo -e "${SITE_DOMAIN}\n${SITE_DOMAIN}" | passwd root
 
 # Set LAN IP
 uci set network.lan.ipaddr='192.168.11.1'
@@ -25,9 +26,9 @@ done
 
 # Configure all wifi-iface
 for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
-    uci set wireless.${iface}.ssid='www.anyfq.com'
+    uci set wireless.${iface}.ssid="${SITE_DOMAIN}"
     uci set wireless.${iface}.encryption='psk2'
-    uci set wireless.${iface}.key='www.anyfq.com'
+    uci set wireless.${iface}.key="${SITE_DOMAIN}"
     uci set wireless.${iface}.disabled='0'
 done
 

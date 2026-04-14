@@ -1,6 +1,7 @@
 #!/bin/sh
 
-API_URL="https://www.anyfq.com/api/v1/router/version"
+SITE_URL=$(uci get vipin.vpn.site_url 2>/dev/null || echo "https://www.anyfq.com")
+API_URL="${SITE_URL}/api/v1/router/version"
 LOG_FILE="/tmp/vipin_update.log"
 LANG_FILE="/etc/vipin_lang"
 

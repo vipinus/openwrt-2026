@@ -5,7 +5,7 @@ STOP=10
 
 USE_PROCD=1
 PROG=/usr/sbin/check-update
-VIPIN_UPDATE_URL="https://www.anyfq.com/api/v1/router/version"
+# URL is read from UCI in check-update script, this var is unused but kept for reference
 
 start_service() {
     procd_open_instance

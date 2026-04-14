@@ -417,7 +417,8 @@ function api_login()
         luci.model.uci:set("vipin", "vpn", "username", username)
         -- Use provided server, existing config, or default
         if server == "" then
-            server = luci.model.uci:get("vipin", "vpn", "server") or "jp.fanq.in"
+            local base_domain = luci.model.uci:get("vipin", "vpn", "base_domain") or "fanq.in"
+            server = luci.model.uci:get("vipin", "vpn", "server") or ("jp." .. base_domain)
         end
         luci.model.uci:set("vipin", "vpn", "server", server)
         luci.model.uci:save("vipin")
@@ -521,7 +522,8 @@ function api_get_servers()
     local util = require("luci.util")
 
     -- Fetch server list from website API (public, no auth needed)
-    local response = util.exec("wget -q -O- --timeout=10 'https://www.anyfq.com/api/v1/servers/list' 2>/dev/null")
+    local site_url = luci.model.uci:get("vipin", "vpn", "site_url") or "https://www.anyfq.com"
+    local response = util.exec("wget -q -O- --timeout=10 '" .. site_url .. "/api/v1/servers/list' 2>/dev/null")
 
     if response and response ~= "" then
         http.prepare_content("application/json")
