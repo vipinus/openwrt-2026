@@ -15,7 +15,7 @@ mkdir -p "$CONF_DIR"
 
 get_ips_apnic() {
     local country=$1
-    local url="https://ftp.apnic.net/public/releases/current/legacy-apnic/delegated-apnic-latest"
+    local url="http://ftp.apnic.net/public/releases/current/legacy-apnic/delegated-apnic-latest"
     local temp_file="/tmp/apnic-ips.$$"
     
     log "Fetching APNIC data for country: $country"
@@ -48,7 +48,7 @@ get_ips_apnic() {
 
 get_ips_ipdeny() {
     local country=$1
-    local url="https://www.ipdeny.com/ipblocks/data/aggregated/$country-aggregated.zone"
+    local url="http://www.ipdeny.com/ipblocks/data/aggregated/$country-aggregated.zone"
     local temp_file="/tmp/ipdeny-$country.$$"
     
     log "Fetching ipdeny data for country: $country"
