@@ -29,16 +29,37 @@ check_auth() {
     return 1
 }
 
-fetch_cert_pin() {
+probe_cert_pin() {
     local srv="$1"
     local pin_file="/etc/vipin/cert_pin"
 
-    # Try to get cert pin from server API
-    local response=$(wget -q -O- --timeout=10 \
-        "https://www.anyfq.com/api/v1/servers" 2>/dev/null)
+    # Intentionally pass wrong pin so openconnect prints the real one
+    local err=$(echo "" | openconnect --protocol=anyconnect --server "$srv:443" \
+        --servercert pin-sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+        --passwd-on-stdin 2>&1 | grep "pin-sha256:")
+    local real_pin=$(echo "$err" | grep -o 'pin-sha256:[A-Za-z0-9+/=]*')
+    if [ -n "$real_pin" ]; then
+        echo "$real_pin" > "$pin_file"
+        logger -t $NAME "Probed real cert pin for $srv: $real_pin"
+        return 0
+    fi
+    return 1
+}
 
+fetch_cert_pin() {
+    local srv="$1"
+    local force="$2"
+    local pin_file="/etc/vipin/cert_pin"
+
+    # force=1: skip API, probe real pin directly (self-heal path)
+    if [ "$force" = "1" ]; then
+        probe_cert_pin "$srv"
+        return $?
+    fi
+
+    # Try API first
+    local response=$(wget -q -O- --timeout=10 "$SERVERS_API" 2>/dev/null)
     if [ -n "$response" ]; then
-        # Extract cert_pin for this server
         local pin=$(echo "$response" | grep -o "\"${srv}\"[^}]*\"cert_pin\":\"[^\"]*\"" | grep -o '"cert_pin":"[^"]*"' | cut -d'"' -f4)
         if [ -n "$pin" ]; then
             echo "$pin" > "$pin_file"
@@ -46,19 +67,9 @@ fetch_cert_pin() {
         fi
     fi
 
-    # Fallback: use a dummy pin to get the real one from openconnect error
-    if [ ! -f "$pin_file" ]; then
-        local err=$(echo "" | openconnect --protocol=anyconnect --server "$srv:443" \
-            --servercert pin-sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
-            --passwd-on-stdin 2>&1 | grep "pin-sha256:")
-        local real_pin=$(echo "$err" | grep -o 'pin-sha256:[A-Za-z0-9+/=]*')
-        if [ -n "$real_pin" ]; then
-            echo "$real_pin" > "$pin_file"
-            return 0
-        fi
-    fi
-
-    return 1
+    # API unreachable or server missing: probe only if we have no pin at all
+    [ ! -f "$pin_file" ] && probe_cert_pin "$srv"
+    return $?
 }
 
 get_cert_pin() {
@@ -156,13 +167,28 @@ SCRIPT
     procd_set_param stderr 1
     procd_close_instance
 
-    # Check connection status in background to avoid blocking procd/LuCI
+    # Check connection status in background; self-heal on pin mismatch
     ( sleep 10
       if pgrep openconnect >/dev/null; then
           logger -t $NAME "VPN started (server: $server)"
+          rm -f /tmp/vipin/.pin_retried
       else
           logger -t $NAME "Failed to start VPN"
           tail -5 /var/log/openconnect.log 2>/dev/null | logger -t $NAME
+
+          # Detect pin mismatch and self-heal (only retry once per start cycle)
+          if grep -q -E "fingerprint.*match|signer not found|certificate verify failed" /var/log/openconnect.log 2>/dev/null \
+             && [ ! -f /tmp/vipin/.pin_retried ]; then
+              logger -t $NAME "Cert pin mismatch detected, probing real pin"
+              touch /tmp/vipin/.pin_retried
+              rm -f /etc/vipin/cert_pin
+              if fetch_cert_pin "$server" 1; then
+                  logger -t $NAME "Real pin acquired, restarting VPN"
+                  /etc/init.d/vipin-vpn restart
+              else
+                  logger -t $NAME "Failed to probe real pin, giving up"
+              fi
+          fi
       fi
     ) &
 }
