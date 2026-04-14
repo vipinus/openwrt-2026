@@ -638,11 +638,12 @@ function refreshServerList() {
                 // Update serverCountries from API and localize names
                 serverCountries = {};
                 servers.forEach(function(s) {
-                    var code = s.code || s.server.split('.')[0];
+                    var domain = s.domain || s.server;
+                    var code = s.code || domain.split('.')[0];
                     var iso = codeToISO[code] || code.toUpperCase();
                     var localName = s.name;
                     try { if (countryNames) localName = countryNames.of(iso) || s.name; } catch(e) {}
-                    serverCountries[code] = { name: localName, flag: codeToFlag(iso), server: s.server };
+                    serverCountries[code] = { name: localName, flag: codeToFlag(iso), server: domain };
                 });
                 loadServerList();
                 return;
