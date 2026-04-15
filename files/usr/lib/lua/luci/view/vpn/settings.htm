@@ -161,7 +161,17 @@ if pass_file then pass_file:close() end
                 <div class="cbi-value">
                     <label class="cbi-value-title">&nbsp;</label>
                     <div class="cbi-value-field">
-                        <input type="button" class="cbi-button cbi-button-reset" onclick="doLogout()" value="<%= t.logout_button %>" />
+                        <input type="button" class="cbi-button cbi-button-apply" id="btn-connect" onclick="vpn_toggle()" value="<%= t.connect %>" />
+                        <input type="button" class="cbi-button cbi-button-reset" onclick="doLogout()" value="<%= t.logout_button %>" style="margin-left:8px;" />
+                        <div id="vpn-toggle-progress" style="display:none;margin-top:8px;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span>⏳</span>
+                                <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
+                                    <div id="vpn-toggle-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
+                                </div>
+                                <span id="vpn-toggle-progress-text" style="font-size:12px;color:#666;">0%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -198,6 +208,18 @@ if pass_file then pass_file:close() end
                 <label class="cbi-value-title"><%= t.count %></label>
                 <div class="cbi-value-field">
                     <span id="info-country">-</span> &mdash; <span id="info-count">-</span>
+                </div>
+            </div>
+            <div class="cbi-value" id="split-progress-row" style="display:none;">
+                <label class="cbi-value-title">&nbsp;</label>
+                <div class="cbi-value-field">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span>⏳</span>
+                        <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
+                            <div id="split-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
+                        </div>
+                        <span id="split-progress-text" style="font-size:12px;color:#666;">0%</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -284,15 +306,48 @@ function updateUI() {
     document.getElementById('info-count').textContent = ipCount + ' ' + vpnData.t.routes_count;
 }
 
+var uiBusy = false;
+
+function runTimedProgress(rowId, barId, textId, duration, onDone) {
+    var row = document.getElementById(rowId);
+    var bar = document.getElementById(barId);
+    var text = document.getElementById(textId);
+    if (row) row.style.display = '';
+    if (bar) bar.style.width = '0%';
+    if (text) text.textContent = '0%';
+    var start = Date.now();
+    var timer = setInterval(function() {
+        var pct = Math.min(99, Math.floor((Date.now() - start) / duration * 100));
+        if (bar) bar.style.width = pct + '%';
+        if (text) text.textContent = pct + '%';
+        if (pct >= 99) {
+            clearInterval(timer);
+            if (bar) bar.style.width = '100%';
+            if (text) text.textContent = '100%';
+            setTimeout(function() {
+                if (row) row.style.display = 'none';
+                if (onDone) onDone();
+            }, 500);
+        }
+    }, 200);
+    return timer;
+}
+
 function vpn_toggle() {
+    if (uiBusy) return;
+    uiBusy = true;
     var action = vpnData.connected ? 'disconnect' : 'connect';
     var btn = document.getElementById('btn-connect');
     if (btn) { btn.disabled = true; btn.value = vpnData.t.please_wait; }
+    runTimedProgress('vpn-toggle-progress', 'vpn-toggle-progress-bar', 'vpn-toggle-progress-text', 10000, function() {
+        uiBusy = false;
+        if (btn) btn.disabled = false;
+        loadStatus();
+    });
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_connect', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
-        if (btn) btn.disabled = false;
         try {
             JSON.parse(xhr.responseText);
             vpnData.connected = (action === 'connect');
@@ -303,6 +358,12 @@ function vpn_toggle() {
 }
 
 function setSplitMode(mode) {
+    if (uiBusy) return;
+    uiBusy = true;
+    runTimedProgress('split-progress-row', 'split-progress-bar', 'split-progress-text', 10000, function() {
+        uiBusy = false;
+        loadStatus();
+    });
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_set_split', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -409,7 +470,7 @@ function showLoginProgress() {
     if (progress) progress.style.display = 'block';
     var pct = 0;
     loginProgressTimer = setInterval(function() {
-        pct += 3;
+        pct += 5;
         if (pct > 95) pct = 95;
         if (bar) bar.style.width = pct + '%';
         if (text) text.textContent = pct + '%';
@@ -671,6 +732,7 @@ window.addEventListener('DOMContentLoaded', function() {
     loadServerList();
     // Only auto-detect if not already detected by loadStatus
     setTimeout(function() { if (!vpnData.detected) auto_detect(); }, 2000);
+    setInterval(function() { if (!uiBusy) loadStatus(); }, 5000);
 });
 </script>
 
