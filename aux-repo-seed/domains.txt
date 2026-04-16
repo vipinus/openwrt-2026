@@ -1,5 +1,5 @@
 # openwrt-2026 video_direct — curated domain list
-# Updated: 2026-04-16
+# Updated: 2026-04-16 (Tencent expanded 2→10)
 # Format: one domain per line; # for comments; dnsmasq matches subdomains
 
 # --- netflix (14) ---
@@ -56,6 +56,14 @@ p-log.ykimg.com
 soku.com
 ykimg.com
 
-# --- tencent (2) ---
+# --- tencent (10) ---
 apdcdn.tc.qq.com
 ltsxmty.gtimg.com
+qqvideo.tc.qq.com
+qqvideo.gtimg.com
+v.smtcdns.com
+vpic.video.qq.com
+vfiles.gtimg.cn
+puui.qpic.cn
+yoo.gtimg.com
+pgdt.gtimg.cn
