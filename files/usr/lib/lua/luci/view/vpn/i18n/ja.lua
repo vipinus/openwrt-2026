@@ -95,5 +95,6 @@ return {
     video_local_add = "追加",
     video_local_placeholder = "ドメインを入力 (例: video.example.com)",
     video_local_remove = "削除",
-    video_reverse_warning = "リバース分割モードではビデオ直通は無効です。"
+    video_reverse_warning = "リバース分割モードではビデオ直通は無効です。",
+    video_view_remote_list = "公開リストを表示"
 }

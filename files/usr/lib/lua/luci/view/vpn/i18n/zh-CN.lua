@@ -95,5 +95,6 @@ return {
     video_local_add = "添加",
     video_local_placeholder = "输入域名（如 video.example.com）",
     video_local_remove = "删除",
-    video_reverse_warning = "反向分流模式下视频直连不可用。"
+    video_reverse_warning = "反向分流模式下视频直连不可用。",
+    video_view_remote_list = "查看公共列表"
 }

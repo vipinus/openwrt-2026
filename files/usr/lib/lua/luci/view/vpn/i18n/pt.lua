@@ -95,5 +95,6 @@ return {
     video_local_add = "Add",
     video_local_placeholder = "Enter a domain (e.g. video.example.com)",
     video_local_remove = "Remove",
-    video_reverse_warning = "Video direct is disabled in Reverse Split mode."
+    video_reverse_warning = "Video direct is disabled in Reverse Split mode.",
+    video_view_remote_list = "View public list"
 }
