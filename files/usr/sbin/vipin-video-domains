@@ -143,6 +143,58 @@ cmd_disable() {
     log "Disabled video_direct"
 }
 
+fetch_remote() {
+    local url="$1"
+    local out="$2"
+    if [ "$MOCK" = "1" ]; then
+        if [ "${VIPIN_VIDEO_MOCK_CURL_OK:-0}" = "1" ] && [ -f "${VIPIN_VIDEO_MOCK_CURL_PAYLOAD:-}" ]; then
+            cp "$VIPIN_VIDEO_MOCK_CURL_PAYLOAD" "$out"
+            return 0
+        fi
+        return 1
+    fi
+    curl -sSL --max-time 10 --retry 1 "$url" -o "$out"
+}
+
+cmd_refresh() {
+    acquire_lock || return 1
+    trap 'release_lock' EXIT INT TERM
+
+    local url
+    url=$(uci_get vipin.vpn.video_url)
+    [ -z "$url" ] && url="$DEFAULT_URL"
+
+    local tmp="${REMOTE}.new"
+    if ! fetch_remote "$url" "$tmp"; then
+        log "fetch failed: $url"
+        rm -f "$tmp"
+        release_lock
+        trap - EXIT INT TERM
+        return 1
+    fi
+    if [ ! -s "$tmp" ]; then
+        log "fetch empty: $url"
+        rm -f "$tmp"
+        release_lock
+        trap - EXIT INT TERM
+        return 1
+    fi
+    mv "$tmp" "$REMOTE"
+    log "Fetched $(wc -l < "$REMOTE") lines from $url"
+
+    if [ "$MOCK" != "1" ]; then
+        uci set vipin.vpn.video_last_refresh="$(date +%s)"
+        uci commit vipin
+        nft flush set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null \
+            && log "Flushed nft set $NFT_SET" \
+            || log "nft flush skipped"
+    fi
+
+    cmd_enable
+    release_lock
+    trap - EXIT INT TERM
+}
+
 cmd_add() {
     local d="$1"
     validate_domain "$d" || { echo "invalid domain: $d" >&2; return 1; }
@@ -182,6 +234,7 @@ render_dnsmasq() {
 case "${1:-}" in
     enable)           cmd_enable ;;
     disable)          cmd_disable ;;
+    refresh)          cmd_refresh ;;
     add)              shift; [ $# -ge 1 ] || usage; cmd_add "$1" ;;
     remove)           shift; [ $# -ge 1 ] || usage; cmd_remove "$1" ;;
     parse-list)       shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;

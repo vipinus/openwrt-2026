@@ -193,3 +193,34 @@ teardown() {
     "$SCRIPT" add "foo.example.com"
     [ ! -f "${VIPIN_VIDEO_ROOT}/var/lock/vipin-video.lock" ]
 }
+
+@test "refresh: successful curl updates remote and last_refresh" {
+    export VIPIN_VIDEO_MOCK_CURL_OK=1
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/mock-fetch.txt"
+    export VIPIN_VIDEO_MOCK_CURL_PAYLOAD="${VIPIN_VIDEO_ROOT}/mock-fetch.txt"
+
+    run "$SCRIPT" refresh
+    [ "$status" -eq 0 ]
+    [ -f "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote" ]
+    grep -q "netflix.ca" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+}
+
+@test "refresh: failed curl preserves old remote" {
+    echo "OLD.CONTENT" > "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    export VIPIN_VIDEO_MOCK_CURL_OK=0
+
+    run "$SCRIPT" refresh
+    [ "$status" -ne 0 ]
+    grep -q "OLD.CONTENT" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+}
+
+@test "refresh: empty payload is treated as failure" {
+    echo "OLD.CONTENT" > "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    export VIPIN_VIDEO_MOCK_CURL_OK=1
+    echo -n "" > "${VIPIN_VIDEO_ROOT}/empty.txt"
+    export VIPIN_VIDEO_MOCK_CURL_PAYLOAD="${VIPIN_VIDEO_ROOT}/empty.txt"
+
+    run "$SCRIPT" refresh
+    [ "$status" -ne 0 ]
+    grep -q "OLD.CONTENT" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+}
