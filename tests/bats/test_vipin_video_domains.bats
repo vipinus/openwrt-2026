@@ -27,3 +27,27 @@ teardown() {
     [ "$status" -eq 2 ]
     [[ "$output" == *"Usage:"* ]]
 }
+
+@test "parse-list: strips comments, blanks, whitespace, lowercases" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/in.txt"
+    run "$SCRIPT" parse-list "${VIPIN_VIDEO_ROOT}/in.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"netflix.ca"* ]]
+    [[ "$output" == *"bilivideo.com"* ]]
+    [[ "$output" == *"apdcdn.tc.qq.com"* ]]
+    [[ "$output" != *"#"* ]]
+    [[ "$output" != *"comment line"* ]]
+}
+
+@test "parse-list: returns empty for missing file" {
+    run "$SCRIPT" parse-list "${VIPIN_VIDEO_ROOT}/nope.txt"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "parse-list: handles uppercase input by lowercasing" {
+    echo "FOO.BAR.com" > "${VIPIN_VIDEO_ROOT}/up.txt"
+    run "$SCRIPT" parse-list "${VIPIN_VIDEO_ROOT}/up.txt"
+    [ "$status" -eq 0 ]
+    [[ "$output" == "foo.bar.com" ]]
+}

@@ -46,6 +46,15 @@ EOF
     exit 2
 }
 
+parse_list() {
+    local file="$1"
+    [ -f "$file" ] || return 0
+    sed -e 's/#.*$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$file" \
+        | awk 'NF' \
+        | tr '[:upper:]' '[:lower:]'
+}
+
 case "${1:-}" in
+    parse-list) shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;
     *) usage ;;
 esac
