@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC3043  # 'local' is supported by busybox ash on OpenWrt
 # vipin-video-domains — manage the video_direct domain list
 #
 # Subcommands:
@@ -215,9 +216,11 @@ cmd_refresh() {
     if [ "$MOCK" != "1" ]; then
         uci set vipin.vpn.video_last_refresh="$(date +%s)"
         uci commit vipin
-        nft flush set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null \
-            && log "Flushed nft set $NFT_SET" \
-            || log "nft flush skipped"
+        if nft flush set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null; then
+            log "Flushed nft set $NFT_SET"
+        else
+            log "nft flush skipped"
+        fi
     fi
 
     cmd_enable
