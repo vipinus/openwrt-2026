@@ -235,14 +235,6 @@ if pass_file then pass_file:close() end
                     <span class="cbi-value-description"><%= t.video_direct_desc %></span>
                 </div>
             </div>
-            <div class="cbi-value" id="video-reverse-warning-row" style="display:none;">
-                <label class="cbi-value-title">&nbsp;</label>
-                <div class="cbi-value-field">
-                    <div style="padding:10px; background:#fff3cd; border-left:4px solid #ffc107;">
-                        <%= t.video_reverse_warning %>
-                    </div>
-                </div>
-            </div>
             <div class="cbi-value">
                 <label class="cbi-value-title"><%= t.video_direct_enable %></label>
                 <div class="cbi-value-field">
@@ -825,11 +817,6 @@ function videoRenderStatus(s) {
     document.getElementById("video-last-refresh").textContent = s.last_refresh
         ? new Date(s.last_refresh * 1000).toLocaleString()
         : vpnData.t.video_status_never;
-
-    var reverse = (s.split_mode === "reverse");
-    document.getElementById("video-reverse-warning-row").style.display = reverse ? "" : "none";
-    document.getElementById("video-toggle").disabled = reverse;
-    document.getElementById("video-refresh-btn").disabled = reverse;
 
     var ul = document.getElementById("video-local-list");
     ul.innerHTML = "";

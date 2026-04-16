@@ -115,15 +115,14 @@ uci_get() {
     fi
 }
 
-mode_compatible() {
-    [ "$(uci_get vipin.vpn.split_mode)" = "forward" ]
-}
-
 cmd_enable() {
     local enabled
     enabled=$(uci_get vipin.vpn.video_direct)
     [ "$enabled" = "1" ] || { log "video_direct disabled in UCI"; cmd_disable; return 0; }
-    mode_compatible || { log "reverse mode — video_direct not enabled"; cmd_disable; return 0; }
+    # video_direct now works in both forward and reverse modes. The nft
+    # ruleset in vipin-vpn-routing places the @vipin_video mark rule before
+    # the @vipin_domestic return, so video CDN IPs always go direct via WAN
+    # regardless of split_mode.
     mkdir -p "$DNSMASQ_DIR"
     render_dnsmasq > "${DNSMASQ_CONF}.new"
     mv "${DNSMASQ_CONF}.new" "$DNSMASQ_CONF"
@@ -158,7 +157,7 @@ cmd_status() {
     fi
     cat <<EOF
 video_direct: $( [ "$enabled" = "1" ] && echo enabled || echo disabled )
-split_mode:   $mode ($( mode_compatible && echo compatible || echo incompatible ))
+split_mode:   $mode
 domains:      remote $rcount / local $lcount
 last_refresh: $last
 EOF
@@ -186,10 +185,14 @@ fetch_remote() {
     fi
     # OpenWrt busybox ships wget but not curl; prefer wget, fall back to curl.
     # busybox wget only supports -q -T (timeout); no --tries.
+    # --no-check-certificate: some target CDNs (Fastly on raw.githubusercontent.com)
+    # have cert chains that busybox's built-in TLS fails to validate even when a
+    # real browser accepts them. The list is a public domain-names file, so
+    # skipping cert validation here is an acceptable trade for reliability.
     if command -v wget >/dev/null 2>&1; then
-        wget -q -T 10 -O "$out" "$url"
+        wget -q -T 10 --no-check-certificate -O "$out" "$url"
     elif command -v curl >/dev/null 2>&1; then
-        curl -sSL --max-time 10 --retry 1 "$url" -o "$out"
+        curl -sSL -k --max-time 10 --retry 1 "$url" -o "$out"
     else
         return 1
     fi

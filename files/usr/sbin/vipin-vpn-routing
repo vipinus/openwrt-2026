@@ -141,11 +141,20 @@ enable_split() {
        nft list set inet fw4 vipin_video >/dev/null 2>&1; then
         local current_has_mark=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "mark set")
         local current_has_return=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "@vipin_domestic return")
+        local current_has_video=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "@vipin_video meta mark")
+        local want_video=0
+        [ "$(uci get vipin.vpn.video_direct 2>/dev/null || echo 1)" = "1" ] && want_video=1
         local already_correct=0
         if [ "$mode" = "reverse" ] && [ "$current_has_return" -gt 0 ] && [ "$current_has_mark" -gt 0 ]; then
             already_correct=1
         elif [ "$mode" = "forward" ] && [ "$current_has_return" -eq 0 ] && [ "$current_has_mark" -gt 0 ]; then
             already_correct=1
+        fi
+        # Video-rule presence must match UCI intent; otherwise force rewrite.
+        if [ "$want_video" = "1" ] && [ "$current_has_video" = "0" ]; then
+            already_correct=0
+        elif [ "$want_video" = "0" ] && [ "$current_has_video" != "0" ]; then
+            already_correct=0
         fi
         if [ "$already_correct" = "1" ]; then
             if ! populate_domestic_set "$domestic_file"; then
@@ -167,9 +176,15 @@ enable_split() {
     mkdir -p /etc/nftables.d
 
     if [ "$mode" = "reverse" ]; then
-        # Reverse: IPs in set → return (go through VPN), everything else → mark direct
-        # vipin_video set is declared but NOT referenced — video_direct is hard-disabled in reverse mode.
-        cat > "$NFT_RULES" << 'EOF'
+        # Reverse: IPs in set → return (go through VPN), everything else → mark direct.
+        # video_direct (if enabled): video CDN IPs get marked direct BEFORE the
+        # domestic-return rule, so video traffic always bypasses the VPN tunnel
+        # regardless of whether the CDN IP happens to fall in the VPN-country range.
+        local video_rule=""
+        if [ "$(uci get vipin.vpn.video_direct 2>/dev/null || echo 1)" = "1" ]; then
+            video_rule="    ip daddr @vipin_video meta mark set 0x200"
+        fi
+        cat > "$NFT_RULES" << EOF
 set vipin_domestic {
     type ipv4_addr
     flags interval
@@ -186,6 +201,7 @@ chain vipin_prerouting {
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
+${video_rule}
     ip daddr @vipin_domestic return
     meta mark set 0x200
 }
@@ -197,6 +213,7 @@ chain vipin_output {
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
+${video_rule}
     ip daddr @vipin_domestic return
     meta mark set 0x200
 }

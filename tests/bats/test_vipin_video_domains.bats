@@ -251,10 +251,13 @@ teardown() {
     [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
 }
 
-@test "enable is a no-op when split_mode=reverse" {
+@test "enable works in reverse mode (video_direct now mode-agnostic)" {
     export VIPIN_SPLIT_MODE=reverse
     cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
     run "$SCRIPT" enable
     [ "$status" -eq 0 ]
-    [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
+    # dnsmasq include should still be written — video_direct no longer
+    # force-disables in reverse mode.
+    [ -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
+    grep -q "nftset=/netflix.ca/4#inet#fw4#vipin_video" "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf"
 }
