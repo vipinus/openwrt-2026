@@ -11,7 +11,21 @@ echo -e "${SITE_DOMAIN}\n${SITE_DOMAIN}" | passwd root
 # Set LAN IP
 uci set network.lan.ipaddr='192.168.11.1'
 uci set network.lan.netmask='255.255.255.0'
+# Never accept DNS from WAN DHCP (LAN must not resolve via ISP DNS)
+uci set network.wan.peerdns='0'
+uci -q delete network.wan.dns
+uci set network.wan6.peerdns='0'
+uci -q delete network.wan6.dns
 uci commit network
+
+# DNS policy: dnsmasq never reads resolv.conf.auto (no WAN DNS fallback).
+# Default upstream = dnscrypt-proxy on 127.0.0.1#5353.
+# vipin-vpnc-script swaps upstream to VPN-pushed DNS on connect.
+uci set dhcp.@dnsmasq[0].noresolv='1'
+uci set dhcp.@dnsmasq[0].resolvfile='/dev/null'
+uci -q delete dhcp.@dnsmasq[0].server
+uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+uci commit dhcp
 
 # Force generate wireless config if not exists
 [ ! -f /etc/config/wireless ] && wifi detect > /etc/config/wireless

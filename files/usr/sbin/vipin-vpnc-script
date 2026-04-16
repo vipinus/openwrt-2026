@@ -21,26 +21,17 @@ case "$reason" in
         ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
 
-        # DNS - add VPN DNS servers
+        # DNS policy: swap dnsmasq upstream to VPN-pushed DNS.
+        # noresolv stays 1 — never fall back to WAN DNS.
+        # /etc/resolv.conf untouched — system lookups keep hitting local dnsmasq.
         if [ -n "$INTERNAL_IP4_DNS" ]; then
-            cp /etc/resolv.conf /etc/resolv.conf.vipin-backup 2>/dev/null
-            : > /tmp/resolv.conf.vpn
-            for dns in $INTERNAL_IP4_DNS; do
-                echo "nameserver $dns" >> /tmp/resolv.conf.vpn
-            done
-            # Keep original DNS as fallback
-            cat /etc/resolv.conf >> /tmp/resolv.conf.vpn
-            cp /tmp/resolv.conf.vpn /etc/resolv.conf
-
-            # Update dnsmasq to use VPN DNS for LAN clients
-            # First clear any existing server settings
-            uci delete dhcp.@dnsmasq[0].server 2>/dev/null
+            uci -q delete dhcp.@dnsmasq[0].server
             for vpn_dns in $INTERNAL_IP4_DNS; do
                 uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
             done
-            uci set dhcp.@dnsmasq[0].noresolv='0'
+            uci set dhcp.@dnsmasq[0].noresolv='1'
             uci commit dhcp
-            /etc/init.d/dnsmasq reload 2>/dev/null
+            /etc/init.d/dnsmasq restart 2>/dev/null
             logger -t vpnc-script "Using VPN DNS for LAN: $INTERNAL_IP4_DNS"
         fi
 
@@ -75,18 +66,13 @@ case "$reason" in
         # Disable split tunnel routing
         /usr/sbin/vipin-vpn-routing disable 2>/dev/null
 
-        # Restore DNS
-        if [ -f /etc/resolv.conf.vipin-backup ]; then
-            cp /etc/resolv.conf.vipin-backup /etc/resolv.conf
-            rm -f /etc/resolv.conf.vipin-backup
-        fi
-
-        # Restore dnsmasq to use default upstream DNS (ISP)
-        uci set dhcp.@dnsmasq[0].noresolv='0'
-        uci delete dhcp.@dnsmasq[0].server 2>/dev/null
+        # DNS policy: fall back to dnscrypt-proxy, never to WAN DNS.
+        uci -q delete dhcp.@dnsmasq[0].server
+        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        uci set dhcp.@dnsmasq[0].noresolv='1'
         uci commit dhcp
-        /etc/init.d/dnsmasq reload 2>/dev/null
-        logger -t vpnc-script "Restored dnsmasq to use default DNS"
+        /etc/init.d/dnsmasq restart 2>/dev/null
+        logger -t vpnc-script "Restored dnsmasq to dnscrypt-proxy (127.0.0.1#5353)"
 
         # Bring down interface
         ip link set dev "$TUNDEV" down
