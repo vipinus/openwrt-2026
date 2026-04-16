@@ -114,3 +114,21 @@ teardown() {
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 }
+
+@test "render-dnsmasq: produces nftset directives" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" render-dnsmasq
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"nftset=/netflix.ca/4#inet#fw4#vipin_video"* ]]
+    [[ "$output" == *"nftset=/bilivideo.com/4#inet#fw4#vipin_video"* ]]
+    [[ "$output" == *"# Auto-generated"* ]]
+}
+
+@test "render-dnsmasq: skips blank/invalid domains from merge output" {
+    printf "\nnetflix.ca\n\n" > "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" render-dnsmasq
+    [ "$status" -eq 0 ]
+    local n
+    n=$(echo "$output" | grep -c "^nftset=")
+    [ "$n" = "1" ]
+}
