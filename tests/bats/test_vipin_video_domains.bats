@@ -156,3 +156,40 @@ teardown() {
     [ "$status" -eq 0 ]
     [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
 }
+
+@test "add: appends valid domain to local file" {
+    run "$SCRIPT" add "foo.example.com"
+    [ "$status" -eq 0 ]
+    grep -qx "foo.example.com" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local"
+}
+
+@test "add: rejects invalid domain" {
+    run "$SCRIPT" add "not_a_domain"
+    [ "$status" -ne 0 ]
+}
+
+@test "add: idempotent — duplicate not appended" {
+    "$SCRIPT" add "foo.example.com"
+    "$SCRIPT" add "foo.example.com"
+    local n
+    n=$(grep -cx "foo.example.com" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local")
+    [ "$n" = "1" ]
+}
+
+@test "remove: deletes existing domain" {
+    "$SCRIPT" add "foo.example.com"
+    run "$SCRIPT" remove "foo.example.com"
+    [ "$status" -eq 0 ]
+    ! grep -qx "foo.example.com" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local"
+}
+
+@test "remove: idempotent when domain absent" {
+    touch "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local"
+    run "$SCRIPT" remove "not.present.example"
+    [ "$status" -eq 0 ]
+}
+
+@test "add: releases lock on success" {
+    "$SCRIPT" add "foo.example.com"
+    [ ! -f "${VIPIN_VIDEO_ROOT}/var/lock/vipin-video.lock" ]
+}
