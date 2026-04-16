@@ -164,10 +164,17 @@ enable_split() {
 
     if [ "$mode" = "reverse" ]; then
         # Reverse: IPs in set → return (go through VPN), everything else → mark direct
+        # vipin_video set is declared but NOT referenced — video_direct is hard-disabled in reverse mode.
         cat > "$NFT_RULES" << 'EOF'
 set vipin_domestic {
     type ipv4_addr
     flags interval
+}
+
+set vipin_video {
+    type ipv4_addr
+    flags interval
+    size 65536
 }
 
 chain vipin_prerouting {
@@ -197,10 +204,22 @@ chain vipin_postrouting {
 EOF
     else
         # Forward (default): IPs in set → mark direct, everything else → VPN
-        cat > "$NFT_RULES" << 'EOF'
+        # vipin_video set is populated by dnsmasq-full at DNS resolve time and
+        # matches the same 0x200 mark → WAN direct path as vipin_domestic.
+        local video_rule=""
+        if [ "$(uci get vipin.vpn.video_direct 2>/dev/null || echo 1)" = "1" ]; then
+            video_rule="    ip daddr @vipin_video meta mark set 0x200"
+        fi
+        cat > "$NFT_RULES" << EOF
 set vipin_domestic {
     type ipv4_addr
     flags interval
+}
+
+set vipin_video {
+    type ipv4_addr
+    flags interval
+    size 65536
 }
 
 chain vipin_prerouting {
@@ -209,6 +228,7 @@ chain vipin_prerouting {
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
     ip daddr @vipin_domestic meta mark set 0x200
+${video_rule}
 }
 
 chain vipin_output {
@@ -219,6 +239,7 @@ chain vipin_output {
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
     ip daddr @vipin_domestic meta mark set 0x200
+${video_rule}
 }
 
 chain vipin_postrouting {
