@@ -224,6 +224,61 @@ if pass_file then pass_file:close() end
             </div>
         </div>
     </fieldset>
+
+    <!-- Video Direct -->
+    <fieldset class="cbi-section" id="cbi-vpn-video">
+        <legend><%= t.video_direct_title %></legend>
+        <div class="cbi-section-node">
+            <div class="cbi-value">
+                <label class="cbi-value-title">&nbsp;</label>
+                <div class="cbi-value-field">
+                    <span class="cbi-value-description"><%= t.video_direct_desc %></span>
+                </div>
+            </div>
+            <div class="cbi-value" id="video-reverse-warning-row" style="display:none;">
+                <label class="cbi-value-title">&nbsp;</label>
+                <div class="cbi-value-field">
+                    <div style="padding:10px; background:#fff3cd; border-left:4px solid #ffc107;">
+                        <%= t.video_reverse_warning %>
+                    </div>
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.video_direct_enable %></label>
+                <div class="cbi-value-field">
+                    <label><input type="checkbox" id="video-toggle" onchange="videoToggle(this.checked)" /></label>
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.video_status_remote %> / <%= t.video_status_local %> / <%= t.video_status_set %></label>
+                <div class="cbi-value-field">
+                    <span id="video-remote-count">-</span> /
+                    <span id="video-local-count">-</span> /
+                    <span id="video-set-count">-</span> IPs
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.video_status_last_refresh %></label>
+                <div class="cbi-value-field">
+                    <span id="video-last-refresh"><%= t.video_status_never %></span>
+                    <input type="button" class="cbi-button cbi-button-action" id="video-refresh-btn" onclick="videoRefresh()" value="<%= t.video_refresh_button %>" style="margin-left:8px;" />
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.video_local_add %></label>
+                <div class="cbi-value-field">
+                    <input type="text" id="video-add-input" placeholder="<%= t.video_local_placeholder %>" style="width:240px;" />
+                    <input type="button" class="cbi-button cbi-button-save" onclick="videoAdd()" value="<%= t.video_local_add %>" />
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.video_status_local %></label>
+                <div class="cbi-value-field">
+                    <ul id="video-local-list" style="list-style:none; padding:0; margin:0;"></ul>
+                </div>
+            </div>
+        </div>
+    </fieldset>
 </div>
 
 <script>
@@ -733,7 +788,106 @@ window.addEventListener('DOMContentLoaded', function() {
     // Only auto-detect if not already detected by loadStatus
     setTimeout(function() { if (!vpnData.detected) auto_detect(); }, 2000);
     setInterval(function() { if (!uiBusy) loadStatus(); }, 5000);
+    videoLoadStatus();
+    setInterval(videoLoadStatus, 10000);
 });
+
+// =========================================================================
+// Video Direct panel
+// =========================================================================
+
+var videoRPC = {
+    status:  '<%=luci.dispatcher.build_url("admin/services/vpn/api_video_status")%>',
+    refresh: '<%=luci.dispatcher.build_url("admin/services/vpn/api_video_refresh")%>',
+    toggle:  '<%=luci.dispatcher.build_url("admin/services/vpn/api_video_toggle")%>',
+    add:     '<%=luci.dispatcher.build_url("admin/services/vpn/api_video_add")%>',
+    remove:  '<%=luci.dispatcher.build_url("admin/services/vpn/api_video_remove")%>'
+};
+
+function videoPostForm(url, data) {
+    var body = Object.keys(data).map(function(k) {
+        return encodeURIComponent(k) + "=" + encodeURIComponent(data[k]);
+    }).join("&");
+    return fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body
+    }).then(function(r) { return r.json(); });
+}
+
+function videoRenderStatus(s) {
+    document.getElementById("video-toggle").checked = !!s.enabled;
+    document.getElementById("video-remote-count").textContent = s.remote_count;
+    document.getElementById("video-local-count").textContent = s.local_count;
+    document.getElementById("video-set-count").textContent = s.set_count;
+    document.getElementById("video-last-refresh").textContent = s.last_refresh
+        ? new Date(s.last_refresh * 1000).toLocaleString()
+        : vpnData.t.video_status_never;
+
+    var reverse = (s.split_mode === "reverse");
+    document.getElementById("video-reverse-warning-row").style.display = reverse ? "" : "none";
+    document.getElementById("video-toggle").disabled = reverse;
+    document.getElementById("video-refresh-btn").disabled = reverse;
+
+    var ul = document.getElementById("video-local-list");
+    ul.innerHTML = "";
+    (s.local_list || []).forEach(function(d) {
+        var li = document.createElement("li");
+        li.style.padding = "4px 0";
+        var label = document.createElement("span");
+        label.textContent = d;
+        label.style.fontFamily = "monospace";
+        label.style.marginRight = "8px";
+        var btn = document.createElement("input");
+        btn.type = "button";
+        btn.className = "cbi-button cbi-button-remove";
+        btn.value = vpnData.t.video_local_remove;
+        btn.onclick = function() {
+            videoPostForm(videoRPC.remove, { domain: d }).then(function(r) {
+                if (r.success) videoLoadStatus();
+                else alert(r.message || "remove failed");
+            });
+        };
+        li.appendChild(label);
+        li.appendChild(btn);
+        ul.appendChild(li);
+    });
+}
+
+function videoLoadStatus() {
+    fetch(videoRPC.status, { credentials: "same-origin" })
+        .then(function(r) { return r.json(); })
+        .then(videoRenderStatus)
+        .catch(function() { /* transient errors ignored */ });
+}
+
+function videoToggle(enabled) {
+    videoPostForm(videoRPC.toggle, { enabled: enabled ? "1" : "0" }).then(videoLoadStatus);
+}
+
+function videoRefresh() {
+    var btn = document.getElementById("video-refresh-btn");
+    btn.disabled = true;
+    var orig = btn.value;
+    btn.value = vpnData.t.loading;
+    videoPostForm(videoRPC.refresh, {}).then(function(r) {
+        btn.disabled = false;
+        btn.value = orig;
+        alert(r.success ? vpnData.t.video_refresh_success : (r.message || vpnData.t.video_refresh_fail));
+        videoLoadStatus();
+    });
+}
+
+function videoAdd() {
+    var input = document.getElementById("video-add-input");
+    var d = input.value.trim().toLowerCase();
+    if (!d) return;
+    videoPostForm(videoRPC.add, { domain: d }).then(function(r) {
+        if (r.success) { input.value = ""; videoLoadStatus(); }
+        else alert(r.message || "add failed");
+    });
+}
 </script>
 
 <%+footer%>
