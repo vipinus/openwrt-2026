@@ -80,5 +80,20 @@ return {
     split_forward = "正向分流",
     split_forward_desc = "本地國家直連，其餘走VPN",
     split_reverse = "反向分流",
-    split_reverse_desc = "只有VPN伺服器國家走VPN，其餘直連"
+    split_reverse_desc = "只有VPN伺服器國家走VPN，其餘直連",
+    video_direct_title = "視頻直連",
+    video_direct_desc = "將視頻 CDN 流量直接從 WAN 出，不經過 VPN 隧道。",
+    video_direct_enable = "啟用視頻直連",
+    video_status_remote = "遠端列表",
+    video_status_local = "本機列表",
+    video_status_set = "集合 IP 數",
+    video_status_last_refresh = "最後重新整理",
+    video_status_never = "從未",
+    video_refresh_button = "立即重新整理",
+    video_refresh_success = "網域列表已更新",
+    video_refresh_fail = "更新失敗（請查看日誌）",
+    video_local_add = "新增",
+    video_local_placeholder = "輸入網域（例：video.example.com）",
+    video_local_remove = "移除",
+    video_reverse_warning = "反向分流模式下視頻直連不可用。"
 }

@@ -80,5 +80,20 @@ return {
     split_forward = "正方向スプリット",
     split_forward_desc = "国内IPは直接、その他はVPN経由",
     split_reverse = "逆方向スプリット",
-    split_reverse_desc = "VPNサーバー国のIPのみVPN経由、その他は直接。最良の結果を得るには、デバイスのDNSをその国のDNSに設定してください。"
+    split_reverse_desc = "VPNサーバー国のIPのみVPN経由、その他は直接。最良の結果を得るには、デバイスのDNSをその国のDNSに設定してください。",
+    video_direct_title = "ビデオ直通",
+    video_direct_desc = "動画CDNトラフィックをVPNトンネルではなくWAN経由で直接送信します。",
+    video_direct_enable = "ビデオ直通を有効化",
+    video_status_remote = "リモート",
+    video_status_local = "ローカル",
+    video_status_set = "セット内IP数",
+    video_status_last_refresh = "最終更新",
+    video_status_never = "未実行",
+    video_refresh_button = "今すぐ更新",
+    video_refresh_success = "ドメインリストを更新しました",
+    video_refresh_fail = "更新に失敗しました",
+    video_local_add = "追加",
+    video_local_placeholder = "ドメインを入力 (例: video.example.com)",
+    video_local_remove = "削除",
+    video_reverse_warning = "リバース分割モードではビデオ直通は無効です。"
 }

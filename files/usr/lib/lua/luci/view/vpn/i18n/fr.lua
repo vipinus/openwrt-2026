@@ -80,5 +80,20 @@ return {
     split_forward = "Split direct",
     split_forward_desc = "Pays local en direct, reste via VPN",
     split_reverse = "Split inversé",
-    split_reverse_desc = "Seul le pays du serveur VPN via VPN, reste en direct"
+    split_reverse_desc = "Seul le pays du serveur VPN via VPN, reste en direct",
+    video_direct_title = "Video Direct",
+    video_direct_desc = "Route video CDN traffic directly via WAN instead of through the VPN tunnel.",
+    video_direct_enable = "Enable video direct routing",
+    video_status_remote = "Remote",
+    video_status_local = "Local",
+    video_status_set = "IPs in set",
+    video_status_last_refresh = "Last refresh",
+    video_status_never = "Never",
+    video_refresh_button = "Refresh now",
+    video_refresh_success = "Domain list refreshed",
+    video_refresh_fail = "Refresh failed (check logs)",
+    video_local_add = "Add",
+    video_local_placeholder = "Enter a domain (e.g. video.example.com)",
+    video_local_remove = "Remove",
+    video_reverse_warning = "Video direct is disabled in Reverse Split mode."
 }
