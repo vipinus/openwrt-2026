@@ -132,3 +132,27 @@ teardown() {
     n=$(echo "$output" | grep -c "^nftset=")
     [ "$n" = "1" ]
 }
+
+@test "enable: writes dnsmasq include with merged domains" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" enable
+    [ "$status" -eq 0 ]
+    local conf="${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf"
+    [ -f "$conf" ]
+    grep -q "nftset=/netflix.ca/4#inet#fw4#vipin_video" "$conf"
+}
+
+@test "enable: writes atomically via .new then rename" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" enable
+    [ "$status" -eq 0 ]
+    [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf.new" ]
+}
+
+@test "disable: removes dnsmasq include" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    "$SCRIPT" enable
+    run "$SCRIPT" disable
+    [ "$status" -eq 0 ]
+    [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
+}
