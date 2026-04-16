@@ -54,7 +54,19 @@ parse_list() {
         | tr '[:upper:]' '[:lower:]'
 }
 
+validate_domain() {
+    local d="$1"
+    case "$d" in
+        ""|.*|*.|*..*|-*|*-|*[!a-z0-9.-]*) return 1 ;;
+    esac
+    case "$d" in
+        *.*) return 0 ;;
+        *)   return 1 ;;
+    esac
+}
+
 case "${1:-}" in
-    parse-list) shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;
+    parse-list)       shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;
+    validate-domain)  shift; [ $# -ge 1 ] || usage; validate_domain "$1" ;;
     *) usage ;;
 esac

@@ -51,3 +51,34 @@ teardown() {
     [ "$status" -eq 0 ]
     [[ "$output" == "foo.bar.com" ]]
 }
+
+@test "validate-domain: accepts valid domains" {
+    run "$SCRIPT" validate-domain "foo.example.com"
+    [ "$status" -eq 0 ]
+    run "$SCRIPT" validate-domain "a.b"
+    [ "$status" -eq 0 ]
+    run "$SCRIPT" validate-domain "x-y.example.net"
+    [ "$status" -eq 0 ]
+}
+
+@test "validate-domain: rejects double-dot, leading-dot, trailing-dot" {
+    run "$SCRIPT" validate-domain "foo..bar"
+    [ "$status" -ne 0 ]
+    run "$SCRIPT" validate-domain ".foo.bar"
+    [ "$status" -ne 0 ]
+    run "$SCRIPT" validate-domain "foo.bar."
+    [ "$status" -ne 0 ]
+}
+
+@test "validate-domain: rejects leading/trailing dash, bare hostname, empty, illegal chars" {
+    run "$SCRIPT" validate-domain "-foo.bar"
+    [ "$status" -ne 0 ]
+    run "$SCRIPT" validate-domain "foo.bar-"
+    [ "$status" -ne 0 ]
+    run "$SCRIPT" validate-domain "nodot"
+    [ "$status" -ne 0 ]
+    run "$SCRIPT" validate-domain ""
+    [ "$status" -ne 0 ]
+    run "$SCRIPT" validate-domain "foo!bar.com"
+    [ "$status" -ne 0 ]
+}
