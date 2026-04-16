@@ -1,0 +1,3 @@
+# local additions
+my.custom-cdn.example.com
+hdslb.com

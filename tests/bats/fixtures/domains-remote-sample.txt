@@ -1,0 +1,8 @@
+# openwrt-2026 video_direct — sample remote
+netflix.ca
+nflxvideo.net
+bilivideo.com
+# comment line
+hdslb.com
+
+apdcdn.tc.qq.com

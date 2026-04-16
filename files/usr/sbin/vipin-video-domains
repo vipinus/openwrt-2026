@@ -1,0 +1,51 @@
+#!/bin/sh
+# vipin-video-domains — manage the video_direct domain list
+#
+# Subcommands:
+#   enable              Merge sources, write dnsmasq include, reload dnsmasq
+#   disable             Remove dnsmasq include, reload dnsmasq, flush nft set
+#   refresh             Fetch remote list from GitHub, re-run enable
+#   status              Print status summary
+#   add <domain>        Add to local list
+#   remove <domain>     Remove from local list
+#   list                Print merged final list with source tags
+#   show-set            Dump current nft set contents
+#   parse-list <file>   (test hook) parse a list file to stdout
+#   merge               (test hook) print merged domain list
+#   validate-domain <d> (test hook) exit 0 if valid
+#   render-dnsmasq      (test hook) print dnsmasq include content
+#
+# Env:
+#   VIPIN_VIDEO_ROOT    Override /etc /var paths (for bats)
+#   VIPIN_VIDEO_MOCK    =1 to skip dnsmasq restart / nft / uci calls
+
+set -eu
+
+ROOT="${VIPIN_VIDEO_ROOT:-}"
+MOCK="${VIPIN_VIDEO_MOCK:-0}"
+
+CONF_DIR="${ROOT}/etc/vipin"
+REMOTE="${CONF_DIR}/video-domains.remote"
+LOCAL="${CONF_DIR}/video-domains.local"
+DNSMASQ_DIR="${ROOT}/etc/dnsmasq.d"
+DNSMASQ_CONF="${DNSMASQ_DIR}/vipin-video.conf"
+LOCK_FILE="${ROOT}/var/lock/vipin-video.lock"
+LOG_FILE="${ROOT}/var/log/vipin-video.log"
+
+NFT_SET="vipin_video"
+NFT_FAMILY="inet"
+NFT_TABLE="fw4"
+
+DEFAULT_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/domains.txt"
+
+usage() {
+    cat <<EOF
+Usage: vipin-video-domains {enable|disable|refresh|status|add|remove|list|show-set}
+       vipin-video-domains {parse-list|merge|validate-domain|render-dnsmasq}  (test hooks)
+EOF
+    exit 2
+}
+
+case "${1:-}" in
+    *) usage ;;
+esac
