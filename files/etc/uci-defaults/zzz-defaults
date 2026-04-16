@@ -18,11 +18,21 @@ uci set network.wan6.peerdns='0'
 uci -q delete network.wan6.dns
 uci commit network
 
+# Disable LAN-side IPv6 entirely — prevents IPv6 bypassing VPN split-tunnel.
+# Geo-locked services (e.g. Tencent Video) would otherwise see real WAN IPv6.
+uci set dhcp.lan.ra='disabled'
+uci set dhcp.lan.dhcpv6='disabled'
+uci -q delete dhcp.lan.ra_slaac
+uci -q delete dhcp.lan.ra_flags
+
 # DNS policy: dnsmasq never reads resolv.conf.auto (no WAN DNS fallback).
 # Default upstream = dnscrypt-proxy on 127.0.0.1#5353.
 # vipin-vpnc-script swaps upstream to VPN-pushed DNS on connect.
 uci set dhcp.@dnsmasq[0].noresolv='1'
 uci set dhcp.@dnsmasq[0].resolvfile='/dev/null'
+# Belt-and-braces: even with LAN IPv6 disabled, don't serve AAAA to clients
+# (a device that enables IPv6 manually still shouldn't get geo-leak AAAA).
+uci set dhcp.@dnsmasq[0].filter_aaaa='1'
 uci -q delete dhcp.@dnsmasq[0].server
 uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
 uci commit dhcp
