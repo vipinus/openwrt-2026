@@ -35,13 +35,23 @@ config dhcp 'wan'
 EOF
 }
 
-# Configure dnsmasq to use dnscrypt-proxy exclusively
+# Configure dnsmasq to use dnscrypt-proxy exclusively (ignore WAN DHCP DNS)
 uci -q set dhcp.@dnsmasq[0].noresolv='1'
-uci -q del_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+uci -q set dhcp.@dnsmasq[0].resolvfile=''
+uci -q delete dhcp.@dnsmasq[0].server
 uci -q add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
 uci -q commit dhcp
 
+# Prevent WAN DHCP/DHCPv6 from injecting ISP DNS into the system resolver
+for wan_if in wan wan6; do
+    uci -q get network.${wan_if} >/dev/null 2>&1 || continue
+    uci -q set network.${wan_if}.peerdns='0'
+    uci -q delete network.${wan_if}.dns
+done
+uci -q commit network
+
 /etc/init.d/dnsmasq restart 2>/dev/null
+/etc/init.d/network reload 2>/dev/null
 
 # Enable dnscrypt-proxy on boot
 /etc/init.d/dnscrypt-proxy enable 2>/dev/null
