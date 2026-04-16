@@ -242,3 +242,19 @@ teardown() {
     [[ "$output" == *"remote netflix.ca"* ]]
     [[ "$output" == *"local my.custom-cdn.example.com"* ]]
 }
+
+@test "enable is a no-op when video_direct=0" {
+    export VIPIN_VIDEO_DIRECT=0
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" enable
+    [ "$status" -eq 0 ]
+    [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
+}
+
+@test "enable is a no-op when split_mode=reverse" {
+    export VIPIN_SPLIT_MODE=reverse
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" enable
+    [ "$status" -eq 0 ]
+    [ ! -f "${VIPIN_VIDEO_ROOT}/etc/dnsmasq.d/vipin-video.conf" ]
+}
