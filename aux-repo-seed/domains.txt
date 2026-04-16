@@ -1,0 +1,61 @@
+# openwrt-2026 video_direct — curated domain list
+# Updated: 2026-04-16
+# Format: one domain per line; # for comments; dnsmasq matches subdomains
+
+# --- netflix (14) ---
+netflix.ca
+netflix.com.edgesuite.net
+netflix.net
+netflixdnstest10.com
+netflixdnstest6.com
+netflixdnstest7.com
+netflixdnstest8.com
+netflixdnstest9.com
+nflxext.com
+nflximg.com
+nflximg.net
+nflxsearch.net
+nflxso.net
+nflxvideo.net
+
+# --- bilibili (14) ---
+bilicdn1.com
+bilicdn2.com
+bilicdn3.com
+bilicdn4.com
+bilicdn5.com
+biliimg.com
+bilivideo.cn
+bilivideo.com
+bilivideo.net
+hdslb.com
+hdslb.org
+maoercdn.com
+mincdn.com
+upos-hz-mirrorakam.akamaized.net
+
+# --- iqiyi (11) ---
+71.am
+71edge.com
+iq.com
+iqiyipic.com
+msg.video.qiyi.com
+msg2.video.qiyi.com
+pps.tv
+ppsimg.com
+qiyi.com
+qiyipic.com
+qy.net
+
+# --- youku (7) ---
+cibntv.net
+e.stat.ykimg.com
+kumiao.com
+mmstat.com
+p-log.ykimg.com
+soku.com
+ykimg.com
+
+# --- tencent (2) ---
+apdcdn.tc.qq.com
+ltsxmty.gtimg.com

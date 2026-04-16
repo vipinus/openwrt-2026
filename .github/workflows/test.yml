@@ -1,0 +1,42 @@
+name: Test
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Check vipin-video-domains
+        run: shellcheck files/usr/sbin/vipin-video-domains
+      - name: Check vipin-video init
+        run: shellcheck -e SC2034 files/etc/init.d/vipin-video
+
+  bats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats
+        run: sudo apt-get update && sudo apt-get install -y bats
+      - name: Run bats tests
+        run: bats tests/bats/test_vipin_video_domains.bats
+
+  lua-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lua
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+      - name: Check controller syntax
+        run: luac5.1 -p files/usr/lib/lua/luci/controller/vpn.lua
+      - name: Check i18n files syntax
+        run: |
+          for f in files/usr/lib/lua/luci/view/vpn/i18n/*.lua; do
+            luac5.1 -p "$f" || exit 1
+          done
