@@ -82,3 +82,35 @@ teardown() {
     run "$SCRIPT" validate-domain "foo!bar.com"
     [ "$status" -ne 0 ]
 }
+
+@test "merge: combines remote + local, deduped" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    cp "$FIX/domains-local-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local"
+    run "$SCRIPT" merge
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"netflix.ca"* ]]
+    [[ "$output" == *"my.custom-cdn.example.com"* ]]
+    local n
+    n=$(echo "$output" | grep -cx "hdslb.com")
+    [ "$n" = "1" ]
+}
+
+@test "merge: works with only remote present" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" merge
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"netflix.ca"* ]]
+}
+
+@test "merge: works with only local present" {
+    cp "$FIX/domains-local-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local"
+    run "$SCRIPT" merge
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"my.custom-cdn.example.com"* ]]
+}
+
+@test "merge: empty when no files" {
+    run "$SCRIPT" merge
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}

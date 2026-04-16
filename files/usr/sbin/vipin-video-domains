@@ -65,8 +65,16 @@ validate_domain() {
     esac
 }
 
+merge() {
+    {
+        parse_list "$REMOTE"
+        parse_list "$LOCAL"
+    } | awk 'NF && !seen[$0]++'
+}
+
 case "${1:-}" in
     parse-list)       shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;
     validate-domain)  shift; [ $# -ge 1 ] || usage; validate_domain "$1" ;;
+    merge)            merge ;;
     *) usage ;;
 esac
