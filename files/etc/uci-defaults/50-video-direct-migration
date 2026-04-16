@@ -1,0 +1,14 @@
+#!/bin/sh
+# video_direct v2 migration: backfill UCI options on routers upgrading from
+# pre-v2 firmware where /etc/config/vipin was preserved by sysupgrade without
+# these entries. This script runs ONCE on first boot and self-deletes.
+
+if [ -z "$(uci -q get vipin.vpn.video_direct)" ]; then
+    uci set vipin.vpn.video_direct='1'
+fi
+if ! uci -q get vipin.vpn.video_last_refresh >/dev/null; then
+    uci set vipin.vpn.video_last_refresh=''
+fi
+uci commit vipin
+
+exit 0

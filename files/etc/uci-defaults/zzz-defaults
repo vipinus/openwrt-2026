@@ -11,7 +11,50 @@ echo -e "${SITE_DOMAIN}\n${SITE_DOMAIN}" | passwd root
 # Set LAN IP
 uci set network.lan.ipaddr='192.168.11.1'
 uci set network.lan.netmask='255.255.255.0'
+# Never accept DNS from WAN DHCP (LAN must not resolve via ISP DNS)
+uci set network.wan.peerdns='0'
+uci -q delete network.wan.dns
 uci commit network
+
+# Disable IPv6 across the whole router — no kernel v6, no WAN6, no LAN6,
+# no odhcpd. Geo-locked services would otherwise see the real WAN IPv6
+# regardless of split-tunnel IPv4 rules.
+uci -q delete network.wan6
+uci -q delete network.globals.ula_prefix
+uci set network.lan.ipv6='0'
+uci set network.lan.delegate='0'
+uci commit network
+
+uci set dhcp.lan.ra='disabled'
+uci set dhcp.lan.dhcpv6='disabled'
+uci set dhcp.lan.ndp='disabled'
+uci -q delete dhcp.lan.ra_slaac
+uci -q delete dhcp.lan.ra_flags
+uci set dhcp.odhcpd.maindhcp='0'
+
+# DNS policy: dnsmasq never reads resolv.conf.auto (no WAN DNS fallback).
+# Default upstream = dnscrypt-proxy on 127.0.0.1#5353.
+# vipin-vpnc-script swaps upstream to VPN-pushed DNS on connect.
+uci set dhcp.@dnsmasq[0].noresolv='1'
+uci set dhcp.@dnsmasq[0].resolvfile='/dev/null'
+# Belt-and-braces: even with LAN IPv6 disabled, don't serve AAAA to clients
+# (a device that enables IPv6 manually still shouldn't get geo-leak AAAA).
+uci set dhcp.@dnsmasq[0].filter_aaaa='1'
+uci -q delete dhcp.@dnsmasq[0].server
+uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+uci commit dhcp
+
+# Kernel-level IPv6 disable — nothing on this box will have an IPv6 address
+cat > /etc/sysctl.d/99-disable-ipv6.conf << 'SYSCTL'
+net.ipv6.conf.all.disable_ipv6=1
+net.ipv6.conf.default.disable_ipv6=1
+net.ipv6.conf.lo.disable_ipv6=1
+SYSCTL
+sysctl -p /etc/sysctl.d/99-disable-ipv6.conf >/dev/null 2>&1
+
+# Stop/disable odhcpd — no RA, no DHCPv6, nothing
+/etc/init.d/odhcpd disable 2>/dev/null
+/etc/init.d/odhcpd stop 2>/dev/null
 
 # Force generate wireless config if not exists
 [ ! -f /etc/config/wireless ] && wifi detect > /etc/config/wireless

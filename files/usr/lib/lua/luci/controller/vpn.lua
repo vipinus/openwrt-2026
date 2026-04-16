@@ -200,6 +200,11 @@ function index()
     entry({"admin", "services", "vpn", "api_renewal"}, call("api_get_renewal_url"), nil, 28)
     entry({"admin", "services", "vpn", "api_servers"}, call("api_get_servers"), nil, 29)
     entry({"admin", "services", "vpn", "api_set_server"}, call("api_set_server"), nil, 30)
+    entry({"admin", "services", "vpn", "api_video_status"},  call("api_video_status"),  nil, 31)
+    entry({"admin", "services", "vpn", "api_video_refresh"}, call("api_video_refresh"), nil, 32)
+    entry({"admin", "services", "vpn", "api_video_toggle"},  call("api_video_toggle"),  nil, 33)
+    entry({"admin", "services", "vpn", "api_video_add"},     call("api_video_add"),     nil, 34)
+    entry({"admin", "services", "vpn", "api_video_remove"},  call("api_video_remove"),  nil, 35)
 end
 
 function api_get_vpn_status()
@@ -568,4 +573,123 @@ function api_set_server()
 
     http.prepare_content("application/json")
     http.write(json.encode(result))
+end
+
+-- =========================================================================
+-- video_direct RPC actions (Phase 4)
+-- =========================================================================
+
+function api_video_status()
+    local http = require("luci.http")
+    local json = require("cjson")
+    local util = require("luci.util")
+
+    local enabled = luci.model.uci:get("vipin", "vpn", "video_direct") or "1"
+    local mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
+    local last = luci.model.uci:get("vipin", "vpn", "video_last_refresh") or ""
+
+    -- NOTE: wrap gsub in parens to discard its 2nd return value (replacement
+    -- count) which Lua would otherwise pass to tonumber as a base argument.
+    -- Use the script's own parse-list subcommand for accurate comment/blank filtering
+    -- (busybox grep's BRE does not handle \| reliably).
+    local remote_count = tonumber(
+        (util.exec("/usr/sbin/vipin-video-domains parse-list /etc/vipin/video-domains.remote 2>/dev/null | wc -l"):gsub("%s+", ""))
+    ) or 0
+
+    local local_list = {}
+    local f = io.open("/etc/vipin/video-domains.local", "r")
+    if f then
+        for line in f:lines() do
+            local t = line:gsub("^%s+", ""):gsub("%s+$", "")
+            if t ~= "" and not t:match("^#") then
+                table.insert(local_list, t)
+                if #local_list >= 200 then break end
+            end
+        end
+        f:close()
+    end
+
+    local set_count = tonumber(
+        (util.exec("nft list set inet fw4 vipin_video 2>/dev/null | awk '/elements =/{c=split($0,a,\",\"); print c; exit} END{if(!c) print 0}'"):gsub("%s+", ""))
+    ) or 0
+
+    http.prepare_content("application/json")
+    http.write(json.encode({
+        enabled = (enabled == "1"),
+        split_mode = mode,
+        remote_count = remote_count,
+        local_count = #local_list,
+        local_list = local_list,
+        set_count = set_count,
+        last_refresh = last
+    }))
+end
+
+function api_video_refresh()
+    local http = require("luci.http")
+    local json = require("cjson")
+    local util = require("luci.util")
+
+    local rc = os.execute("/usr/sbin/vipin-video-domains refresh >/tmp/vipin-video-refresh.log 2>&1")
+    http.prepare_content("application/json")
+    if rc == 0 or rc == true then
+        http.write(json.encode({ success = true }))
+    else
+        local msg = util.exec("tail -3 /tmp/vipin-video-refresh.log 2>/dev/null")
+        http.write(json.encode({ success = false, message = msg or "refresh failed" }))
+    end
+end
+
+function api_video_toggle()
+    local http = require("luci.http")
+    local json = require("cjson")
+
+    local enabled = http.formvalue("enabled")
+    local target = (enabled == "1" or enabled == "true") and "1" or "0"
+    luci.model.uci:set("vipin", "vpn", "video_direct", target)
+    luci.model.uci:commit("vipin")
+    if target == "1" then
+        os.execute("/usr/sbin/vipin-video-domains enable >/dev/null 2>&1")
+    else
+        os.execute("/usr/sbin/vipin-video-domains disable >/dev/null 2>&1")
+    end
+    http.prepare_content("application/json")
+    http.write(json.encode({ success = true, enabled = (target == "1") }))
+end
+
+local function _video_domain_valid(d)
+    if not d or d == "" then return false end
+    if not d:match("^[a-z0-9%.%-]+$") then return false end
+    if d:match("%.%.") or d:match("^%.") or d:match("%.$") then return false end
+    if d:match("^%-") or d:match("%-$") then return false end
+    if not d:match("%.") then return false end
+    return true
+end
+
+function api_video_add()
+    local http = require("luci.http")
+    local json = require("cjson")
+    local d = http.formvalue("domain") or ""
+    d = string.lower(d):gsub("^%s+", ""):gsub("%s+$", "")
+    http.prepare_content("application/json")
+    if not _video_domain_valid(d) then
+        http.write(json.encode({ success = false, message = "invalid domain format" }))
+        return
+    end
+    local rc = os.execute("/usr/sbin/vipin-video-domains add " .. string.format("%q", d) .. " >/dev/null 2>&1")
+    http.write(json.encode({ success = (rc == 0 or rc == true) }))
+end
+
+function api_video_remove()
+    local http = require("luci.http")
+    local json = require("cjson")
+    local d = http.formvalue("domain") or ""
+    d = string.lower(d):gsub("^%s+", ""):gsub("%s+$", "")
+    http.prepare_content("application/json")
+    if not _video_domain_valid(d) then
+        http.write(json.encode({ success = false, message = "invalid domain format" }))
+        return
+    end
+    local rc = os.execute("/usr/sbin/vipin-video-domains remove " .. string.format("%q", d) .. " >/dev/null 2>&1")
+    http.write(json.encode({ success = (rc == 0 or rc == true) }))
 end

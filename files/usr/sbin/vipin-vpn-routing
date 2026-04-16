@@ -59,6 +59,42 @@ get_server_country() {
     fi
 }
 
+# Atomically replace vipin_domestic contents with CIDRs from $1.
+# Single nft -f with leading `flush` avoids stale elements surviving a
+# country switch (prior implementation assumed fw4 reload wiped the set,
+# which it doesn't reliably — seen e.g. 180.160.0.0/12 lingering under ca).
+# Returns 0 on success, 1 if post-check shows the set is not populated.
+populate_domestic_set() {
+    local src_file="$1"
+    local batch="/tmp/vipin_nft_batch.nft"
+    local err_log="/tmp/vipin_nft_batch.err"
+
+    echo "flush set inet fw4 vipin_domestic" > "$batch"
+    grep -v "^#" "$src_file" | grep -v "^$" | while read -r cidr; do
+        echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
+    done
+
+    if ! nft -f "$batch" 2>"$err_log"; then
+        local err=$(head -3 "$err_log" 2>/dev/null | tr '\n' ' ')
+        logger -t vipin-routing "nft batch failed: $err"
+        rm -f "$batch" "$err_log"
+        return 1
+    fi
+    rm -f "$batch" "$err_log"
+
+    # Post-check: first CIDR from source must hit a set element.
+    # Catches silent partial-load scenarios where nft accepted some rules
+    # but not the early ones.
+    local first_ip
+    first_ip=$(grep -v "^#" "$src_file" | grep -v "^$" | head -1 | cut -d/ -f1)
+    if [ -n "$first_ip" ] && \
+       ! nft get element inet fw4 vipin_domestic "{ $first_ip }" >/dev/null 2>&1; then
+        logger -t vipin-routing "WARNING: post-populate check failed ($first_ip not in set)"
+        return 1
+    fi
+    return 0
+}
+
 enable_split() {
     local country="${1:-$(get_current_country)}"
     local mode="${2:-$(uci get vipin.vpn.split_mode 2>/dev/null || echo "forward")}"
@@ -97,8 +133,12 @@ enable_split() {
         return 1
     fi
 
-    # Skip firewall reload if same mode is already active with correct country
-    if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
+    # Skip firewall reload if same mode is already active with correct country.
+    # Require BOTH sets present so a sysupgrade from v1 (which only had
+    # vipin_domestic) falls through to the full rewrite path and declares
+    # the new vipin_video set.
+    if nft list set inet fw4 vipin_domestic >/dev/null 2>&1 && \
+       nft list set inet fw4 vipin_video >/dev/null 2>&1; then
         local current_has_mark=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "mark set")
         local current_has_return=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "@vipin_domestic return")
         local already_correct=0
@@ -108,21 +148,16 @@ enable_split() {
             already_correct=1
         fi
         if [ "$already_correct" = "1" ]; then
-            # Rules already match, just re-populate the set atomically
-            # Build batch with flush+add in one nft -f call to avoid empty-set gap
-            local batch="/tmp/vipin_nft_batch.nft"
-            echo "flush set inet fw4 vipin_domestic" > "$batch"
-            grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
-                echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
-            done
-            nft -f "$batch" 2>/dev/null
-            rm -f "$batch"
-            ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
-            ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
-            ip rule add fwmark $MARK_DIRECT table $TABLE_ID pri 100 2>/dev/null
-            local ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
-            logger -t vipin-routing "Split tunnel refreshed: $country, mode=$mode ($ip_count IPs, direct via $wan_dev)"
-            return 0
+            if ! populate_domestic_set "$domestic_file"; then
+                logger -t vipin-routing "refresh failed, falling through to full rebuild"
+            else
+                ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null
+                ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
+                ip rule add fwmark $MARK_DIRECT table $TABLE_ID pri 100 2>/dev/null
+                local ip_count=$(grep -cv "^#\|^$" "$domestic_file" 2>/dev/null || echo 0)
+                logger -t vipin-routing "Split tunnel refreshed: $country, mode=$mode ($ip_count IPs, direct via $wan_dev)"
+                return 0
+            fi
         fi
     fi
 
@@ -133,10 +168,17 @@ enable_split() {
 
     if [ "$mode" = "reverse" ]; then
         # Reverse: IPs in set → return (go through VPN), everything else → mark direct
+        # vipin_video set is declared but NOT referenced — video_direct is hard-disabled in reverse mode.
         cat > "$NFT_RULES" << 'EOF'
 set vipin_domestic {
     type ipv4_addr
     flags interval
+}
+
+set vipin_video {
+    type ipv4_addr
+    flags interval
+    size 65536
 }
 
 chain vipin_prerouting {
@@ -166,10 +208,22 @@ chain vipin_postrouting {
 EOF
     else
         # Forward (default): IPs in set → mark direct, everything else → VPN
-        cat > "$NFT_RULES" << 'EOF'
+        # vipin_video set is populated by dnsmasq-full at DNS resolve time and
+        # matches the same 0x200 mark → WAN direct path as vipin_domestic.
+        local video_rule=""
+        if [ "$(uci get vipin.vpn.video_direct 2>/dev/null || echo 1)" = "1" ]; then
+            video_rule="    ip daddr @vipin_video meta mark set 0x200"
+        fi
+        cat > "$NFT_RULES" << EOF
 set vipin_domestic {
     type ipv4_addr
     flags interval
+}
+
+set vipin_video {
+    type ipv4_addr
+    flags interval
+    size 65536
 }
 
 chain vipin_prerouting {
@@ -178,6 +232,7 @@ chain vipin_prerouting {
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
     ip daddr @vipin_domestic meta mark set 0x200
+${video_rule}
 }
 
 chain vipin_output {
@@ -188,6 +243,7 @@ chain vipin_output {
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
     ip daddr @vipin_domestic meta mark set 0x200
+${video_rule}
 }
 
 chain vipin_postrouting {
@@ -230,14 +286,11 @@ FWEOF
         return 1
     fi
 
-    # Populate set using batch add (avoids huge single-line elements)
-    local batch="/tmp/vipin_nft_batch.nft"
-    : > "$batch"
-    grep -v "^#" "$domestic_file" | grep -v "^$" | while read -r cidr; do
-        echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
-    done
-    nft -f "$batch" 2>/dev/null
-    rm -f "$batch"
+    # Populate set atomically (flush + add in single nft -f, with post-check)
+    if ! populate_domestic_set "$domestic_file"; then
+        logger -t vipin-routing "Failed to populate vipin_domestic for $country"
+        return 1
+    fi
 
     # Policy route: marked domestic traffic bypasses VPN via WAN
     ip route add default via "$wan_gw" dev "$wan_dev" table $TABLE_ID 2>/dev/null

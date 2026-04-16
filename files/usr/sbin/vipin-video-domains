@@ -1,0 +1,289 @@
+#!/bin/sh
+# shellcheck disable=SC3043  # 'local' is supported by busybox ash on OpenWrt
+# vipin-video-domains — manage the video_direct domain list
+#
+# Subcommands:
+#   enable              Merge sources, write dnsmasq include, reload dnsmasq
+#   disable             Remove dnsmasq include, reload dnsmasq, flush nft set
+#   refresh             Fetch remote list from GitHub, re-run enable
+#   status              Print status summary
+#   add <domain>        Add to local list
+#   remove <domain>     Remove from local list
+#   list                Print merged final list with source tags
+#   show-set            Dump current nft set contents
+#   parse-list <file>   (test hook) parse a list file to stdout
+#   merge               (test hook) print merged domain list
+#   validate-domain <d> (test hook) exit 0 if valid
+#   render-dnsmasq      (test hook) print dnsmasq include content
+#
+# Env:
+#   VIPIN_VIDEO_ROOT    Override /etc /var paths (for bats)
+#   VIPIN_VIDEO_MOCK    =1 to skip dnsmasq restart / nft / uci calls
+
+set -eu
+
+ROOT="${VIPIN_VIDEO_ROOT:-}"
+MOCK="${VIPIN_VIDEO_MOCK:-0}"
+
+CONF_DIR="${ROOT}/etc/vipin"
+REMOTE="${CONF_DIR}/video-domains.remote"
+LOCAL="${CONF_DIR}/video-domains.local"
+DNSMASQ_DIR="${ROOT}/etc/dnsmasq.d"
+DNSMASQ_CONF="${DNSMASQ_DIR}/vipin-video.conf"
+LOCK_FILE="${ROOT}/var/lock/vipin-video.lock"
+LOG_FILE="${ROOT}/var/log/vipin-video.log"
+
+NFT_SET="vipin_video"
+NFT_FAMILY="inet"
+NFT_TABLE="fw4"
+
+DEFAULT_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/domains.txt"
+
+usage() {
+    cat <<EOF
+Usage: vipin-video-domains {enable|disable|refresh|status|add|remove|list|show-set}
+       vipin-video-domains {parse-list|merge|validate-domain|render-dnsmasq}  (test hooks)
+EOF
+    exit 2
+}
+
+parse_list() {
+    local file="$1"
+    [ -f "$file" ] || return 0
+    sed -e 's/#.*$//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' "$file" \
+        | awk 'NF' \
+        | tr '[:upper:]' '[:lower:]'
+}
+
+validate_domain() {
+    local d="$1"
+    case "$d" in
+        ""|.*|*.|*..*|-*|*-|*[!a-z0-9.-]*) return 1 ;;
+    esac
+    case "$d" in
+        *.*) return 0 ;;
+        *)   return 1 ;;
+    esac
+}
+
+merge() {
+    {
+        parse_list "$REMOTE"
+        parse_list "$LOCAL"
+    } | awk 'NF && !seen[$0]++'
+}
+
+log() {
+    mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE" 2>/dev/null || true
+    [ "$MOCK" = "1" ] || logger -t vipin-video "$*" 2>/dev/null || true
+}
+
+acquire_lock() {
+    mkdir -p "$(dirname "$LOCK_FILE")" 2>/dev/null || true
+    local wait=0
+    while [ -f "$LOCK_FILE" ]; do
+        local age
+        age=$(( $(date +%s) - $(date -r "$LOCK_FILE" +%s 2>/dev/null || echo 0) ))
+        if [ "$age" -gt 120 ]; then
+            log "Removing stale lock (${age}s old)"
+            rm -f "$LOCK_FILE"
+            break
+        fi
+        wait=$((wait + 1))
+        [ "$wait" -ge 60 ] && { log "Timeout waiting for lock"; return 1; }
+        sleep 1
+    done
+    echo $$ > "$LOCK_FILE"
+}
+
+release_lock() {
+    rm -f "$LOCK_FILE" 2>/dev/null || true
+}
+
+uci_get() {
+    if [ "$MOCK" = "1" ]; then
+        case "$1" in
+            vipin.vpn.video_direct) echo "${VIPIN_VIDEO_DIRECT:-1}" ;;
+            vipin.vpn.split_mode)   echo "${VIPIN_SPLIT_MODE:-forward}" ;;
+            vipin.vpn.video_url)    echo "${VIPIN_VIDEO_URL:-}" ;;
+            vipin.vpn.video_last_refresh) echo "" ;;
+            *) echo "" ;;
+        esac
+    else
+        uci get "$1" 2>/dev/null || echo ""
+    fi
+}
+
+mode_compatible() {
+    [ "$(uci_get vipin.vpn.split_mode)" = "forward" ]
+}
+
+cmd_enable() {
+    local enabled
+    enabled=$(uci_get vipin.vpn.video_direct)
+    [ "$enabled" = "1" ] || { log "video_direct disabled in UCI"; cmd_disable; return 0; }
+    mode_compatible || { log "reverse mode — video_direct not enabled"; cmd_disable; return 0; }
+    mkdir -p "$DNSMASQ_DIR"
+    render_dnsmasq > "${DNSMASQ_CONF}.new"
+    mv "${DNSMASQ_CONF}.new" "$DNSMASQ_CONF"
+    log "Wrote $DNSMASQ_CONF ($(merge | wc -l) domains)"
+    if [ "$MOCK" != "1" ]; then
+        /etc/init.d/dnsmasq restart 2>/dev/null || log "dnsmasq restart failed"
+        /usr/sbin/vipin-vpn-routing reload 2>/dev/null || log "vipin-vpn-routing reload failed"
+    fi
+}
+
+cmd_disable() {
+    rm -f "$DNSMASQ_CONF"
+    if [ "$MOCK" != "1" ]; then
+        /etc/init.d/dnsmasq restart 2>/dev/null || true
+        /usr/sbin/vipin-vpn-routing reload 2>/dev/null || true
+        nft flush set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null || true
+    fi
+    log "Disabled video_direct"
+}
+
+cmd_status() {
+    local enabled mode rcount lcount last
+    enabled=$(uci_get vipin.vpn.video_direct)
+    mode=$(uci_get vipin.vpn.split_mode)
+    rcount=$(parse_list "$REMOTE" | wc -l)
+    lcount=$(parse_list "$LOCAL" | wc -l)
+    last=$(uci_get vipin.vpn.video_last_refresh)
+    if [ -n "$last" ]; then
+        last=$(date -d "@$last" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "$last")
+    else
+        last="never"
+    fi
+    cat <<EOF
+video_direct: $( [ "$enabled" = "1" ] && echo enabled || echo disabled )
+split_mode:   $mode ($( mode_compatible && echo compatible || echo incompatible ))
+domains:      remote $rcount / local $lcount
+last_refresh: $last
+EOF
+}
+
+cmd_list() {
+    parse_list "$REMOTE" | while IFS= read -r d; do echo "remote $d"; done
+    parse_list "$LOCAL"  | while IFS= read -r d; do echo "local $d"; done
+}
+
+cmd_show_set() {
+    nft list set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null \
+        || echo "set $NFT_SET not present"
+}
+
+fetch_remote() {
+    local url="$1"
+    local out="$2"
+    if [ "$MOCK" = "1" ]; then
+        if [ "${VIPIN_VIDEO_MOCK_CURL_OK:-0}" = "1" ] && [ -f "${VIPIN_VIDEO_MOCK_CURL_PAYLOAD:-}" ]; then
+            cp "$VIPIN_VIDEO_MOCK_CURL_PAYLOAD" "$out"
+            return 0
+        fi
+        return 1
+    fi
+    # OpenWrt busybox ships wget but not curl; prefer wget, fall back to curl.
+    # busybox wget only supports -q -T (timeout); no --tries.
+    if command -v wget >/dev/null 2>&1; then
+        wget -q -T 10 -O "$out" "$url"
+    elif command -v curl >/dev/null 2>&1; then
+        curl -sSL --max-time 10 --retry 1 "$url" -o "$out"
+    else
+        return 1
+    fi
+}
+
+cmd_refresh() {
+    acquire_lock || return 1
+    trap 'release_lock' EXIT INT TERM
+
+    local url
+    url=$(uci_get vipin.vpn.video_url)
+    [ -z "$url" ] && url="$DEFAULT_URL"
+
+    local tmp="${REMOTE}.new"
+    if ! fetch_remote "$url" "$tmp"; then
+        log "fetch failed: $url"
+        rm -f "$tmp"
+        release_lock
+        trap - EXIT INT TERM
+        return 1
+    fi
+    if [ ! -s "$tmp" ]; then
+        log "fetch empty: $url"
+        rm -f "$tmp"
+        release_lock
+        trap - EXIT INT TERM
+        return 1
+    fi
+    mv "$tmp" "$REMOTE"
+    log "Fetched $(wc -l < "$REMOTE") lines from $url"
+
+    if [ "$MOCK" != "1" ]; then
+        uci set vipin.vpn.video_last_refresh="$(date +%s)"
+        uci commit vipin
+        if nft flush set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null; then
+            log "Flushed nft set $NFT_SET"
+        else
+            log "nft flush skipped"
+        fi
+    fi
+
+    cmd_enable
+    release_lock
+    trap - EXIT INT TERM
+}
+
+cmd_add() {
+    local d="$1"
+    validate_domain "$d" || { echo "invalid domain: $d" >&2; return 1; }
+    acquire_lock || return 1
+    touch "$LOCAL"
+    if ! grep -qxF "$d" "$LOCAL"; then
+        echo "$d" >> "$LOCAL"
+        log "Added local: $d"
+    fi
+    release_lock
+    [ "$MOCK" = "1" ] || cmd_enable
+}
+
+cmd_remove() {
+    local d="$1"
+    acquire_lock || return 1
+    if [ -f "$LOCAL" ]; then
+        local tmp="${LOCAL}.tmp"
+        grep -vxF "$d" "$LOCAL" > "$tmp" || true
+        mv "$tmp" "$LOCAL"
+        log "Removed local: $d"
+    fi
+    release_lock
+    [ "$MOCK" = "1" ] || cmd_enable
+}
+
+render_dnsmasq() {
+    echo "# /etc/dnsmasq.d/vipin-video.conf"
+    echo "# Auto-generated by vipin-video-domains; DO NOT EDIT"
+    echo ""
+    merge | while IFS= read -r d; do
+        [ -z "$d" ] && continue
+        echo "nftset=/${d}/4#${NFT_FAMILY}#${NFT_TABLE}#${NFT_SET}"
+    done
+}
+
+case "${1:-}" in
+    enable)           cmd_enable ;;
+    disable)          cmd_disable ;;
+    refresh)          cmd_refresh ;;
+    status)           cmd_status ;;
+    list)             cmd_list ;;
+    show-set)         cmd_show_set ;;
+    add)              shift; [ $# -ge 1 ] || usage; cmd_add "$1" ;;
+    remove)           shift; [ $# -ge 1 ] || usage; cmd_remove "$1" ;;
+    parse-list)       shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;
+    validate-domain)  shift; [ $# -ge 1 ] || usage; validate_domain "$1" ;;
+    merge)            merge ;;
+    render-dnsmasq)   render_dnsmasq ;;
+    *) usage ;;
+esac
