@@ -588,8 +588,12 @@ function api_video_status()
     local mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
     local last = luci.model.uci:get("vipin", "vpn", "video_last_refresh") or ""
 
+    -- NOTE: wrap gsub in parens to discard its 2nd return value (replacement
+    -- count) which Lua would otherwise pass to tonumber as a base argument.
+    -- Use the script's own parse-list subcommand for accurate comment/blank filtering
+    -- (busybox grep's BRE does not handle \| reliably).
     local remote_count = tonumber(
-        util.exec("grep -cv '^[[:space:]]*\\(#\\|$\\)' /etc/vipin/video-domains.remote 2>/dev/null"):gsub("%s+", "")
+        (util.exec("/usr/sbin/vipin-video-domains parse-list /etc/vipin/video-domains.remote 2>/dev/null | wc -l"):gsub("%s+", ""))
     ) or 0
 
     local local_list = {}
@@ -606,7 +610,7 @@ function api_video_status()
     end
 
     local set_count = tonumber(
-        util.exec("nft list set inet fw4 vipin_video 2>/dev/null | awk '/elements =/{c=split($0,a,\",\"); print c; exit} END{if(!c) print 0}'"):gsub("%s+", "")
+        (util.exec("nft list set inet fw4 vipin_video 2>/dev/null | awk '/elements =/{c=split($0,a,\",\"); print c; exit} END{if(!c) print 0}'"):gsub("%s+", ""))
     ) or 0
 
     http.prepare_content("application/json")
