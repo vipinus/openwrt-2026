@@ -6,6 +6,14 @@ USE_PROCD=1
 NAME=vipin-video
 
 start_service() {
+    # Post-sysupgrade safety: if the kernel has no vipin_video set (because
+    # /etc/nftables.d/vipin-split.nft was preserved from a pre-v2 build),
+    # trigger vipin-vpn-routing to rewrite the ruleset so the set is declared.
+    # vipin-vpn-routing's fast path now requires both sets present, so this
+    # call will take the full rewrite path when vipin_video is missing.
+    if ! nft list set inet fw4 vipin_video >/dev/null 2>&1; then
+        /usr/sbin/vipin-vpn-routing enable >/dev/null 2>&1 || true
+    fi
     /usr/sbin/vipin-video-domains enable 2>/dev/null || true
 }
 

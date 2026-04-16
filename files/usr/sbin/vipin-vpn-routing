@@ -133,8 +133,12 @@ enable_split() {
         return 1
     fi
 
-    # Skip firewall reload if same mode is already active with correct country
-    if nft list set inet fw4 vipin_domestic >/dev/null 2>&1; then
+    # Skip firewall reload if same mode is already active with correct country.
+    # Require BOTH sets present so a sysupgrade from v1 (which only had
+    # vipin_domestic) falls through to the full rewrite path and declares
+    # the new vipin_video set.
+    if nft list set inet fw4 vipin_domestic >/dev/null 2>&1 && \
+       nft list set inet fw4 vipin_video >/dev/null 2>&1; then
         local current_has_mark=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "mark set")
         local current_has_return=$(nft list chain inet fw4 vipin_prerouting 2>/dev/null | grep -c "@vipin_domestic return")
         local already_correct=0

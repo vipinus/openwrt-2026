@@ -184,7 +184,15 @@ fetch_remote() {
         fi
         return 1
     fi
-    curl -sSL --max-time 10 --retry 1 "$url" -o "$out"
+    # OpenWrt busybox ships wget but not curl; prefer wget, fall back to curl.
+    # busybox wget only supports -q -T (timeout); no --tries.
+    if command -v wget >/dev/null 2>&1; then
+        wget -q -T 10 -O "$out" "$url"
+    elif command -v curl >/dev/null 2>&1; then
+        curl -sSL --max-time 10 --retry 1 "$url" -o "$out"
+    else
+        return 1
+    fi
 }
 
 cmd_refresh() {
