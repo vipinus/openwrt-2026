@@ -224,3 +224,21 @@ teardown() {
     [ "$status" -ne 0 ]
     grep -q "OLD.CONTENT" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
 }
+
+@test "status: outputs expected lines under MOCK" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    run "$SCRIPT" status
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"video_direct:"* ]]
+    [[ "$output" == *"split_mode:"* ]]
+    [[ "$output" == *"domains:"* ]]
+}
+
+@test "list: tags source on each domain" {
+    cp "$FIX/domains-remote-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.remote"
+    cp "$FIX/domains-local-sample.txt" "${VIPIN_VIDEO_ROOT}/etc/vipin/video-domains.local"
+    run "$SCRIPT" list
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"remote netflix.ca"* ]]
+    [[ "$output" == *"local my.custom-cdn.example.com"* ]]
+}

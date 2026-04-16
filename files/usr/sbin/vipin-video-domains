@@ -143,6 +143,36 @@ cmd_disable() {
     log "Disabled video_direct"
 }
 
+cmd_status() {
+    local enabled mode rcount lcount last
+    enabled=$(uci_get vipin.vpn.video_direct)
+    mode=$(uci_get vipin.vpn.split_mode)
+    rcount=$(parse_list "$REMOTE" | wc -l)
+    lcount=$(parse_list "$LOCAL" | wc -l)
+    last=$(uci_get vipin.vpn.video_last_refresh)
+    if [ -n "$last" ]; then
+        last=$(date -d "@$last" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "$last")
+    else
+        last="never"
+    fi
+    cat <<EOF
+video_direct: $( [ "$enabled" = "1" ] && echo enabled || echo disabled )
+split_mode:   $mode ($( mode_compatible && echo compatible || echo incompatible ))
+domains:      remote $rcount / local $lcount
+last_refresh: $last
+EOF
+}
+
+cmd_list() {
+    parse_list "$REMOTE" | while IFS= read -r d; do echo "remote $d"; done
+    parse_list "$LOCAL"  | while IFS= read -r d; do echo "local $d"; done
+}
+
+cmd_show_set() {
+    nft list set "$NFT_FAMILY" "$NFT_TABLE" "$NFT_SET" 2>/dev/null \
+        || echo "set $NFT_SET not present"
+}
+
 fetch_remote() {
     local url="$1"
     local out="$2"
@@ -235,6 +265,9 @@ case "${1:-}" in
     enable)           cmd_enable ;;
     disable)          cmd_disable ;;
     refresh)          cmd_refresh ;;
+    status)           cmd_status ;;
+    list)             cmd_list ;;
+    show-set)         cmd_show_set ;;
     add)              shift; [ $# -ge 1 ] || usage; cmd_add "$1" ;;
     remove)           shift; [ $# -ge 1 ] || usage; cmd_remove "$1" ;;
     parse-list)       shift; [ $# -ge 1 ] || usage; parse_list "$1" ;;
