@@ -121,9 +121,6 @@ checkHost = ${connect_host}
 ; keep idle tunnels short so the process footprint doesn't grow under burst
 TIMEOUTclose = 0
 TIMEOUTidle = 60
-; Pin TLS 1.2 — smaller memory footprint than TLS 1.3 on some builds and
-; matches what haproxy→cn2 chain speaks downstream.
-sslVersion = TLSv1.2
 EOF
 }
 
@@ -280,9 +277,12 @@ YAML
     procd_close_instance
 
     # Poll for tun0 — hev-socks5-tunnel brings the device up only after
-    # stunnel has handshaken, which on slower routers can take 5-10s.
+    # stunnel has handshaken, which on MT7628-class boxes can take 20s+
+    # under WAN latency. If the poll expires before tun0 shows up,
+    # vipin-auth-check's 30s watchdog reinstates the default routes
+    # as soon as the device appears.
     ( i=0
-      while [ "$i" -lt 15 ]; do
+      while [ "$i" -lt 30 ]; do
           ip link show tun0 >/dev/null 2>&1 && break
           sleep 1
           i=$((i + 1))
@@ -313,7 +313,7 @@ YAML
           logger -t "$NAME" "DNS upstream set to $dns_upstream"
           logger -t "$NAME" "VPN started"
       else
-          logger -t "$NAME" "tun0 did not come up in 15s"
+          logger -t "$NAME" "tun0 did not come up in 30s"
       fi
     ) &
 }

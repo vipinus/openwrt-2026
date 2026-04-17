@@ -117,6 +117,16 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
         if ! is_stack_running; then
             log "stunnel or tun2socks not running — calling vipin-vpn restart"
             /etc/init.d/vipin-vpn restart 2>/dev/null
+        elif ip link show tun0 >/dev/null 2>&1; then
+            # Stack up — ensure tun0 default routes are still in place. They
+            # disappear whenever hev-socks5-tunnel gets respawned (tun device
+            # is recreated fresh) and start_service's one-shot poll already
+            # exited. Missing routes = clients silently fall back to WAN and
+            # think VPN is broken (Toronto IP on baidu, etc).
+            ip route show 0.0.0.0/1 dev tun0 >/dev/null 2>&1 || \
+                ip route add 0.0.0.0/1 dev tun0 2>/dev/null
+            ip route show 128.0.0.0/1 dev tun0 >/dev/null 2>&1 || \
+                ip route add 128.0.0.0/1 dev tun0 2>/dev/null
         fi
 
         # Periodic auth revalidation.
