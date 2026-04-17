@@ -216,8 +216,12 @@ function api_get_vpn_status()
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
     local split_mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
+    -- procd's status wrapper prints "running" when the service is up and
+    -- "running (N/M)" when some instances have stopped. Treat either as
+    -- connected as long as tun0 actually exists (ground truth).
     local vpn_status_out = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
-    local vpn_connected = vpn_status_out:find("VPN is running") ~= nil
+    local tun0_up = util.exec("ip link show tun0 2>/dev/null"):find("tun0") ~= nil
+    local vpn_connected = tun0_up and vpn_status_out:find("running") ~= nil
     local auth_status = luci.model.uci:get("vipin", "vpn", "auth_status") or "ok"
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
@@ -318,9 +322,9 @@ function api_set_split_tunnel()
     luci.model.uci:save("vipin")
     luci.model.uci:commit("vipin")
 
-    -- Only apply routing changes if VPN is connected
+    -- Only apply routing changes if VPN is connected (procd prints "running")
     local vpn_status = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
-    local vpn_running = vpn_status:find("VPN is running") and "1" or "0"
+    local vpn_running = vpn_status:find("running") and "1" or "0"
     if vpn_running == "1" then
         if mode == "off" then
             util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")

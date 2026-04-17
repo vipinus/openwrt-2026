@@ -326,7 +326,10 @@ restart() {
 }
 
 status() {
-    if pgrep stunnel >/dev/null && pgrep badvpn-tun2socks >/dev/null && \
+    # With USE_PROCD=1, rc.common overrides this function with procd's own
+    # wrapper (which prints just "running"). Keep this for the direct-invoke
+    # case and for shells without procd — it's never the LuCI code path.
+    if pgrep stunnel >/dev/null && pgrep hev-socks5-tunnel >/dev/null && \
        ip link show tun0 >/dev/null 2>&1; then
         echo "VPN is running"
         local auth_info username
