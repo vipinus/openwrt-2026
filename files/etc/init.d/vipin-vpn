@@ -144,6 +144,9 @@ start_service() {
     logger -t $NAME "Connecting to $connect_server:$vpn_port (config: $server)"
 
     # Create wrapper script to pipe password to openconnect via stdin
+    # Note: the router's busybox-linked openconnect build does not expose
+    # --dpd on the command line; DTLS keepalive is set entirely by the
+    # server's ocserv.conf dpd value, which we tuned separately.
     cat > /tmp/vipin/vpn_start.sh << SCRIPT
 #!/bin/sh
 cat "$pass_file" | $PROG \

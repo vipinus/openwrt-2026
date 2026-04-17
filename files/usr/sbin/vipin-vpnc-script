@@ -21,6 +21,19 @@ case "$reason" in
         ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
 
+        # Explicit /32 routes to each VPN-pushed DNS IP via the tunnel with
+        # `src` pinned to our internal address. Without these, the kernel
+        # falls through to the default eth0.2 route for 172.16.0.1 / 172.*
+        # (because 0.0.0.0/1 + 128.0.0.0/1 don't carry a src hint and the
+        # main-table lookup picks the WAN default), so DNS queries exit
+        # with src=WAN-IP; the server then routes replies back over the
+        # public internet instead of the tunnel and they blackhole.
+        if [ -n "$INTERNAL_IP4_DNS" ] && [ -n "$INTERNAL_IP4_ADDRESS" ]; then
+            for vpn_dns in $INTERNAL_IP4_DNS; do
+                ip route add "$vpn_dns" dev "$TUNDEV" src "$INTERNAL_IP4_ADDRESS" 2>/dev/null
+            done
+        fi
+
         # DNS policy: VPN DNS is EXCLUSIVE when reachable. We don't mix it
         # with dnscrypt in parallel because dnscrypt answers from an
         # overseas resolver, which returns overseas CDN IPs for CN sites
@@ -79,6 +92,11 @@ case "$reason" in
         ip route del 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route del 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route del "$VPNGATEWAY" 2>/dev/null
+        if [ -n "$INTERNAL_IP4_DNS" ]; then
+            for vpn_dns in $INTERNAL_IP4_DNS; do
+                ip route del "$vpn_dns" dev "$TUNDEV" 2>/dev/null
+            done
+        fi
 
         # Disable split tunnel routing
         /usr/sbin/vipin-vpn-routing disable 2>/dev/null
