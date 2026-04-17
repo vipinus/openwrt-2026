@@ -1,9 +1,26 @@
 # openwrt-2026 video_direct — curated domain list
-# Updated: 2026-04-17 (added mgtv/sohu/letv/pptv/acfun/migu — 17 domains)
+# Updated: 2026-04-17 (added 11 overseas CDNs — twitter/vimeo/twitch/disney/
+#                      amazon/max/spotify/apple/soundcloud)
 # Format: one domain per line; # for comments; dnsmasq matches subdomains
-# Scope: domestic (CN) video CDNs only. Overseas CDNs (YouTube/Netflix/etc.)
-# excluded because GFW poisons their DNS in CN — adding them would route
-# traffic to fake IPs. See docs for DoH-based overseas support (deferred).
+#
+# Scope:
+#   - Domestic CN video CDNs (bilibili/iqiyi/youku/tencent/mgtv/sohu/letv/
+#     pptv/acfun/migu). DNS clean, WAN reachable from CN.
+#   - Overseas CDNs that are BOTH (a) IP-layer reachable from China WAN AND
+#     (b) resolvable via clean DNS (DoH/DNSCrypt). Verified 2026-04-17 from
+#     Aliyun Shanghai: each listed overseas host passes TCP 443 connect AND
+#     TLS SNI handshake with a matching certificate.
+#
+# Excluded:
+#   - YouTube / Google CDN (googlevideo.com, ytimg.com, ggpht.com): IP-layer
+#     blocked by GFW — TCP 443 unreachable even with clean DNS.
+#   - Cloudflare-anycast hosts behind SNI filtering (pbs.twimg.com,
+#     v.redd.it, some fbcdn.net edges): TCP connects but TLS handshake
+#     resets — not usable.
+#
+# Caveat: overseas CDN entries only help CN users whose router uses a
+# DoH/DNSCrypt upstream for DNS. With poisoned ISP DNS these entries would
+# populate the nftset with fake IPs. Overseas-location routers are unaffected.
 
 # --- netflix (14) ---
 netflix.ca
@@ -99,3 +116,32 @@ acimg.cn
 cmvideo.cn
 migu.cn
 miguvideo.com
+
+# --- twitter-x (2) ---
+abs.twimg.com
+video.twimg.com
+
+# --- vimeo (1) ---
+f.vimeocdn.com
+
+# --- twitch (1) ---
+jtvnw.net
+
+# --- disney+ (1) ---
+bamgrid.com
+
+# --- amazon-prime-video (2) ---
+atv-ps.amazon.com
+media-amazon.com
+
+# --- max / hbo (1) ---
+max.com
+
+# --- spotify (1) ---
+scdn.co
+
+# --- apple (1) ---
+mzstatic.com
+
+# --- soundcloud (1) ---
+sndcdn.com
