@@ -78,6 +78,9 @@ local active_lang = i18n[lang] and lang or "en"
 <div class="cbi-map">
     <h2><%= t.vpn_settings %></h2>
 
+    <div id="vpn-auth-banner"
+         style="display:none;padding:8px 12px;margin-bottom:12px;border-radius:4px;"></div>
+
     <!-- VPN Account -->
     <fieldset class="cbi-section" id="cbi-vpn-account">
         <legend><%= t.user_status %></legend>
@@ -157,22 +160,6 @@ if pass_file then pass_file:close() end
                 </div>
                 <div id="expiry-warning" class="alert-message warning" style="display:none;">
                     <span id="expiry-warning-text"></span>
-                </div>
-                <div class="cbi-value">
-                    <label class="cbi-value-title">&nbsp;</label>
-                    <div class="cbi-value-field">
-                        <input type="button" class="cbi-button cbi-button-apply" id="btn-connect" onclick="vpn_toggle()" value="<%= t.connect %>" />
-                        <input type="button" class="cbi-button cbi-button-reset" onclick="doLogout()" value="<%= t.logout_button %>" style="margin-left:8px;" />
-                        <div id="vpn-toggle-progress" style="display:none;margin-top:8px;">
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <span>⏳</span>
-                                <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
-                                    <div id="vpn-toggle-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
-                                </div>
-                                <span id="vpn-toggle-progress-text" style="font-size:12px;color:#666;">0%</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -302,16 +289,13 @@ var vpnData = {
 
 function updateUI() {
     var badge = document.getElementById('vpn-status-badge');
-    var btnConnect = document.getElementById('btn-connect');
 
     if (vpnData.connected) {
         badge.className = 'connected';
         badge.textContent = vpnData.t.connected;
-        if (btnConnect) { btnConnect.value = vpnData.t.disconnect; btnConnect.className = 'cbi-button cbi-button-remove'; }
     } else {
         badge.className = 'disconnected';
         badge.textContent = vpnData.t.disconnected;
-        if (btnConnect) { btnConnect.value = vpnData.t.connect; btnConnect.className = 'cbi-button cbi-button-apply'; }
     }
 
     // Update split mode radio buttons
@@ -378,30 +362,6 @@ function runTimedProgress(rowId, barId, textId, duration, onDone) {
         }
     }, 200);
     return timer;
-}
-
-function vpn_toggle() {
-    if (uiBusy) return;
-    uiBusy = true;
-    var action = vpnData.connected ? 'disconnect' : 'connect';
-    var btn = document.getElementById('btn-connect');
-    if (btn) { btn.disabled = true; btn.value = vpnData.t.please_wait; }
-    runTimedProgress('vpn-toggle-progress', 'vpn-toggle-progress-bar', 'vpn-toggle-progress-text', 10000, function() {
-        uiBusy = false;
-        if (btn) btn.disabled = false;
-        loadStatus();
-    });
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_connect', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        try {
-            JSON.parse(xhr.responseText);
-            vpnData.connected = (action === 'connect');
-            updateUI();
-        } catch (e) { console.error(e); }
-    };
-    xhr.send('action=' + action);
 }
 
 function setSplitMode(mode) {
@@ -577,24 +537,6 @@ function doLogin() {
     xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password) + '&server=' + encodeURIComponent(server));
 }
 
-function doLogout() {
-    // Save credentials before logout
-    var savedUser = vpnData.authUsername || document.getElementById('login-username').value;
-    var savedPass = document.getElementById('login-password').value;
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_logout', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        vpnData.authLoggedIn = false; vpnData.authUsername = ''; vpnData.authType = '';
-        vpnData.authExpiry = ''; vpnData.connected = false;
-        updateAuthUI(); updateUI();
-        // Restore credentials
-        document.getElementById('login-username').value = savedUser;
-        document.getElementById('login-password').value = savedPass;
-    };
-    xhr.send();
-}
-
 function openRenewalPage() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', '/cgi-bin/luci/admin/services/vpn/api_renewal', true);
@@ -602,6 +544,25 @@ function openRenewalPage() {
         try { var r = JSON.parse(xhr.responseText); if (r.success && r.url) window.open(r.url, '_blank'); } catch (e) {}
     };
     xhr.send();
+}
+
+function renderAuthBanner(authStatus) {
+    var banner = document.getElementById('vpn-auth-banner');
+    if (!banner) return;
+    var t = vpnData.t;
+    if (authStatus && authStatus !== 'ok') {
+        var msg = ({
+            expired: t.auth_banner_expired || 'Account expired. Please renew to continue.',
+            invalid: t.auth_banner_invalid || 'Invalid credentials. Please log in again.',
+            not_vip: t.auth_banner_not_vip || 'Account is not a VIP. VPN access is unavailable.'
+        })[authStatus] || ((t.auth_banner_fail || 'Authentication problem') + ': ' + authStatus);
+        banner.style.display = 'block';
+        banner.style.background = '#ffeecc';
+        banner.style.color = '#8a5a00';
+        banner.textContent = msg;
+    } else {
+        banner.style.display = 'none';
+    }
 }
 
 function loadStatus() {
@@ -626,6 +587,7 @@ function loadStatus() {
             vpnData.detectedCountry = r.detected_country || '';
             vpnData.detectedCountryName = r.detected_country_name || '';
             vpnData.detectedCountryFlag = r.detected_country_flag || '';
+            vpnData.authStatus = r.auth_status || 'ok';
             if (vpnData.detected) {
                 var flag = document.getElementById('detection-flag');
                 var title = document.getElementById('detection-title');
@@ -634,6 +596,7 @@ function loadStatus() {
                 if (title) title.textContent = vpnData.detectedCountryName;
                 if (ip) ip.textContent = vpnData.detectedIp;
             }
+            renderAuthBanner(vpnData.authStatus);
             updateUI();
         } catch (e) { console.error(e); }
     };
@@ -765,12 +728,26 @@ function refreshServerList() {
 }
 
 function saveServerSelection(server) {
-    if (!server) return;
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_set_server', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {};
-    xhr.send('server=' + encodeURIComponent(server));
+    serverChange(server);
+}
+
+function serverChange(newServer) {
+    if (!newServer) return;
+    fetch('<%=luci.dispatcher.build_url("admin/services/vpn/api_set_server")%>', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'server=' + encodeURIComponent(newServer)
+    }).then(function(r) { return r.json(); }).then(function(d) {
+        if (d && d.success) {
+            // Reload status so the UI reflects the new session.
+            loadStatus();
+        } else {
+            alert(vpnData.t.server_change_fail || 'Server change failed');
+        }
+    }).catch(function() {
+        alert(vpnData.t.server_change_fail || 'Server change failed');
+    });
 }
 
 window.addEventListener('DOMContentLoaded', function() {
