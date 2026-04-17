@@ -130,10 +130,13 @@ configure_dns() {
     server_country=$(echo "$uci_server" | cut -d. -f1)
     [ "$server_country" = "un" ] && server_country="cn"
 
-    local upstream="127.0.0.1#5353"   # dnscrypt-proxy by default
-    if [ "$router_country" != "cn" ] && [ "$server_country" = "cn" ]; then
-        upstream="127.0.0.1#5356"      # UDP→TCP bridge → stunnel → cn2
-    fi
+    # Always hand DNS to dnscrypt-proxy on 127.0.0.1#5353. The previous
+    # overseas-router + cn-server branch pointed at 127.0.0.1#5356 (a
+    # UDP→TCP→stunnel→cn2 sidecar bridge), but that sidecar has never been
+    # wired up on the router — sending dnsmasq there just produces timeouts
+    # and client devices fail with "no network." dnscrypt works from both
+    # CN and overseas and is always a safe choice.
+    local upstream="127.0.0.1#5353"
 
     if [ "$VIPIN_VPN_MOCK" != "1" ]; then
         uci -q delete dhcp.@dnsmasq[0].server
