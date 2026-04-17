@@ -210,7 +210,8 @@ chain vipin_output {
     type route hook output priority mangle;
     # NOTE: do NOT add 'oifname "tun0" return' here. The main routing
     # table sends every non-private destination to tun0 (via the
-    # 0.0.0.0/1 + 128.0.0.0/1 pair installed by vpnc-script), so on the
+    # 0.0.0.0/1 + 128.0.0.0/1 pair installed by /etc/init.d/vipin-vpn
+    # start_service under the stunnel+tun2socks architecture), so on the
     # first OUTPUT pass every router-originated packet has oifname=tun0
     # before we get a chance to mark it. Returning here would skip the mark
     # and blackhole all router-originated DNS/ICMP/HTTP to public IPs.

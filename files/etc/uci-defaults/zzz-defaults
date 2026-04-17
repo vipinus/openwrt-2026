@@ -34,7 +34,7 @@ uci set dhcp.odhcpd.maindhcp='0'
 
 # DNS policy: dnsmasq never reads resolv.conf.auto (no WAN DNS fallback).
 # Default upstream = dnscrypt-proxy on 127.0.0.1#5353.
-# vipin-vpnc-script swaps upstream to VPN-pushed DNS on connect.
+# vipin-vpn start_service writes dnsmasq upstream via configure_dns on connect.
 uci set dhcp.@dnsmasq[0].noresolv='1'
 uci set dhcp.@dnsmasq[0].resolvfile='/dev/null'
 # Belt-and-braces: even with LAN IPv6 disabled, don't serve AAAA to clients
