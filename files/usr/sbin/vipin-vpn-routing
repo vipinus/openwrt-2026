@@ -259,15 +259,20 @@ ${video_rule}
 
 chain vipin_output {
     type route hook output priority mangle;
-    # See reverse-mode note above: removing 'oifname "vpn_vipin" return'
-    # because main table already routes non-private dst to vpn_vipin, so
-    # that return would preempt the mark in forward mode too.
+    # Router-originated traffic must ALWAYS take WAN, never the tunnel.
+    # In forward mode, LAN clients get the "domestic direct, rest via VPN"
+    # semantic through vipin_prerouting. For packets the router itself
+    # emits (DNS upstream queries, NTP, update checks) we can't rely on
+    # the VPN server to SNAT them back — production servers often drop
+    # LAN-side source IPs sent over the tunnel. So default mark=0x200
+    # here routes everything via WAN. See reverse-mode note: the original
+    # 'oifname "vpn_vipin" return' preempted the mark and is removed.
     oifname "lo" return
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
-    ip daddr @vipin_domestic meta mark set 0x200
 ${video_rule}
+    meta mark set 0x200
 }
 
 chain vipin_postrouting {
