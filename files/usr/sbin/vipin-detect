@@ -10,11 +10,11 @@ log() {
 }
 
 get_wan_device() {
-    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $5}'
+    ip route | grep "^default" | grep -v tun0 | head -1 | awk '{print $5}'
 }
 
 get_wan_gateway() {
-    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $3}'
+    ip route | grep "^default" | grep -v tun0 | head -1 | awk '{print $3}'
 }
 
 get_public_ip() {
@@ -23,7 +23,7 @@ get_public_ip() {
     local wan_dev=$(get_wan_device)
     local vpn_active=0
 
-    ip link show vpn_vipin >/dev/null 2>&1 && vpn_active=1
+    ip link show tun0 >/dev/null 2>&1 && vpn_active=1
 
     if [ "$vpn_active" = "1" ] && [ -n "$wan_gw" ] && [ -n "$wan_dev" ]; then
         # VPN active: use DNS-based IP detection (bypasses VPN routing)

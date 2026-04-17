@@ -214,10 +214,11 @@ function api_get_vpn_status()
     
     local current_country = util.exec("/usr/sbin/vipin-country-ips get-country 2>/dev/null"):gsub("%s+", "")
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
-    local vpn_enabled = luci.model.uci:get("vipin", "vpn", "enabled") or "0"
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
     local split_mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
-    local vpn_connected = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+    local vpn_status_out = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+    local vpn_connected = vpn_status_out:find("VPN is running") ~= nil
+    local auth_status = luci.model.uci:get("vipin", "vpn", "auth_status") or "ok"
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
     local detected = false
@@ -252,8 +253,8 @@ function api_get_vpn_status()
     local extra = i18n[lang_key] or i18n["en"]
 
     local status = {
-        vpn_enabled = (vpn_enabled == "1"),
-        vpn_connected = (vpn_connected == "1"),
+        vpn_connected = vpn_connected,
+        auth_status = auth_status,
         split_tunnel = (split_enabled == "1"),
         split_mode = split_mode,
         current_country = current_country,
@@ -289,7 +290,8 @@ function api_connect()
     
     if action == "connect" then
         local output = util.exec("/etc/init.d/vipin-vpn start 2>&1")
-        result.success = (util.exec("pgrep openconnect >/dev/null && echo 1 || echo 0"):gsub("%s+", "") == "1")
+        local s = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+        result.success = s:find("VPN is running") ~= nil
     elseif action == "disconnect" then
         util.exec("/etc/init.d/vipin-vpn stop 2>&1")
         result.success = true
@@ -317,7 +319,8 @@ function api_set_split_tunnel()
     luci.model.uci:commit("vipin")
 
     -- Only apply routing changes if VPN is connected
-    local vpn_running = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+    local vpn_status = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+    local vpn_running = vpn_status:find("VPN is running") and "1" or "0"
     if vpn_running == "1" then
         if mode == "off" then
             util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")
@@ -391,37 +394,31 @@ function api_login()
     local http = require("luci.http")
     local json = require("cjson")
     local util = require("luci.util")
-    
+    local nixio = require("nixio")
+
     local username = luci.http.formvalue("username") or ""
     local password = luci.http.formvalue("password") or ""
-    
+
     -- Escape single quotes to prevent shell injection
     local safe_user = username:gsub("'", "'\\''")
     local safe_pass = password:gsub("'", "'\\''")
     local result_json = util.exec("/usr/sbin/vipin-auth login '" .. safe_user .. "' '" .. safe_pass .. "' 2>/dev/null")
-    
+
     local success = string.match(result_json, '"status": "valid"') ~= nil
     local status = string.match(result_json, '"status": "([^"]+)"') or "error"
     local message = string.match(result_json, '"message": "([^"]+)"') or ""
     local user_type = string.match(result_json, '"type": "([^"]+)"') or ""
     local expiration = string.match(result_json, '"expiration": "([^"]+)"') or ""
-    
-    local result = {
-        success = success,
-        status = status,
-        message = message,
-        username = username,
-        type = user_type,
-        expiration = expiration
-    }
-    
+
+    local connected = false
+    local auth_status
+
     if success then
         local server = luci.http.formvalue("server") or ""
         -- Ensure vipin config section exists
         if not luci.model.uci:get("vipin", "vpn") then
             luci.model.uci:set("vipin", "vpn", "vpn")
         end
-        luci.model.uci:set("vipin", "vpn", "enabled", "1")
         luci.model.uci:set("vipin", "vpn", "username", username)
         -- Use provided server, existing config, or default
         if server == "" then
@@ -429,13 +426,47 @@ function api_login()
             server = luci.model.uci:get("vipin", "vpn", "server") or ("jp." .. base_domain)
         end
         luci.model.uci:set("vipin", "vpn", "server", server)
+        luci.model.uci:set("vipin", "vpn", "auth_status", "ok")
         luci.model.uci:save("vipin")
         luci.model.uci:commit("vipin")
-        -- Start VPN and auth monitor
-        util.exec("/etc/init.d/vipin-vpn start 2>&1")
-        util.exec("/etc/init.d/vipin-auth start 2>&1")
+        auth_status = "ok"
+
+        -- Kick the VPN init.d. It will POST /api/v1/router-auth source=stunnel,
+        -- render config, and launch stunnel + tun2socks.
+        util.exec("/etc/init.d/vipin-vpn start >/dev/null 2>&1")
+        util.exec("/etc/init.d/vipin-auth start >/dev/null 2>&1")
+
+        -- Poll up to 12s for the stack to report running.
+        for _ = 1, 24 do
+            local st = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+            if st:find("VPN is running") then
+                connected = true
+                break
+            end
+            nixio.nanosleep(0, 500000000)  -- 500ms
+        end
+    else
+        -- Persist failure reason so api_get_vpn_status reflects it.
+        if not luci.model.uci:get("vipin", "vpn") then
+            luci.model.uci:set("vipin", "vpn", "vpn")
+        end
+        luci.model.uci:set("vipin", "vpn", "auth_status", status)
+        luci.model.uci:save("vipin")
+        luci.model.uci:commit("vipin")
+        auth_status = status
     end
-    
+
+    local result = {
+        success = success,
+        status = status,
+        message = message,
+        username = username,
+        type = user_type,
+        expiration = expiration,
+        vpn_connected = connected,
+        auth_status = auth_status
+    }
+
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
@@ -444,11 +475,7 @@ function api_logout()
     local http = require("luci.http")
     local json = require("cjson")
     local util = require("luci.util")
-    
-    -- Disable auto-connect
-    luci.model.uci:set("vipin", "vpn", "enabled", "0")
-    luci.model.uci:save("vipin")
-    luci.model.uci:commit("vipin")
+
     -- Stop services
     util.exec("/etc/init.d/vipin-vpn stop 2>&1")
     util.exec("/etc/init.d/vipin-auth stop 2>&1")
@@ -559,11 +586,9 @@ function api_set_server()
         success = true
 
         -- If VPN is running, reconnect to new server
-        local vpn_running = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
-        if vpn_running == "1" then
-            util.exec("/etc/init.d/vipin-vpn stop 2>&1")
-            util.exec("sleep 1")
-            util.exec("/etc/init.d/vipin-vpn start 2>&1")
+        local st = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+        if st:find("VPN is running") then
+            util.exec("/etc/init.d/vipin-vpn restart >/dev/null 2>&1")
             reconnected = true
         end
     end

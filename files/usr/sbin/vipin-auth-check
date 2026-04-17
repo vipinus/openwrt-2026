@@ -1,8 +1,10 @@
 #!/bin/sh
-# VIPIN Auth Monitor - background daemon
-# 1. Reconnect VPN if openconnect dies
-# 2. Periodically verify account is still valid via remote API
-# 3. If account invalid, stop VPN and disable auto-connect
+# VIPIN Auth Monitor - background daemon (stunnel+tun2socks architecture)
+# 1. Watchdog: restart VPN stack if stunnel or tun2socks died
+# 2. Periodically revalidate account via remote API
+# 3. Network error = no-op; explicit expired/invalid/not_vip = stop stack
+# 4. Credentials are never auto-deleted (user must logout); auth_status UCI
+#    drives UI + auto-recovery when the server returns ok again
 
 LOG_FILE="/var/log/vipin-auth-check.log"
 CONF_DIR="/etc/vipin"
@@ -10,7 +12,6 @@ AUTH_FILE="$CONF_DIR/auth.conf"
 API_BASE=$(uci get vipin.vpn.site_url 2>/dev/null || echo "https://www.anyfq.com")
 CHECK_INTERVAL=300
 RECONNECT_INTERVAL=30
-MAX_RECONNECT_FAILS=5
 
 log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -22,17 +23,20 @@ log() {
     fi
 }
 
-is_vpn_enabled() {
-    local enabled=$(uci get vipin.vpn.enabled 2>/dev/null || echo "0")
-    [ "$enabled" = "1" ]
-}
-
-is_vpn_running() {
-    pgrep openconnect >/dev/null
-}
-
 has_auth_file() {
     [ -f "$AUTH_FILE" ] && [ -f "$CONF_DIR/.vpn_pass" ]
+}
+
+# MOCK mode: tests source the script and drive helpers via env.
+VIPIN_AUTH_CHECK_MOCK="${VIPIN_AUTH_CHECK_MOCK:-0}"
+
+is_stack_running() {
+    if [ "$VIPIN_AUTH_CHECK_MOCK" = "1" ]; then
+        [ "$VIPIN_AUTH_CHECK_STUNNEL_RUNNING" = "1" ] && \
+        [ "$VIPIN_AUTH_CHECK_TUN2SOCKS_RUNNING" = "1" ]
+        return
+    fi
+    pgrep stunnel >/dev/null && pgrep badvpn-tun2socks >/dev/null
 }
 
 get_saved_username() {
@@ -43,121 +47,85 @@ get_saved_password() {
     cat "$CONF_DIR/.vpn_pass" 2>/dev/null
 }
 
-# Remote check: verify account is still valid via API
-remote_verify() {
-    local username="$1"
-    local password="$2"
+disable_and_stop() {
+    local reason="$1"
+    log "Stopping VPN: $reason"
+    /etc/init.d/vipin-vpn stop 2>/dev/null
+    uci set vipin.vpn.auth_status='expired'
+    uci commit vipin
+    log "VPN stopped; auth_status=expired. Will auto-recover when auth returns ok."
+}
 
-    local response=$(wget -q -O- --timeout=10 \
-        "${API_BASE}/api/v1/router-auth" \
-        --post-data="username=$username&credentials=verify&mac=check&source=verify" \
+handle_auth_tick() {
+    local username password mac api_base response status
+    username=$(get_saved_username)
+    password=$(get_saved_password)
+    mac=$(/usr/sbin/vipin-auth mac 2>/dev/null | \
+          grep -o '"mac": *"[^"]*"' | cut -d'"' -f4)
+
+    [ -z "$username" ] && return 0
+
+    api_base=$(uci -q get vipin.vpn.site_url || echo "https://www.anyfq.com")
+    response=$(wget -q -O- --timeout=10 \
+        "${api_base}/api/v1/router-auth" \
+        --post-data="username=${username}&credentials=${password}&mac=${mac}&source=stunnel" \
         2>/dev/null)
 
-    # If we can't reach the server, assume still valid (don't kill VPN on network glitch)
     if [ -z "$response" ]; then
-        log "Remote verify: server unreachable, assuming valid"
+        log "auth API unreachable — no action"
         return 0
     fi
 
-    local status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-
+    status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
     case "$status" in
-        expired|not_vip|invalid)
-            log "Remote verify: account invalid (status=$status)"
-            return 1
+        ok)
+            uci set vipin.vpn.auth_status='ok'
+            uci commit vipin
+            if ! is_stack_running; then
+                log "auth=ok and stack stopped — auto-recover"
+                /etc/init.d/vipin-vpn start
+            fi
+            ;;
+        expired|invalid|not_vip)
+            log "auth=$status — stopping stack, keeping credentials"
+            uci set vipin.vpn.auth_status="$status"
+            uci commit vipin
+            /etc/init.d/vipin-vpn stop
             ;;
         *)
-            return 0
+            log "auth returned unknown status=$status — no action"
             ;;
     esac
 }
 
-disable_and_stop() {
-    local reason="$1"
-    log "Stopping VPN: $reason"
+# Guard: don't run the main loop when the file is sourced for tests.
+if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
+    log "=== VIPIN Auth Monitor Started (stunnel+tun2socks) ==="
 
-    # Stop VPN
-    killall openconnect 2>/dev/null
-    ip link delete vpn_vipin 2>/dev/null
+    reconnect_fails=0
+    last_verify=0
 
-    # Disable auto-connect
-    uci set vipin.vpn.enabled=0
-    uci commit vipin
+    while true; do
+        now=$(date +%s)
 
-    log "VPN stopped, auto-connect disabled. User needs to renew subscription."
-}
-
-reconnect_vpn() {
-    log "VPN process died, reconnecting..."
-    killall openconnect 2>/dev/null
-    ip link delete vpn_vipin 2>/dev/null
-    # Keep vipin-vpn-routing chains/sets intact during the brief reconnect
-    # window. Calling `disable` here flushes @vipin_domestic and drops the
-    # vipin_* chains, which opens a 10-15 s gap before `enable` rebuilds
-    # them; during that gap LAN-client packets reach the now-empty chain
-    # with no mark and get routed via the 0.0.0.0/1 main-table path that
-    # still points to a dead vpn_vipin, so they blackhole. `vipin-vpn-
-    # routing enable` is idempotent (atomic set replace + chain rewrite),
-    # so the next connect refreshes everything without needing a disable.
-    sleep 2
-    /etc/init.d/vipin-vpn start 2>/dev/null
-    sleep 10
-
-    if is_vpn_running; then
-        log "VPN reconnected successfully"
-        return 0
-    else
-        log "VPN reconnect failed"
-        return 1
-    fi
-}
-
-# Main loop
-log "=== VIPIN Auth Monitor Started ==="
-
-reconnect_fails=0
-last_verify=0
-
-while true; do
-    now=$(date +%s)
-
-    if ! has_auth_file; then
-        # No credentials saved, nothing to do
-        sleep $CHECK_INTERVAL
-        continue
-    fi
-
-    if ! is_vpn_enabled; then
-        # VPN disabled, nothing to monitor
-        sleep $CHECK_INTERVAL
-        continue
-    fi
-
-    # Check if VPN is running, reconnect if needed
-    if ! is_vpn_running; then
-        reconnect_vpn
-        if ! is_vpn_running; then
-            reconnect_fails=$((reconnect_fails + 1))
-            log "Reconnect attempt $reconnect_fails failed, will retry"
-            sleep $RECONNECT_INTERVAL
+        if ! has_auth_file; then
+            sleep "$RECONNECT_INTERVAL"
             continue
-        else
-            reconnect_fails=0
         fi
-    fi
 
-    # Periodic remote verification
-    elapsed=$((now - last_verify))
-    if [ "$elapsed" -ge "$CHECK_INTERVAL" ]; then
-        last_verify=$now
-        username=$(get_saved_username)
-
-        if [ -n "$username" ]; then
-            if ! remote_verify "$username"; then
-                disable_and_stop "Account expired or invalid for $username"
-            fi
+        # Watchdog: if either component died, restart (keeps chain intact).
+        if ! is_stack_running; then
+            log "stunnel or tun2socks not running — calling vipin-vpn restart"
+            /etc/init.d/vipin-vpn restart 2>/dev/null
         fi
-    fi
 
-    sleep $RECONNECT_INTERVAL
-done
+        # Periodic auth revalidation.
+        elapsed=$((now - last_verify))
+        if [ "$elapsed" -ge "$CHECK_INTERVAL" ]; then
+            last_verify=$now
+            handle_auth_tick
+        fi
+
+        sleep "$RECONNECT_INTERVAL"
+    done
+fi

@@ -39,11 +39,11 @@ get_current_country() {
 }
 
 get_wan_gateway() {
-    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $3}'
+    ip route | grep "^default" | grep -v tun0 | head -1 | awk '{print $3}'
 }
 
 get_wan_device() {
-    ip route | grep "^default" | grep -v vpn_vipin | head -1 | awk '{print $5}'
+    ip route | grep "^default" | grep -v tun0 | head -1 | awk '{print $5}'
 }
 
 get_server_country() {
@@ -208,10 +208,11 @@ ${video_rule}
 
 chain vipin_output {
     type route hook output priority mangle;
-    # NOTE: do NOT add 'oifname "vpn_vipin" return' here. The main routing
-    # table sends every non-private destination to vpn_vipin (via the
-    # 0.0.0.0/1 + 128.0.0.0/1 pair installed by vpnc-script), so on the
-    # first OUTPUT pass every router-originated packet has oifname=vpn_vipin
+    # NOTE: do NOT add 'oifname "tun0" return' here. The main routing
+    # table sends every non-private destination to tun0 (via the
+    # 0.0.0.0/1 + 128.0.0.0/1 pair installed by /etc/init.d/vipin-vpn
+    # start_service under the stunnel+tun2socks architecture), so on the
+    # first OUTPUT pass every router-originated packet has oifname=tun0
     # before we get a chance to mark it. Returning here would skip the mark
     # and blackhole all router-originated DNS/ICMP/HTTP to public IPs.
     oifname "lo" return
@@ -225,7 +226,7 @@ ${video_rule}
 
 chain vipin_postrouting {
     type nat hook postrouting priority srcnat;
-    oifname "vpn_vipin" masquerade
+    oifname "tun0" masquerade
 }
 EOF
     else
@@ -266,7 +267,7 @@ chain vipin_output {
     # the VPN server to SNAT them back — production servers often drop
     # LAN-side source IPs sent over the tunnel. So default mark=0x200
     # here routes everything via WAN. See reverse-mode note: the original
-    # 'oifname "vpn_vipin" return' preempted the mark and is removed.
+    # 'oifname "tun0" return' preempted the mark and is removed.
     oifname "lo" return
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
@@ -277,7 +278,7 @@ ${video_rule}
 
 chain vipin_postrouting {
     type nat hook postrouting priority srcnat;
-    oifname "vpn_vipin" masquerade
+    oifname "tun0" masquerade
 }
 EOF
     fi
@@ -288,10 +289,10 @@ EOF
 #!/bin/sh
 # Insert VPN forwarding and MSS clamp rules into fw4 forward chain
 # This script is called by fw4 on every firewall reload
-nft insert rule inet fw4 forward iifname "vpn_vipin" oifname "br-lan" ct state established,related accept 2>/dev/null
-nft insert rule inet fw4 forward iifname "br-lan" oifname "vpn_vipin" accept 2>/dev/null
-nft insert rule inet fw4 forward oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
-nft insert rule inet fw4 forward iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
+nft insert rule inet fw4 forward iifname "tun0" oifname "br-lan" ct state established,related accept 2>/dev/null
+nft insert rule inet fw4 forward iifname "br-lan" oifname "tun0" accept 2>/dev/null
+nft insert rule inet fw4 forward oifname "tun0" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
+nft insert rule inet fw4 forward iifname "tun0" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
 FWEOF
     chmod +x /etc/vipin/firewall-include.sh
 
@@ -344,11 +345,11 @@ disable_split() {
     cat > /etc/vipin/firewall-include.sh << 'FWEOF'
 #!/bin/sh
 # Insert VPN forwarding, NAT and MSS clamp rules into fw4 chains
-nft insert rule inet fw4 forward iifname "vpn_vipin" oifname "br-lan" ct state established,related accept 2>/dev/null
-nft insert rule inet fw4 forward iifname "br-lan" oifname "vpn_vipin" accept 2>/dev/null
-nft insert rule inet fw4 forward oifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
-nft insert rule inet fw4 forward iifname "vpn_vipin" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
-nft insert rule inet fw4 srcnat oifname "vpn_vipin" masquerade 2>/dev/null
+nft insert rule inet fw4 forward iifname "tun0" oifname "br-lan" ct state established,related accept 2>/dev/null
+nft insert rule inet fw4 forward iifname "br-lan" oifname "tun0" accept 2>/dev/null
+nft insert rule inet fw4 forward oifname "tun0" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
+nft insert rule inet fw4 forward iifname "tun0" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
+nft insert rule inet fw4 srcnat oifname "tun0" masquerade 2>/dev/null
 FWEOF
     chmod +x /etc/vipin/firewall-include.sh
 
