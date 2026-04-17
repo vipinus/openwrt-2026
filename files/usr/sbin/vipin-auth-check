@@ -36,7 +36,7 @@ is_stack_running() {
         [ "$VIPIN_AUTH_CHECK_TUN2SOCKS_RUNNING" = "1" ]
         return
     fi
-    pgrep stunnel >/dev/null && pgrep badvpn-tun2socks >/dev/null
+    pgrep stunnel >/dev/null && pgrep hev-socks5-tunnel >/dev/null
 }
 
 get_saved_username() {
