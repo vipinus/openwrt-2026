@@ -277,12 +277,18 @@ YAML
           ip route add 128.0.0.0/1 dev tun0 2>/dev/null
           local split_mode country dns_upstream
           split_mode=$(uci -q get vipin.vpn.split_mode || echo forward)
-          country=$(uci -q get vipin.vpn.country || echo cn)
           if [ "$split_mode" = "reverse" ]; then
-              local sc=$(echo "$(uci -q get vipin.vpn.server)" | cut -d. -f1)
-              [ "$sc" = "un" ] && sc="cn"
-              /usr/sbin/vipin-vpn-routing enable "$sc" reverse
+              # reverse: server-country IPs go through VPN (so user picks up
+              # that country's egress). un is a cn alias.
+              country=$(echo "$(uci -q get vipin.vpn.server)" | cut -d. -f1)
+              [ "$country" = "un" ] && country="cn"
+              /usr/sbin/vipin-vpn-routing enable "$country" reverse
           elif [ "$split_mode" = "forward" ]; then
+              # forward: router-location IPs stay on direct WAN, the rest
+              # goes through VPN. Use the auto-detected router country, not
+              # the static uci vpn.country (which is a server-side hint).
+              country=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
+              [ -z "$country" ] && country="$(uci -q get vipin.vpn.country || echo cn)"
               /usr/sbin/vipin-vpn-routing enable "$country" forward
           fi
           # stack is up — now safe to flip DNS to the 4-matrix decision
