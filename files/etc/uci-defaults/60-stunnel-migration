@@ -1,0 +1,20 @@
+#!/bin/sh
+# One-shot migration for stunnel+tun2socks architecture.
+# Removes obsolete openconnect UCI keys and initializes new ones.
+
+uci -q delete vipin.vpn.enabled
+uci -q delete vipin.vpn.cert_pin
+
+# Seed auth_status=ok so first boot does not show an error banner
+# before vipin-auth-check has a chance to run.
+[ -z "$(uci -q get vipin.vpn.auth_status)" ] && uci set vipin.vpn.auth_status='ok'
+
+# Default split_mode to 'forward' on first install (overwrite only if unset).
+[ -z "$(uci -q get vipin.vpn.split_mode)" ] && uci set vipin.vpn.split_mode='forward'
+
+uci commit vipin
+
+# Also remove the legacy openconnect cert pin file if present.
+rm -f /etc/vipin/cert_pin
+
+exit 0
