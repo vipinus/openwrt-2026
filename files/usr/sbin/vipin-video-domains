@@ -115,6 +115,18 @@ uci_get() {
     fi
 }
 
+ensure_dnsmasq_confdir() {
+    # OpenWrt's auto-generated dnsmasq config uses conf-dir=/tmp/dnsmasq.<sec>.d
+    # and does NOT pick up /etc/dnsmasq.d/. But /etc/dnsmasq.conf is sourced via
+    # conf-file=, so adding conf-dir there makes our nftset= rules load. Idempotent.
+    local main_conf="${ROOT}/etc/dnsmasq.conf"
+    [ -f "$main_conf" ] || return 0
+    if ! grep -q '^conf-dir=/etc/dnsmasq.d' "$main_conf"; then
+        echo 'conf-dir=/etc/dnsmasq.d/,*.conf' >> "$main_conf"
+        log "Added conf-dir=/etc/dnsmasq.d/ to $main_conf"
+    fi
+}
+
 cmd_enable() {
     local enabled
     enabled=$(uci_get vipin.vpn.video_direct)
@@ -127,6 +139,7 @@ cmd_enable() {
     render_dnsmasq > "${DNSMASQ_CONF}.new"
     mv "${DNSMASQ_CONF}.new" "$DNSMASQ_CONF"
     log "Wrote $DNSMASQ_CONF ($(merge | wc -l) domains)"
+    ensure_dnsmasq_confdir
     if [ "$MOCK" != "1" ]; then
         /etc/init.d/dnsmasq restart 2>/dev/null || log "dnsmasq restart failed"
         /usr/sbin/vipin-vpn-routing reload 2>/dev/null || log "vipin-vpn-routing reload failed"
