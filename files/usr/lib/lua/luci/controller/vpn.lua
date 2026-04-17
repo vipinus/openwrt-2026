@@ -216,12 +216,14 @@ function api_get_vpn_status()
     local ip_count = util.exec("/usr/sbin/vipin-country-ips count " .. current_country .. " 2>/dev/null"):gsub("%s+", "")
     local split_enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
     local split_mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
-    -- procd's status wrapper prints "running" when the service is up and
-    -- "running (N/M)" when some instances have stopped. Treat either as
-    -- connected as long as tun0 actually exists (ground truth).
-    local vpn_status_out = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+    -- Ground truth: tun0 exists + both userspace components alive. procd's
+    -- status wrapper only reports procd-managed instances, so a manually
+    -- launched or externally-restarted stack would be invisible to it.
+    -- Checking actual state is more reliable.
     local tun0_up = util.exec("ip link show tun0 2>/dev/null"):find("tun0") ~= nil
-    local vpn_connected = tun0_up and vpn_status_out:find("running") ~= nil
+    local stunnel_up = util.exec("pgrep -f '/etc/vipin/stunnel-client.conf' 2>/dev/null") ~= ""
+    local hev_up = util.exec("pgrep -f hev-socks5-tunnel 2>/dev/null") ~= ""
+    local vpn_connected = tun0_up and stunnel_up and hev_up
     local auth_status = luci.model.uci:get("vipin", "vpn", "auth_status") or "ok"
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
@@ -294,8 +296,7 @@ function api_connect()
     
     if action == "connect" then
         local output = util.exec("/etc/init.d/vipin-vpn start 2>&1")
-        local s = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
-        result.success = s:find("VPN is running") ~= nil
+        result.success = util.exec("ip link show tun0 2>/dev/null"):find("tun0") ~= nil
     elseif action == "disconnect" then
         util.exec("/etc/init.d/vipin-vpn stop 2>&1")
         result.success = true
@@ -322,9 +323,8 @@ function api_set_split_tunnel()
     luci.model.uci:save("vipin")
     luci.model.uci:commit("vipin")
 
-    -- Only apply routing changes if VPN is connected (procd prints "running")
-    local vpn_status = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
-    local vpn_running = vpn_status:find("running") and "1" or "0"
+    -- Only apply routing changes if VPN is connected (tun0 is ground truth)
+    local vpn_running = util.exec("ip link show tun0 2>/dev/null"):find("tun0") and "1" or "0"
     if vpn_running == "1" then
         if mode == "off" then
             util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")
@@ -440,10 +440,9 @@ function api_login()
         util.exec("/etc/init.d/vipin-vpn start >/dev/null 2>&1")
         util.exec("/etc/init.d/vipin-auth start >/dev/null 2>&1")
 
-        -- Poll up to 12s for the stack to report running.
+        -- Poll up to 12s for tun0 to exist (ground truth for stack-up).
         for _ = 1, 24 do
-            local st = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
-            if st:find("VPN is running") then
+            if util.exec("ip link show tun0 2>/dev/null"):find("tun0") then
                 connected = true
                 break
             end
@@ -589,9 +588,8 @@ function api_set_server()
         luci.model.uci:commit("vipin")
         success = true
 
-        -- If VPN is running, reconnect to new server
-        local st = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
-        if st:find("VPN is running") then
+        -- If VPN is running (tun0 exists), reconnect to new server
+        if util.exec("ip link show tun0 2>/dev/null"):find("tun0") then
             util.exec("/etc/init.d/vipin-vpn restart >/dev/null 2>&1")
             reconnected = true
         end
