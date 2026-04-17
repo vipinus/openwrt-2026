@@ -338,16 +338,24 @@ stop_service() {
     logger -t "$NAME" "VPN stopped"
 }
 
-reload_service() {
+_restart_locked() {
     stop_service
     sleep 1
     start_service
 }
 
+reload_service() {
+    # Serialise with concurrent LuCI / watchdog restarts — no racing callers
+    # ripping down stunnel mid-handshake.
+    ( flock 8
+      _restart_locked
+    ) 8>/var/lock/vipin-restart.lock
+}
+
 restart() {
-    stop_service
-    sleep 1
-    start_service
+    ( flock 8
+      _restart_locked
+    ) 8>/var/lock/vipin-restart.lock
 }
 
 status() {

@@ -98,12 +98,33 @@ handle_auth_tick() {
     esac
 }
 
+# Minimum seconds between successive vipin-vpn restarts we trigger. Prevents
+# a thrash loop where the watchdog re-kicks before procd has finished the
+# previous spawn, which on slow routers made the stack look permanently down.
+RESTART_MIN_INTERVAL=45
+
+# Path used by both the single-instance lock and the restart-serialisation
+# lock. Concurrent actors (LuCI api_set_server, user-triggered restart) take
+# the same file descriptor so they queue instead of racing.
+WATCHDOG_LOCK=/var/lock/vipin-watchdog.lock
+RESTART_LOCK=/var/lock/vipin-restart.lock
+
 # Guard: don't run the main loop when the file is sourced for tests.
 if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
+    # Single-instance guard — if another vipin-auth-check is already running
+    # (e.g. /etc/init.d/vipin-auth start called twice), this exec-flock exits
+    # the duplicate cleanly instead of letting two watchdogs fight.
+    exec 9>"$WATCHDOG_LOCK"
+    if ! flock -n 9; then
+        log "another vipin-auth-check is already holding the lock — exiting"
+        exit 0
+    fi
+
     log "=== VIPIN Auth Monitor Started (stunnel+tun2socks) ==="
 
     reconnect_fails=0
     last_verify=0
+    last_restart=0
 
     while true; do
         now=$(date +%s)
@@ -115,8 +136,19 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
 
         # Watchdog: if either component died, restart (keeps chain intact).
         if ! is_stack_running; then
-            log "stunnel or tun2socks not running — calling vipin-vpn restart"
-            /etc/init.d/vipin-vpn restart 2>/dev/null
+            elapsed_since_restart=$((now - last_restart))
+            if [ "$elapsed_since_restart" -lt "$RESTART_MIN_INTERVAL" ]; then
+                log "stack down but last restart was ${elapsed_since_restart}s ago — waiting"
+            else
+                log "stunnel or tun2socks not running — calling vipin-vpn restart"
+                # Serialise restart with any concurrent caller (LuCI
+                # api_set_server / api_connect) via flock.
+                (
+                    flock 8
+                    /etc/init.d/vipin-vpn restart 2>/dev/null
+                ) 8>"$RESTART_LOCK"
+                last_restart=$now
+            fi
         elif ip link show tun0 >/dev/null 2>&1; then
             # Stack up — ensure tun0 default routes are still in place. They
             # disappear whenever hev-socks5-tunnel gets respawned (tun device
