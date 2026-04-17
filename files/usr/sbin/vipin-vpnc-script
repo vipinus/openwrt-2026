@@ -21,18 +21,24 @@ case "$reason" in
         ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
 
-        # DNS policy: swap dnsmasq upstream to VPN-pushed DNS.
-        # noresolv stays 1 — never fall back to WAN DNS.
-        # /etc/resolv.conf untouched — system lookups keep hitting local dnsmasq.
+        # DNS policy: add VPN-pushed DNS as the preferred upstream, but KEEP
+        # local dnscrypt-proxy (127.0.0.1#5353) as a parallel fallback.
+        # dnsmasq queries all upstreams in parallel by default — whichever
+        # answers first wins. If the VPN-pushed DNS is unreachable (e.g. the
+        # tunnel drops local-originated traffic, which we have seen in
+        # production), dnscrypt-proxy still resolves and the LAN never loses
+        # DNS. Previously we wiped the list and kept only VPN DNS, so a flaky
+        # tunnel broke all name resolution until manual intervention.
         if [ -n "$INTERNAL_IP4_DNS" ]; then
             uci -q delete dhcp.@dnsmasq[0].server
             for vpn_dns in $INTERNAL_IP4_DNS; do
                 uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
             done
+            uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
             uci set dhcp.@dnsmasq[0].noresolv='1'
             uci commit dhcp
             /etc/init.d/dnsmasq restart 2>/dev/null
-            logger -t vpnc-script "Using VPN DNS for LAN: $INTERNAL_IP4_DNS"
+            logger -t vpnc-script "Using VPN DNS for LAN: $INTERNAL_IP4_DNS (+ 127.0.0.1#5353 fallback)"
         fi
 
         # Configure IPv6 if available
