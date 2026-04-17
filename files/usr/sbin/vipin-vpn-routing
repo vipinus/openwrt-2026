@@ -208,7 +208,12 @@ ${video_rule}
 
 chain vipin_output {
     type route hook output priority mangle;
-    oifname "vpn_vipin" return
+    # NOTE: do NOT add 'oifname "vpn_vipin" return' here. The main routing
+    # table sends every non-private destination to vpn_vipin (via the
+    # 0.0.0.0/1 + 128.0.0.0/1 pair installed by vpnc-script), so on the
+    # first OUTPUT pass every router-originated packet has oifname=vpn_vipin
+    # before we get a chance to mark it. Returning here would skip the mark
+    # and blackhole all router-originated DNS/ICMP/HTTP to public IPs.
     oifname "lo" return
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
@@ -254,7 +259,9 @@ ${video_rule}
 
 chain vipin_output {
     type route hook output priority mangle;
-    oifname "vpn_vipin" return
+    # See reverse-mode note above: removing 'oifname "vpn_vipin" return'
+    # because main table already routes non-private dst to vpn_vipin, so
+    # that return would preempt the mark in forward mode too.
     oifname "lo" return
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return

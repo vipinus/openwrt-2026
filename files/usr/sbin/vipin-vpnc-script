@@ -21,25 +21,30 @@ case "$reason" in
         ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
 
-        # DNS policy: add VPN-pushed DNS as the preferred upstream, but KEEP
-        # local dnscrypt-proxy (127.0.0.1#5353) as a parallel fallback.
-        # dnsmasq queries all upstreams in parallel by default — whichever
-        # answers first wins. If the VPN-pushed DNS is unreachable (e.g. the
-        # tunnel drops local-originated traffic, which we have seen in
-        # production), dnscrypt-proxy still resolves and the LAN never loses
-        # DNS. Previously we wiped the list and kept only VPN DNS, so a flaky
-        # tunnel broke all name resolution until manual intervention.
+        # DNS policy: probe each VPN-pushed DNS; only the reachable ones get
+        # added. Always append local dnscrypt-proxy (127.0.0.1#5353) as a
+        # parallel fallback. A dead VPN DNS in the upstream list wastes
+        # dnsmasq query slots (each query waits ~5s for timeout) and can
+        # saturate the 150-slot limit under mobile-app query bursts, which
+        # manifests on clients as "no internet, DNS error". Probing avoids
+        # that state entirely.
+        uci -q delete dhcp.@dnsmasq[0].server
         if [ -n "$INTERNAL_IP4_DNS" ]; then
-            uci -q delete dhcp.@dnsmasq[0].server
             for vpn_dns in $INTERNAL_IP4_DNS; do
-                uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
+                # Short-timeout probe via busybox nslookup. If the server
+                # does not respond within 2 s, skip it.
+                if nslookup -timeout=2 -retry=1 . "$vpn_dns" 2>&1 | grep -q "^Address"; then
+                    uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
+                    logger -t vpnc-script "VPN DNS $vpn_dns reachable — using"
+                else
+                    logger -t vpnc-script "VPN DNS $vpn_dns unreachable — skipping"
+                fi
             done
-            uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
-            uci set dhcp.@dnsmasq[0].noresolv='1'
-            uci commit dhcp
-            /etc/init.d/dnsmasq restart 2>/dev/null
-            logger -t vpnc-script "Using VPN DNS for LAN: $INTERNAL_IP4_DNS (+ 127.0.0.1#5353 fallback)"
         fi
+        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        uci set dhcp.@dnsmasq[0].noresolv='1'
+        uci commit dhcp
+        /etc/init.d/dnsmasq restart 2>/dev/null
 
         # Configure IPv6 if available
         if [ -n "$INTERNAL_IP6_ADDRESS" ]; then
