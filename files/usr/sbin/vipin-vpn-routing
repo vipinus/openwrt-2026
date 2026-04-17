@@ -348,7 +348,10 @@ FWEOF
 }
 
 disable_split() {
-    # Clean up policy routing
+    # Clean up policy routing. The main-table 0.0.0.0/1 + 128.0.0.0/1 dev
+    # tun0 pair stays in place — "关闭分流" semantic is full-tunnel (all
+    # client traffic rides the VPN), and those routes are exactly what
+    # delivers that when no fwmark rule is diverting anything back to WAN.
     ip rule del fwmark $MARK_DIRECT table $TABLE_ID 2>/dev/null
     ip route flush table $TABLE_ID 2>/dev/null
 
