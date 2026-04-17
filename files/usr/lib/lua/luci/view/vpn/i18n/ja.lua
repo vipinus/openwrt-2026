@@ -95,5 +95,10 @@ return {
     video_local_placeholder = "ドメインを入力 (例: video.example.com)",
     video_local_remove = "削除",
     video_reverse_warning = "リバース分割モードではビデオ高速化は無効です。",
-    video_view_remote_list = "公開リストを表示"
+    video_view_remote_list = "公開リストを表示",
+    auth_banner_expired = "アカウントが期限切れです。更新後に自動回復します",
+    auth_banner_invalid = "認証失敗。認証情報を確認してください",
+    auth_banner_not_vip = "VIPアカウントではありません",
+    auth_banner_fail = "認証エラー",
+    server_change_fail = "サーバー変更失敗。再試行してください"
 }

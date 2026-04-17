@@ -95,5 +95,10 @@ return {
     video_local_placeholder = "输入域名（如 video.example.com）",
     video_local_remove = "删除",
     video_reverse_warning = "反向分流模式下视频加速不可用。",
-    video_view_remote_list = "查看公共列表"
+    video_view_remote_list = "查看公共列表",
+    auth_banner_expired = "账户已过期，续费后自动恢复",
+    auth_banner_invalid = "验证失败，请检查凭据",
+    auth_banner_not_vip = "非 VIP 账户",
+    auth_banner_fail = "验证错误",
+    server_change_fail = "更换服务器失败，请重试"
 }

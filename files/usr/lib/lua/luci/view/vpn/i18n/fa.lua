@@ -95,5 +95,10 @@ return {
     video_local_placeholder = "Enter a domain (e.g. video.example.com)",
     video_local_remove = "Remove",
     video_reverse_warning = "Video acceleration is disabled in Reverse Split mode.",
-    video_view_remote_list = "View public list"
+    video_view_remote_list = "View public list",
+    auth_banner_expired = "Account expired — will auto-recover after renewal",
+    auth_banner_invalid = "Verification failed — check credentials",
+    auth_banner_not_vip = "Not a VIP account",
+    auth_banner_fail = "Verification error",
+    server_change_fail = "Failed to change server, please try again"
 }
