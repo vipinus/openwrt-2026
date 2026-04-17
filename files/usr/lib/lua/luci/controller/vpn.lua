@@ -237,8 +237,11 @@ function api_get_vpn_status()
     end
     
     -- VPN server country (extracted from server domain, e.g. "cn" from "cn.fanq.in")
+    -- un.fanq.in is the overseas frontend that forwards CN traffic to cn2,
+    -- so it shares cn's IP set and country display — treat as cn alias.
     local server = luci.model.uci:get("vipin", "vpn", "server") or ""
     local server_country = server:match("^([^.]+)") or ""
+    if server_country == "un" then server_country = "cn" end
     local server_ip_count = 0
     if server_country ~= "" then
         local server_ip_str = util.exec("/usr/sbin/vipin-country-ips count " .. server_country .. " 2>/dev/null"):gsub("%s+", "")

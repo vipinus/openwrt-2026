@@ -21,27 +21,34 @@ case "$reason" in
         ip route add 0.0.0.0/1 dev "$TUNDEV" 2>/dev/null
         ip route add 128.0.0.0/1 dev "$TUNDEV" 2>/dev/null
 
-        # DNS policy: probe each VPN-pushed DNS; only the reachable ones get
-        # added. Always append local dnscrypt-proxy (127.0.0.1#5353) as a
-        # parallel fallback. A dead VPN DNS in the upstream list wastes
-        # dnsmasq query slots (each query waits ~5s for timeout) and can
-        # saturate the 150-slot limit under mobile-app query bursts, which
-        # manifests on clients as "no internet, DNS error". Probing avoids
-        # that state entirely.
+        # DNS policy: VPN DNS is EXCLUSIVE when reachable. We don't mix it
+        # with dnscrypt in parallel because dnscrypt answers from an
+        # overseas resolver, which returns overseas CDN IPs for CN sites
+        # (e.g. baidu → Hong Kong block) that fall outside @vipin_domestic
+        # and bypass the VPN — defeating reverse-split semantics entirely.
+        # Only when VPN DNS is proven dead do we fall back to dnscrypt so
+        # the LAN doesn't lose DNS outright.
         uci -q delete dhcp.@dnsmasq[0].server
+        local any_vpn_dns_live=0
         if [ -n "$INTERNAL_IP4_DNS" ]; then
             for vpn_dns in $INTERNAL_IP4_DNS; do
-                # Short-timeout probe via busybox nslookup. If the server
-                # does not respond within 2 s, skip it.
-                if nslookup -timeout=2 -retry=1 . "$vpn_dns" 2>&1 | grep -q "^Address"; then
+                # Probe with a realistic query (baidu A record), 2 s timeout.
+                # Using '.' root query produced false negatives because some
+                # VPN-side resolvers don't recursively answer root queries.
+                if nslookup -timeout=2 -retry=1 www.baidu.com "$vpn_dns" 2>&1 \
+                   | grep -qE "^Name:|^Address: *[0-9]+\."; then
                     uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
-                    logger -t vpnc-script "VPN DNS $vpn_dns reachable — using"
+                    any_vpn_dns_live=1
+                    logger -t vpnc-script "VPN DNS $vpn_dns reachable — using (exclusive)"
                 else
                     logger -t vpnc-script "VPN DNS $vpn_dns unreachable — skipping"
                 fi
             done
         fi
-        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        if [ "$any_vpn_dns_live" = "0" ]; then
+            uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+            logger -t vpnc-script "No VPN DNS reachable — falling back to dnscrypt-proxy"
+        fi
         uci set dhcp.@dnsmasq[0].noresolv='1'
         uci commit dhcp
         /etc/init.d/dnsmasq restart 2>/dev/null
@@ -61,6 +68,9 @@ case "$reason" in
                 if [ "$SPLIT_MODE" = "reverse" ]; then
                     VPN_SERVER=$(uci get vipin.vpn.server 2>/dev/null || echo "")
                     SERVER_COUNTRY=$(echo "$VPN_SERVER" | cut -d. -f1)
+                    # un.fanq.in is an overseas frontend that forwards CN
+                    # traffic to cn2, so treat it as a cn alias for split.
+                    [ "$SERVER_COUNTRY" = "un" ] && SERVER_COUNTRY="cn"
                     /usr/sbin/vipin-vpn-routing enable "$SERVER_COUNTRY" reverse 2>/dev/null
                 else
                     /usr/sbin/vipin-vpn-routing enable "" forward 2>/dev/null
