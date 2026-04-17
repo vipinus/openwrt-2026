@@ -38,6 +38,38 @@ resolve_connect_server() {
     fi
 }
 
+fetch_auth_params() {
+    # POST /api/v1/router-auth source=stunnel with creds, write response to
+    # $VIPIN_CONFIG_DIR/auth-params.json.
+    # Exit codes: 0=ok, 1=expired/invalid, 2=network error.
+    local username="$1" password="$2" mac="$3"
+    local cfgdir="${VIPIN_CONFIG_DIR:-/etc/vipin}"
+    local api_base response status
+    mkdir -p "$cfgdir"
+
+    if [ "$VIPIN_VPN_MOCK" = "1" ]; then
+        response="$VIPIN_VPN_API_RESPONSE"
+    else
+        api_base=$(uci -q get vipin.vpn.site_url || echo "https://www.anyfq.com")
+        response=$(wget -q -O- --timeout=10 \
+            "${api_base}/api/v1/router-auth" \
+            --post-data="username=${username}&credentials=${password}&mac=${mac}&source=stunnel" \
+            2>/dev/null)
+    fi
+
+    if [ -z "$response" ]; then
+        return 2
+    fi
+
+    echo "$response" > "$cfgdir/auth-params.json"
+    status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    case "$status" in
+        ok) return 0 ;;
+        expired|invalid|not_vip) return 1 ;;
+        *) return 2 ;;
+    esac
+}
+
 get_config() {
     config_load vipin
     config_get_bool enabled vpn enabled 0

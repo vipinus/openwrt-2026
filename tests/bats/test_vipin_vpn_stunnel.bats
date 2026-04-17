@@ -39,3 +39,35 @@
     [ "$status" -eq 0 ]
     [ "$output" = "jp.fanq.in" ]
 }
+
+@test "fetch_auth_params: status=ok writes params file and returns 0" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_API_RESPONSE='{"status":"ok","session_expires":1700000000,"tunnel":{"port":22,"ca_cert":"CERT"},"dns":{"stunnel_host":"cn2.fanq.in","stunnel_port":994},"split":{"default_mode":"forward"}}'
+    export VIPIN_CONFIG_DIR="$BATS_TMPDIR/vipin-test-$$"
+    mkdir -p "$VIPIN_CONFIG_DIR"
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; fetch_auth_params user pass AA:BB'
+    [ "$status" -eq 0 ]
+    [ -f "$VIPIN_CONFIG_DIR/auth-params.json" ]
+    grep -q '"status":"ok"' "$VIPIN_CONFIG_DIR/auth-params.json"
+    rm -rf "$VIPIN_CONFIG_DIR"
+}
+
+@test "fetch_auth_params: status=expired returns 1" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_API_RESPONSE='{"status":"expired","message":"trial ended"}'
+    export VIPIN_CONFIG_DIR="$BATS_TMPDIR/vipin-test-$$"
+    mkdir -p "$VIPIN_CONFIG_DIR"
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; fetch_auth_params user pass AA:BB'
+    [ "$status" -eq 1 ]
+    rm -rf "$VIPIN_CONFIG_DIR"
+}
+
+@test "fetch_auth_params: empty response (network) returns 2" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_API_RESPONSE=''
+    export VIPIN_CONFIG_DIR="$BATS_TMPDIR/vipin-test-$$"
+    mkdir -p "$VIPIN_CONFIG_DIR"
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; fetch_auth_params user pass AA:BB'
+    [ "$status" -eq 2 ]
+    rm -rf "$VIPIN_CONFIG_DIR"
+}
