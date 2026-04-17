@@ -81,9 +81,8 @@ return {
     split_forward_desc = "本地国家直连，其余走VPN",
     split_reverse = "反向分流",
     split_reverse_desc = "只有VPN服务器国家IP走VPN，其余直连。建议将设备DNS设为该国DNS以获得最佳效果。",
-    video_direct_title = "视频直连",
-    video_direct_desc = "将视频 CDN 流量直接从 WAN 出，不经过 VPN 隧道。",
-    video_direct_enable = "启用视频直连",
+    video_direct_title = "视频加速",
+    video_direct_enable = "启用视频加速",
     video_status_remote = "远程列表",
     video_status_local = "本机列表",
     video_status_set = "集合 IP 数",
@@ -95,6 +94,6 @@ return {
     video_local_add = "添加",
     video_local_placeholder = "输入域名（如 video.example.com）",
     video_local_remove = "删除",
-    video_reverse_warning = "反向分流模式下视频直连不可用。",
+    video_reverse_warning = "反向分流模式下视频加速不可用。",
     video_view_remote_list = "查看公共列表"
 }

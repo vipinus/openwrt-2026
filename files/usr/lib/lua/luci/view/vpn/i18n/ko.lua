@@ -81,9 +81,8 @@ return {
     split_forward_desc = "국내 IP 직접 연결, 나머지는 VPN 경유",
     split_reverse = "역방향 분할",
     split_reverse_desc = "VPN 서버 국가만 VPN 경유, 나머지는 직접 연결",
-    video_direct_title = "Video Direct",
-    video_direct_desc = "Route video CDN traffic directly via WAN instead of through the VPN tunnel.",
-    video_direct_enable = "Enable video direct routing",
+    video_direct_title = "Video Acceleration",
+    video_direct_enable = "Enable video acceleration",
     video_status_remote = "Remote",
     video_status_local = "Local",
     video_status_set = "IPs in set",
@@ -95,6 +94,6 @@ return {
     video_local_add = "Add",
     video_local_placeholder = "Enter a domain (e.g. video.example.com)",
     video_local_remove = "Remove",
-    video_reverse_warning = "Video direct is disabled in Reverse Split mode.",
+    video_reverse_warning = "Video acceleration is disabled in Reverse Split mode.",
     video_view_remote_list = "View public list"
 }
