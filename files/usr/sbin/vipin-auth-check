@@ -91,7 +91,14 @@ reconnect_vpn() {
     log "VPN process died, reconnecting..."
     killall openconnect 2>/dev/null
     ip link delete vpn_vipin 2>/dev/null
-    /usr/sbin/vipin-vpn-routing disable 2>/dev/null
+    # Keep vipin-vpn-routing chains/sets intact during the brief reconnect
+    # window. Calling `disable` here flushes @vipin_domestic and drops the
+    # vipin_* chains, which opens a 10-15 s gap before `enable` rebuilds
+    # them; during that gap LAN-client packets reach the now-empty chain
+    # with no mark and get routed via the 0.0.0.0/1 main-table path that
+    # still points to a dead vpn_vipin, so they blackhole. `vipin-vpn-
+    # routing enable` is idempotent (atomic set replace + chain rewrite),
+    # so the next connect refreshes everything without needing a disable.
     sleep 2
     /etc/init.d/vipin-vpn start 2>/dev/null
     sleep 10
