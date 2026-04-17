@@ -28,42 +28,24 @@ case "$reason" in
         # and bypass the VPN — defeating reverse-split semantics entirely.
         # Only when VPN DNS is proven dead do we fall back to dnscrypt so
         # the LAN doesn't lose DNS outright.
+        # DNS policy: write VPN-pushed DNS servers first, then 127.0.0.1#5353
+        # (dnscrypt-proxy) as a fallback. With `strict-order` dnsmasq tries
+        # the list in order, so CN domains get resolved by the VPN DNS
+        # (returning real CN mainland IPs that fall inside @vipin_domestic
+        # and route through the tunnel correctly) and only falls back to
+        # dnscrypt if the VPN DNS times out. This self-heals across DTLS
+        # stalls without the vpnc-script having to guess from an early
+        # probe whether the freshly-up tunnel is actually forwarding.
         uci -q delete dhcp.@dnsmasq[0].server
-        # busybox ash only allows `local` inside functions; this case block
-        # is plain shell, so use a regular variable.
-        any_vpn_dns_live=0
-        # The tunnel interface was just brought up; give it a moment before
-        # firing probes, otherwise the first 1-2 packets silently drop and
-        # the VPN DNS gets marked dead when it is actually fine.
-        sleep 2
         if [ -n "$INTERNAL_IP4_DNS" ]; then
             for vpn_dns in $INTERNAL_IP4_DNS; do
-                # Probe with a realistic query (baidu A record). Try up to
-                # 3 attempts with a 4 s per-attempt timeout so a single
-                # packet loss on the fresh tunnel doesn't mis-classify the
-                # server as dead.
-                got_answer=0
-                for attempt in 1 2 3; do
-                    if nslookup -timeout=4 -retry=1 www.baidu.com "$vpn_dns" 2>&1 \
-                       | grep -qE "^Name:|^Address: *[0-9]+\."; then
-                        got_answer=1; break
-                    fi
-                    sleep 1
-                done
-                if [ "$got_answer" = "1" ]; then
-                    uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
-                    any_vpn_dns_live=1
-                    logger -t vpnc-script "VPN DNS $vpn_dns reachable — using (exclusive)"
-                else
-                    logger -t vpnc-script "VPN DNS $vpn_dns unreachable after 3 tries — skipping"
-                fi
+                uci add_list dhcp.@dnsmasq[0].server="$vpn_dns"
+                logger -t vpnc-script "VPN DNS $vpn_dns added as primary upstream"
             done
         fi
-        if [ "$any_vpn_dns_live" = "0" ]; then
-            uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
-            logger -t vpnc-script "No VPN DNS reachable — falling back to dnscrypt-proxy"
-        fi
+        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
         uci set dhcp.@dnsmasq[0].noresolv='1'
+        uci set dhcp.@dnsmasq[0].strictorder='1'
         uci commit dhcp
         /etc/init.d/dnsmasq restart 2>/dev/null
 
