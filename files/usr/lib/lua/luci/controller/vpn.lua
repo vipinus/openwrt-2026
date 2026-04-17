@@ -609,8 +609,12 @@ function api_video_status()
         f:close()
     end
 
+    -- nft list set prints "elements = { ip1, ip2, ... }" and the block may span
+    -- multiple lines. Old awk only read the first line — drastically undercounted
+    -- or returned 0 whenever the IPs wrapped. Now: extract the whole elements
+    -- block with sed, split on commas, count lines that look like an IP.
     local set_count = tonumber(
-        (util.exec("nft list set inet fw4 vipin_video 2>/dev/null | awk '/elements =/{c=split($0,a,\",\"); print c; exit} END{if(!c) print 0}'"):gsub("%s+", ""))
+        (util.exec("nft list set inet fw4 vipin_video 2>/dev/null | sed -n '/elements = {/,/}/p' | tr ',' '\\n' | grep -cE '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+'"):gsub("%s+", ""))
     ) or 0
 
     http.prepare_content("application/json")

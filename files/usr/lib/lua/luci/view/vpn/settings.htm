@@ -236,12 +236,17 @@ if pass_file then pass_file:close() end
                 </div>
             </div>
             <div class="cbi-value">
-                <label class="cbi-value-title"><%= t.video_status_remote %> / <%= t.video_status_local %> / <%= t.video_status_set %></label>
+                <label class="cbi-value-title"><%= t.video_status_remote %> / <%= t.video_status_local %></label>
                 <div class="cbi-value-field">
                     <span id="video-remote-count">-</span>
                     (<a href="https://github.com/vipinus/openwrt-2026-video-domains/blob/main/domains.txt" target="_blank" rel="noopener"><%= t.video_view_remote_list %></a>)
                     / <span id="video-local-count">-</span>
-                    / <span id="video-set-count">-</span> IPs
+                </div>
+            </div>
+            <div class="cbi-value">
+                <label class="cbi-value-title"><%= t.video_status_set %></label>
+                <div class="cbi-value-field">
+                    <span id="video-set-count">-</span> IPs
                 </div>
             </div>
             <div class="cbi-value">
