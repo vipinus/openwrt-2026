@@ -22,8 +22,10 @@ resolve_connect_server() {
         uci_server="$VIPIN_VPN_UCI_SERVER"
         base_domain="$VIPIN_VPN_BASE_DOMAIN"
     else
-        router_country=$(/usr/sbin/vipin-detect 2>/dev/null | \
-            grep -o '"country": *"[^"]*"' | cut -d'"' -f4)
+        # Use vipin-country-ips get-country to match the detection used in
+        # start_service. vipin-detect with no subcommand prints usage, not JSON;
+        # get-country returns just the 2-letter code (empty if not yet detected).
+        router_country=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
         [ -z "$router_country" ] && router_country="$(uci -q get vipin.vpn.country || echo cn)"
         uci_server=$(uci -q get vipin.vpn.server)
         base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
