@@ -234,13 +234,24 @@ start_service() {
     procd_set_param stderr 1
     procd_close_instance
 
+    cat > /etc/vipin/hev-tun.yaml << 'YAML'
+tunnel:
+  name: tun0
+  mtu: 8500
+  multi-queue: true
+  ipv4: 192.168.200.1/24
+socks5:
+  address: 127.0.0.1
+  port: 1080
+  udp: 'tcp'
+misc:
+  task-stack-size: 20480
+  log-file: stderr
+  log-level: warn
+YAML
+
     procd_open_instance tun2socks
-    procd_set_param command /usr/bin/badvpn-tun2socks \
-        --tundev tun0 \
-        --netif-ipaddr 192.168.200.1 \
-        --netif-netmask 255.255.255.0 \
-        --socks-server-addr 127.0.0.1:1080 \
-        --loglevel warning
+    procd_set_param command /usr/bin/hev-socks5-tunnel /etc/vipin/hev-tun.yaml
     procd_set_param respawn 5 30 3
     procd_set_param stdout 1
     procd_set_param stderr 1
@@ -274,7 +285,7 @@ stop_service() {
     /usr/sbin/vipin-vpn-routing disable 2>/dev/null
 
     killall stunnel 2>/dev/null
-    killall badvpn-tun2socks 2>/dev/null
+    killall hev-socks5-tunnel 2>/dev/null
     sleep 1
 
     ip route del 0.0.0.0/1 dev tun0 2>/dev/null
