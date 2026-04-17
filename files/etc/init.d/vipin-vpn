@@ -112,6 +112,51 @@ checkHost = ${connect_host}
 EOF
 }
 
+configure_dns() {
+    # Decide which dnsmasq upstream to use and (in non-MOCK mode) write it.
+    # Prints the chosen upstream server string to stdout either way.
+    local router_country uci_server base_domain server_country
+    if [ "$VIPIN_VPN_MOCK" = "1" ]; then
+        router_country="$VIPIN_VPN_ROUTER_COUNTRY"
+        uci_server="$VIPIN_VPN_UCI_SERVER"
+        base_domain="$VIPIN_VPN_BASE_DOMAIN"
+    else
+        router_country=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
+        [ -z "$router_country" ] && router_country="$(uci -q get vipin.vpn.country || echo cn)"
+        uci_server=$(uci -q get vipin.vpn.server)
+        base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
+    fi
+
+    # un is a cn alias for split-tunnel and DNS purposes.
+    server_country=$(echo "$uci_server" | cut -d. -f1)
+    [ "$server_country" = "un" ] && server_country="cn"
+
+    local upstream="127.0.0.1#5353"   # dnscrypt-proxy by default
+    if [ "$router_country" != "cn" ] && [ "$server_country" = "cn" ]; then
+        upstream="127.0.0.1#5356"      # UDP→TCP bridge → stunnel → cn2
+    fi
+
+    if [ "$VIPIN_VPN_MOCK" != "1" ]; then
+        uci -q delete dhcp.@dnsmasq[0].server
+        uci add_list dhcp.@dnsmasq[0].server="$upstream"
+        uci set dhcp.@dnsmasq[0].noresolv='1'
+        uci commit dhcp
+        /etc/init.d/dnsmasq restart >/dev/null 2>&1
+    fi
+    echo "$upstream"
+}
+
+teardown_dns() {
+    # Revert to dnscrypt-only upstream when VPN is stopped.
+    if [ "$VIPIN_VPN_MOCK" != "1" ]; then
+        uci -q delete dhcp.@dnsmasq[0].server
+        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        uci set dhcp.@dnsmasq[0].noresolv='1'
+        uci commit dhcp
+        /etc/init.d/dnsmasq restart >/dev/null 2>&1
+    fi
+}
+
 get_config() {
     config_load vipin
     config_get_bool enabled vpn enabled 0

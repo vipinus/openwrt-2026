@@ -104,3 +104,43 @@ EOF
     grep -q 'client = yes' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
     rm -rf "$VIPIN_CONFIG_DIR"
 }
+
+@test "configure_dns: overseas router + cn server -> stunnel chain upstream" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_ROUTER_COUNTRY=ca
+    export VIPIN_VPN_UCI_SERVER=cn.fanq.in
+    export VIPIN_VPN_BASE_DOMAIN=fanq.in
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; configure_dns'
+    [ "$status" -eq 0 ]
+    [ "$output" = "127.0.0.1#5356" ]
+}
+
+@test "configure_dns: cn router + cn server -> dnscrypt upstream" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_ROUTER_COUNTRY=cn
+    export VIPIN_VPN_UCI_SERVER=cn.fanq.in
+    export VIPIN_VPN_BASE_DOMAIN=fanq.in
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; configure_dns'
+    [ "$status" -eq 0 ]
+    [ "$output" = "127.0.0.1#5353" ]
+}
+
+@test "configure_dns: overseas router + jp server -> dnscrypt upstream" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_ROUTER_COUNTRY=ca
+    export VIPIN_VPN_UCI_SERVER=jp.fanq.in
+    export VIPIN_VPN_BASE_DOMAIN=fanq.in
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; configure_dns'
+    [ "$status" -eq 0 ]
+    [ "$output" = "127.0.0.1#5353" ]
+}
+
+@test "configure_dns: overseas router + un server -> stunnel chain (un=cn alias)" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_ROUTER_COUNTRY=ca
+    export VIPIN_VPN_UCI_SERVER=un.fanq.in
+    export VIPIN_VPN_BASE_DOMAIN=fanq.in
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; configure_dns'
+    [ "$status" -eq 0 ]
+    [ "$output" = "127.0.0.1#5356" ]
+}
