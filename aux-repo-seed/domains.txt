@@ -1,6 +1,9 @@
 # openwrt-2026 video_direct — curated domain list
-# Updated: 2026-04-16 (Tencent expanded 2→10)
+# Updated: 2026-04-17 (added mgtv/sohu/letv/pptv/acfun/migu — 17 domains)
 # Format: one domain per line; # for comments; dnsmasq matches subdomains
+# Scope: domestic (CN) video CDNs only. Overseas CDNs (YouTube/Netflix/etc.)
+# excluded because GFW poisons their DNS in CN — adding them would route
+# traffic to fake IPs. See docs for DoH-based overseas support (deferred).
 
 # --- netflix (14) ---
 netflix.ca
@@ -67,3 +70,32 @@ vfiles.gtimg.cn
 puui.qpic.cn
 yoo.gtimg.com
 pgdt.gtimg.cn
+
+# --- mgtv (3) ---
+hitv.com
+mgmiao.com
+mgtv.com
+
+# --- sohu (3) ---
+itc.cn
+sohucs.com
+tv.sohu.com
+
+# --- letv (4) ---
+le.com
+lecloud.com
+letv.com
+letvimg.com
+
+# --- pptv (2) ---
+pplive.com
+pptv.com
+
+# --- acfun (2) ---
+acfun.cn
+acimg.cn
+
+# --- migu (3) ---
+cmvideo.cn
+migu.cn
+miguvideo.com
