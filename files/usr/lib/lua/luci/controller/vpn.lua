@@ -290,7 +290,8 @@ function api_connect()
     
     if action == "connect" then
         local output = util.exec("/etc/init.d/vipin-vpn start 2>&1")
-        result.success = (util.exec("pgrep openconnect >/dev/null && echo 1 || echo 0"):gsub("%s+", "") == "1")
+        local s = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+        result.success = s:find("VPN is running") ~= nil
     elseif action == "disconnect" then
         util.exec("/etc/init.d/vipin-vpn stop 2>&1")
         result.success = true
@@ -318,7 +319,8 @@ function api_set_split_tunnel()
     luci.model.uci:commit("vipin")
 
     -- Only apply routing changes if VPN is connected
-    local vpn_running = util.exec("pgrep openconnect >/dev/null && echo '1' || echo '0'"):gsub("%s+", "")
+    local vpn_status = util.exec("/etc/init.d/vipin-vpn status 2>/dev/null")
+    local vpn_running = vpn_status:find("VPN is running") and "1" or "0"
     if vpn_running == "1" then
         if mode == "off" then
             util.exec("/usr/sbin/vipin-vpn-routing disable 2>&1")
@@ -473,11 +475,7 @@ function api_logout()
     local http = require("luci.http")
     local json = require("cjson")
     local util = require("luci.util")
-    
-    -- Disable auto-connect
-    luci.model.uci:set("vipin", "vpn", "enabled", "0")
-    luci.model.uci:save("vipin")
-    luci.model.uci:commit("vipin")
+
     -- Stop services
     util.exec("/etc/init.d/vipin-vpn stop 2>&1")
     util.exec("/etc/init.d/vipin-auth stop 2>&1")

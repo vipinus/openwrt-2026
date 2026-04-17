@@ -23,11 +23,6 @@ log() {
     fi
 }
 
-is_vpn_enabled() {
-    local enabled=$(uci get vipin.vpn.enabled 2>/dev/null || echo "0")
-    [ "$enabled" = "1" ]
-}
-
 has_auth_file() {
     [ -f "$AUTH_FILE" ] && [ -f "$CONF_DIR/.vpn_pass" ]
 }
