@@ -71,3 +71,36 @@
     [ "$status" -eq 2 ]
     rm -rf "$VIPIN_CONFIG_DIR"
 }
+
+@test "extract_ca_cert: writes CA from auth-params.json" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_CONFIG_DIR="$BATS_TMPDIR/vipin-test-$$"
+    mkdir -p "$VIPIN_CONFIG_DIR"
+    cat > "$VIPIN_CONFIG_DIR/auth-params.json" <<EOF
+{"status":"ok","tunnel":{"port":22,"ca_cert":"-----BEGIN CERTIFICATE-----\nMIIBXX\n-----END CERTIFICATE-----\n"}}
+EOF
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; extract_ca_cert'
+    [ "$status" -eq 0 ]
+    [ -f "$VIPIN_CONFIG_DIR/stunnel-ca.pem" ]
+    grep -q 'BEGIN CERTIFICATE' "$VIPIN_CONFIG_DIR/stunnel-ca.pem"
+    rm -rf "$VIPIN_CONFIG_DIR"
+}
+
+@test "render_stunnel_conf: uses port from auth + connect_server from resolve" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_ROUTER_COUNTRY=ca
+    export VIPIN_VPN_UCI_SERVER=cn.fanq.in
+    export VIPIN_VPN_BASE_DOMAIN=fanq.in
+    export VIPIN_CONFIG_DIR="$BATS_TMPDIR/vipin-test-$$"
+    mkdir -p "$VIPIN_CONFIG_DIR"
+    cat > "$VIPIN_CONFIG_DIR/auth-params.json" <<EOF
+{"status":"ok","tunnel":{"port":22,"ca_cert":"CERT"}}
+EOF
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; render_stunnel_conf'
+    [ "$status" -eq 0 ]
+    [ -f "$VIPIN_CONFIG_DIR/stunnel-client.conf" ]
+    grep -q 'connect = un.fanq.in:22' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
+    grep -q 'accept = 127.0.0.1:1080' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
+    grep -q 'client = yes' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
+    rm -rf "$VIPIN_CONFIG_DIR"
+}
