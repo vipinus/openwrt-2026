@@ -747,9 +747,9 @@ function serverChange(newServer) {
     if (!newServer) return;
     if (uiBusy) return;
     uiBusy = true;
-    // Same 35s window the stack needs to teardown stunnel+hev, reconnect,
-    // rebring tun0, and reinstall routing rules — mirrors setSplitMode UX.
-    runTimedProgress('server-progress-row', 'server-progress-bar', 'server-progress-text', 35000, function() {
+    // 10s matches the split-mode progress window. Routing/stack may still
+    // settle after this, but the 5s poller picks up the final state.
+    runTimedProgress('server-progress-row', 'server-progress-bar', 'server-progress-text', 10000, function() {
         uiBusy = false;
         loadStatus();
     });
