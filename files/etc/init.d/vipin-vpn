@@ -184,7 +184,14 @@ dns_transport_list:
 tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
 tls_query_padding_blocksize: 128
 edns_client_subnet_private: 1
-idle_timeout: 10000
+# 60s idle — stubby's default inherited from stock OpenWrt (9s) was tuned
+# for public DoT providers (Cloudflare/Quad9) where short connections help
+# load-balancing. We point at our own cn.fanq.in:994 with only one client
+# (this router) so there's no server-side reason to churn. A bursty browse
+# (page load → 20 queries, pause → click next) pays a full TLS reconnect
+# every time the pause exceeds the timeout; bumping 10s → 60s cuts cold
+# reconnects ~6× on typical traffic. Cloudflare's published guidance is 30s.
+idle_timeout: 60000
 listen_addresses:
   - 127.0.0.1@5356
 round_robin_upstreams: 1
