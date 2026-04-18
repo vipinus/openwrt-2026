@@ -141,6 +141,34 @@ jobs:
           mkdir -p custom-files
           cp -r "${{ github.workspace }}/files/"* custom-files/
 
+          # Pre-bake latest upstream lists into the image so a fresh flash
+          # is useful offline and doesn't burn the first-boot DNS window
+          # on downloading them. Non-fatal: if GitHub is rate-limiting or
+          # the URL 404s, the cached copy already in files/ is kept.
+          echo "=== Refreshing upstream lists ==="
+          VIDEO_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/domains.txt"
+          DNSC_URL_BASE="https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3"
+          mkdir -p custom-files/etc/vipin custom-files/etc/dnscrypt-proxy
+
+          # Video-direct domain list → seeds /etc/vipin/video-domains.remote
+          if curl -fsSL --max-time 20 -o /tmp/domains.txt "$VIDEO_URL"; then
+              mv /tmp/domains.txt custom-files/etc/vipin/video-domains.remote
+              echo "video-domains.remote: $(wc -l < custom-files/etc/vipin/video-domains.remote) lines"
+          else
+              echo "WARN: video-domains fetch failed — keeping baked copy"
+          fi
+
+          # DNSCrypt resolvers list + minisig (pair; fetch both or neither)
+          if curl -fsSL --max-time 30 -o /tmp/public-resolvers.md "$DNSC_URL_BASE/public-resolvers.md" && \
+             curl -fsSL --max-time 10 -o /tmp/public-resolvers.md.minisig "$DNSC_URL_BASE/public-resolvers.md.minisig"; then
+              mv /tmp/public-resolvers.md custom-files/etc/dnscrypt-proxy/public-resolvers.md
+              mv /tmp/public-resolvers.md.minisig custom-files/etc/dnscrypt-proxy/public-resolvers.md.minisig
+              echo "public-resolvers.md: $(wc -c < custom-files/etc/dnscrypt-proxy/public-resolvers.md) bytes"
+          else
+              echo "WARN: dnscrypt-resolvers fetch failed — keeping baked copy"
+              rm -f /tmp/public-resolvers.md /tmp/public-resolvers.md.minisig
+          fi
+
           # Map language code
           FINAL_LANG="${LUCI_LANG:-en}"
           case "$FINAL_LANG" in
