@@ -133,9 +133,12 @@ failover = rr
 CAfile = ${cfgdir}/stunnel-ca.pem
 verifyChain = yes
 checkHost = ${connect_host}
-; keep idle tunnels short so the process footprint doesn't grow under burst
+; Close initiator-side immediately (default is 60s lingering half-close).
+; Leaves TIMEOUTidle at stunnel's upstream default (43200s = 12h) — earlier
+; override at 60s was killing long-lived SSH / WebSocket / video-keepalive
+; flows every minute of quiet for a memory saving that doesn't materially
+; help on a residential-traffic router.
 TIMEOUTclose = 0
-TIMEOUTidle = 60
 EOF
 
 }
