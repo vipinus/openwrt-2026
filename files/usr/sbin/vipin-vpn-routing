@@ -219,6 +219,10 @@ chain vipin_output {
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
+    # stubby DoT must go straight out WAN, not loop back through tun0. The
+    # DoT endpoint (cn.fanq.in:994) is in @vipin_domestic so would normally
+    # "return" here; force-mark port 994 first.
+    tcp dport 994 meta mark set 0x200
 ${video_rule}
     ip daddr @vipin_domestic return
     meta mark set 0x200
