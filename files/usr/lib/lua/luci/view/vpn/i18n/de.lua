@@ -60,6 +60,7 @@ return {
     login_button = "Konto speichern",
     logout_button = "Abmelden & Trennen",
     invalid_credentials = "Ungueltiger Benutzername oder Passwort",
+    network_initializing = "Netzwerk wird initialisiert, bitte erneut versuchen",
     account_expired = "Konto abgelaufen",
     not_vip_account = "Dieses Konto ist kein VIP-Konto",
     logged_in = "Angemeldet",

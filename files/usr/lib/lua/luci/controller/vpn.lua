@@ -80,6 +80,7 @@ i18n["en"] = load_i18n("en") or {
         login_button = "Save Account",
         logout_button = "Logout & Disconnect",
         invalid_credentials = "Invalid username or password",
+        network_initializing = "Network initializing, please retry shortly",
         account_expired = "Account has expired",
         not_vip_account = "This account is not a VIP account",
         logged_in = "Logged In",

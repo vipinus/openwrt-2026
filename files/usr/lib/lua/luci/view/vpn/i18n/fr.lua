@@ -60,6 +60,7 @@ return {
     login_button = "Enregistrer le compte",
     logout_button = "Deconnexion et arret VPN",
     invalid_credentials = "Nom d'utilisateur ou mot de passe invalide",
+    network_initializing = "Initialisation du réseau, veuillez réessayer dans un instant",
     account_expired = "Compte expire",
     not_vip_account = "Ce compte n'est pas un compte VIP",
     logged_in = "Connecte",

@@ -60,6 +60,7 @@ return {
     login_button = "アカウント保存",
     logout_button = "ログアウトして切断",
     invalid_credentials = "ユーザー名またはパスワードが無効です",
+    network_initializing = "ネットワーク初期化中です。しばらくしてから再試行してください",
     account_expired = "アカウント有効期限切れ",
     not_vip_account = "このアカウントはVIPアカウントではありません",
     logged_in = "ログイン済み",

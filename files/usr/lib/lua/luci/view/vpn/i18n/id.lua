@@ -60,6 +60,7 @@ return {
     login_button = "Simpan Akun",
     logout_button = "Keluar & Putuskan",
     invalid_credentials = "Nama pengguna atau kata sandi tidak valid",
+    network_initializing = "Jaringan sedang inisialisasi, coba lagi sebentar",
     account_expired = "Akun telah kedaluwarsa",
     not_vip_account = "Akun ini bukan akun VIP",
     logged_in = "Masuk",

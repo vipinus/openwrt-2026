@@ -558,6 +558,7 @@ function doLogin() {
                 var msg = vpnData.t.invalid_credentials;
                 if (r.status === 'expired') msg = vpnData.t.account_expired;
                 if (r.status === 'not_vip') msg = vpnData.t.not_vip_account;
+                if (r.status === 'network_error') msg = vpnData.t.network_initializing || vpnData.t.error;
                 errorEl.textContent = msg; errorEl.style.display = 'inline';
             }
         } catch (e) { hideLoginProgress(false); errorEl.textContent = vpnData.t.error; errorEl.style.display = 'inline'; }

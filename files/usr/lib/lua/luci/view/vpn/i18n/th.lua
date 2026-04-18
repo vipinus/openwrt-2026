@@ -60,6 +60,7 @@ return {
     login_button = "บันทึกบัญชี",
     logout_button = "ออกจากระบบและตัดการเชื่อมต่อ",
     invalid_credentials = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+    network_initializing = "กำลังเริ่มต้นเครือข่าย โปรดลองอีกครั้งในอีกสักครู่",
     account_expired = "บัญชีหมดอายุ",
     not_vip_account = "บัญชีนี้ไม่ใช่บัญชี VIP",
     logged_in = "เข้าสู่ระบบแล้ว",

@@ -60,6 +60,7 @@ return {
     login_button = "Guardar cuenta",
     logout_button = "Cerrar sesion y desconectar",
     invalid_credentials = "Usuario o contrasena invalidos",
+    network_initializing = "Red inicializando, inténtelo de nuevo en un momento",
     account_expired = "Cuenta vencida",
     not_vip_account = "Esta cuenta no es una cuenta VIP",
     logged_in = "Sesion iniciada",

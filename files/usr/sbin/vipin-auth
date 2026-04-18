@@ -206,9 +206,18 @@ remote_auth() {
     local enc_mac=$(urlencode "$router_mac")
     local enc_model=$(urlencode "$router_model")
 
-    local response=$(wget -q -O- --timeout=15 \
-        --post-data="username=$enc_username&password=$enc_password&mac=$enc_mac&source=router-plain&model=$enc_model" \
-        "$auth_url" 2>/dev/null)
+    # Retry up to 3 times: on first boot, dnscrypt-proxy takes ~60s to
+    # bootstrap its resolver list. If user hits "Save Account" within that
+    # window, wget returns empty (DNS unresolvable) and the caller would
+    # treat the account as invalid. Worst case: 3 × (15+3) = 54s.
+    local response attempt
+    for attempt in 1 2 3; do
+        response=$(wget -q -O- --timeout=15 \
+            --post-data="username=$enc_username&password=$enc_password&mac=$enc_mac&source=router-plain&model=$enc_model" \
+            "$auth_url" 2>/dev/null)
+        [ -n "$response" ] && break
+        [ "$attempt" -lt 3 ] && sleep 3
+    done
 
     echo "$response"
 }
@@ -272,9 +281,12 @@ local_auth() {
     local router_mac="$3"
 
     # Local database auth not available on router (no MySQL)
-    # Only remote API auth is supported
+    # Only remote API auth is supported. Return a distinct status so the
+    # UI can distinguish "DNS/network not ready yet" (typical on cold flash
+    # first boot) from "credentials rejected" — showing the latter for what
+    # is actually the former causes users to think their account is bad.
     log "Local auth not available, remote API required"
-    echo "{\"status\": \"error\", \"message\": \"Server unreachable, please check internet connection\"}"
+    echo "{\"status\": \"network_error\", \"message\": \"Network not ready, please retry in a moment\"}"
     return 1
 
     # Legacy local auth code below (requires MySQL, not available on router)

@@ -60,6 +60,7 @@ return {
     login_button = "계정 저장",
     logout_button = "로그아웃 및 연결 해제",
     invalid_credentials = "사용자 이름 또는 비밀번호가 올바르지 않습니다",
+    network_initializing = "네트워크 초기화 중입니다. 잠시 후 다시 시도하세요",
     account_expired = "계정이 만료되었습니다",
     not_vip_account = "이 계정은 VIP 계정이 아닙니다",
     logged_in = "로그인됨",

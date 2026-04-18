@@ -60,6 +60,7 @@ return {
     login_button = "Hesabı Kaydet",
     logout_button = "Çikis yap ve baglantiyi kes",
     invalid_credentials = "Gecersiz kullanici adi veya sifre",
+    network_initializing = "Ağ başlatılıyor, lütfen kısa süre sonra tekrar deneyin",
     account_expired = "Hesap süresi doldu",
     not_vip_account = "Bu hesap VIP hesabi degil",
     logged_in = "Girili",

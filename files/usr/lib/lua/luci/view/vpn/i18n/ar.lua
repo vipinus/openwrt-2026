@@ -60,6 +60,7 @@ return {
     login_button = "حفظ الحساب",
     logout_button = "تسجيل الخروج وقطع الاتصال",
     invalid_credentials = "اسم المستخدم أو كلمة المرور غير صحيحة",
+    network_initializing = "تتم تهيئة الشبكة، يرجى إعادة المحاولة بعد قليل",
     account_expired = "انتهت صلاحية الحساب",
     not_vip_account = "هذا الحساب ليس حساب VIP",
     logged_in = "مسجل الدخول",

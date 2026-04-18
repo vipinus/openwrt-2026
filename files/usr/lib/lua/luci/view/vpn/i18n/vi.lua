@@ -60,6 +60,7 @@ return {
     login_button = "Lưu tài khoản",
     logout_button = "Dang xuat va ngat ket noi",
     invalid_credentials = "Ten nguoi dung hoac mat khau khong hop le",
+    network_initializing = "Đang khởi tạo mạng, vui lòng thử lại sau giây lát",
     account_expired = "Tai khoan da het han",
     not_vip_account = "Tai khoan nay khong phai tai khoan VIP",
     logged_in = "Da dang nhap",

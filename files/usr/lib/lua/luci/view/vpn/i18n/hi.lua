@@ -60,6 +60,7 @@ return {
     login_button = "खाता सहेजें",
     logout_button = "लॉगआउट और डिस्कनेक्ट करें",
     invalid_credentials = "अमान्य उपयोगकर्ता नाम या पासवर्ड",
+    network_initializing = "नेटवर्क आरंभ हो रहा है, कृपया कुछ देर बाद पुनः प्रयास करें",
     account_expired = "खाते की अवधि समाप्त",
     not_vip_account = "यह खाता VIP खाता नहीं है",
     logged_in = "लॉगिन है",

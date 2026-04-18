@@ -60,6 +60,7 @@ return {
     login_button = "Salvar conta",
     logout_button = "Sair e desconectar",
     invalid_credentials = "Nome de usuario ou senha invalidos",
+    network_initializing = "Rede inicializando, tente novamente em instantes",
     account_expired = "Conta expirada",
     not_vip_account = "Esta conta nao e uma conta VIP",
     logged_in = "Conectado",

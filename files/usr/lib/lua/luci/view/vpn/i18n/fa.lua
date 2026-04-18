@@ -60,6 +60,7 @@ return {
     login_button = "ذخیره حساب",
     logout_button = "خروج و قطع اتصال",
     invalid_credentials = "نام کاربری یا رمز عبور اشتباه",
+    network_initializing = "درحال راه‌اندازی شبکه، لطفاً کمی بعد دوباره تلاش کنید",
     account_expired = "حساب منقضی شده",
     not_vip_account = "این حساب VIP نیست",
     logged_in = "وارد شده",

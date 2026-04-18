@@ -60,6 +60,7 @@ return {
     login_button = "保存帳號",
     logout_button = "登出並斷線",
     invalid_credentials = "使用者名稱或密碼錯誤",
+    network_initializing = "網絡初始化中，請稍候重試",
     account_expired = "帳戶已過期",
     not_vip_account = "此帳戶不是VIP帳戶",
     logged_in = "已登入",

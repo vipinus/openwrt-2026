@@ -60,6 +60,7 @@ return {
     login_button = "Сохранить аккаунт",
     logout_button = "Vyhod i otklyuchenie",
     invalid_credentials = "Nevernoe imya polzovatelya ili parol",
+    network_initializing = "Сеть инициализируется, повторите попытку позже",
     account_expired = "Srok dejstviya аккаунta istek",
     not_vip_account = "Etot аккаунт ne yavlyaetsya VIP-аккаунtom",
     logged_in = "Avtorizovan",
