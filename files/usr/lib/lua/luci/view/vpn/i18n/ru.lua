@@ -54,6 +54,7 @@ return {
     logout = "Vyhod",
     username = "Imya polzovatelya",
     password = "Parol",
+    update_account = "Обновить аккаунт",
     login_title = "Vxod v аккаунт VIP",
     login_desc = "Vvedite svoi dannye dlya podklyucheniya k VPN",
     login_button = "Vxod i podklyuchenie",

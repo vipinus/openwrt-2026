@@ -54,6 +54,7 @@ return {
     logout = "خروج",
     username = "نام کاربری",
     password = "رمز عبور",
+    update_account = "به‌روزرسانی حساب",
     login_title = "ورود به حساب VIP",
     login_desc = "اطلاعات حساب خود را برای اتصال VPN وارد کنید",
     login_button = "ورود و اتصال",

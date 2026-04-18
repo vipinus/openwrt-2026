@@ -54,6 +54,7 @@ return {
     logout = "Deconnexion",
     username = "Nom d'utilisateur",
     password = "Mot de passe",
+    update_account = "Mettre à jour le compte",
     login_title = "Connexion au compte VIP",
     login_desc = "Entrez vos identifiants pour vous connecter au VPN",
     login_button = "Connexion et connexion VPN",

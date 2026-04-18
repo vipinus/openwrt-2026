@@ -54,6 +54,7 @@ return {
     logout = "Dang xuat",
     username = "Ten nguoi dung",
     password = "Mat khau",
+    update_account = "Cập nhật tài khoản",
     login_title = "Dang nhap tai khoan VIP",
     login_desc = "Nhap thong tin tai khoan de ket noi VPN",
     login_button = "Dang nhap va ket noi",

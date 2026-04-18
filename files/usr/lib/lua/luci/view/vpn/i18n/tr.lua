@@ -54,6 +54,7 @@ return {
     logout = "Çikis yap",
     username = "Kullanici adi",
     password = "Sifre",
+    update_account = "Hesabı Güncelle",
     login_title = "VIP Hesabi Girisi",
     login_desc = "VPN'e baglanmak için kimlik bilgilerinizi girin",
     login_button = "Giris yap ve baglan",

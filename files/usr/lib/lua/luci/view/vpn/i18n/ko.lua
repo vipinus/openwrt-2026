@@ -54,6 +54,7 @@ return {
     logout = "로그아웃",
     username = "사용자 이름",
     password = "비밀번호",
+    update_account = "계정 업데이트",
     login_title = "VIP 계정 로그인",
     login_desc = "계정 자격 증명을 입력하여 VPN 연결",
     login_button = "로그인 및 연결",

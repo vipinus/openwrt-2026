@@ -54,6 +54,7 @@ return {
     logout = "ออกจากระบบ",
     username = "ชื่อผู้ใช้",
     password = "รหัสผ่าน",
+    update_account = "อัปเดตบัญชี",
     login_title = "เข้าสู่ระบบบัญชี VIP",
     login_desc = "ป้อนข้อมูลประจำตัวเพื่อเชื่อมต่อ VPN",
     login_button = "เข้าสู่ระบบและเชื่อมต่อ",

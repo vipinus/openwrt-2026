@@ -54,6 +54,7 @@ return {
     logout = "Sair",
     username = "Nome de usuario",
     password = "Senha",
+    update_account = "Atualizar conta",
     login_title = "Login da conta VIP",
     login_desc = "Digite suas credenciais para conectar ao VPN",
     login_button = "Entrar e conectar",

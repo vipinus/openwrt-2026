@@ -74,6 +74,7 @@ i18n["en"] = load_i18n("en") or {
         logout = "Logout",
         username = "Username",
         password = "Password",
+        update_account = "Update Account",
         login_title = "VIP Account Login",
         login_desc = "Enter your account credentials to connect VPN",
         login_button = "Login & Connect",

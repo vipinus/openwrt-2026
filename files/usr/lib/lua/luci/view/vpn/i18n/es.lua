@@ -54,6 +54,7 @@ return {
     logout = "Cerrar sesion",
     username = "Nombre de usuario",
     password = "Contrasena",
+    update_account = "Actualizar cuenta",
     login_title = "Inicio de sesion cuenta VIP",
     login_desc = "Ingrese sus credenciales para conectar VPN",
     login_button = "Iniciar sesion y conectar",

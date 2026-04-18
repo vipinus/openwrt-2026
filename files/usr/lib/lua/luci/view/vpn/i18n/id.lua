@@ -54,6 +54,7 @@ return {
     logout = "Keluar",
     username = "Nama pengguna",
     password = "Kata sandi",
+    update_account = "Perbarui Akun",
     login_title = "Login Akun VIP",
     login_desc = "Masukkan kredensial akun Anda untuk menghubungkan VPN",
     login_button = "Masuk & Hubungkan",

@@ -54,6 +54,7 @@ return {
     logout = "登出",
     username = "使用者名稱",
     password = "密碼",
+    update_account = "更新帳號",
     login_title = "VIP帳戶登入",
     login_desc = "輸入您的帳戶憑證以連線VPN",
     login_button = "登入並連線",

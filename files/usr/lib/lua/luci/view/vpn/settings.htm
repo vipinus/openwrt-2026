@@ -141,7 +141,10 @@ if pass_file then pass_file:close() end
             <div id="user-info" style="display:none;">
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.username %></label>
-                    <div class="cbi-value-field"><strong id="user-name">-</strong></div>
+                    <div class="cbi-value-field">
+                        <strong id="user-name">-</strong>
+                        <input type="button" class="cbi-button cbi-button-neutral" id="btn-update-account" onclick="updateAccount()" value="<%= t.update_account %>" style="margin-left:12px;" />
+                    </div>
                 </div>
                 <div class="cbi-value">
                     <label class="cbi-value-title"><%= t.valid_until %></label>
@@ -452,6 +455,22 @@ function loadAuthStatus() {
         } catch (e) { console.error(e); }
     };
     xhr.send();
+}
+
+function updateAccount() {
+    // Show the login form pre-filled with the current username so the user
+    // can re-enter (or change) credentials. Submitting runs the normal
+    // api_login flow which replaces stored creds and reconnects.
+    var loginForm = document.getElementById('login-form');
+    var userInfo = document.getElementById('user-info');
+    var u = document.getElementById('login-username');
+    var p = document.getElementById('login-password');
+    var err = document.getElementById('login-error');
+    if (u) u.value = (vpnData.authUsername || '');
+    if (p) { p.value = ''; setTimeout(function () { p.focus(); }, 0); }
+    if (err) err.style.display = 'none';
+    if (loginForm) loginForm.style.display = 'block';
+    if (userInfo) userInfo.style.display = 'none';
 }
 
 function updateAuthUI() {

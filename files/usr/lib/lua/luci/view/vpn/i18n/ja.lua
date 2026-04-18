@@ -54,6 +54,7 @@ return {
     logout = "ログアウト",
     username = "ユーザー名",
     password = "パスワード",
+    update_account = "アカウント更新",
     login_title = "VIPアカウントログイン",
     login_desc = "アカウント資格情報を入力してVPNに接続",
     login_button = "ログインして接続",

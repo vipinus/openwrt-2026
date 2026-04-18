@@ -54,6 +54,7 @@ return {
     logout = "تسجيل الخروج",
     username = "اسم المستخدم",
     password = "كلمة المرور",
+    update_account = "تحديث الحساب",
     login_title = "تسجيل دخول حساب VIP",
     login_desc = "أدخل بيانات اعتماد حسابك للاتصال بـ VPN",
     login_button = "تسجيل الدخول والاتصال",
