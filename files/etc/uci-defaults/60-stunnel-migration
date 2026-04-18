@@ -17,4 +17,12 @@ uci commit vipin
 # Also remove the legacy openconnect cert pin file if present.
 rm -f /etc/vipin/cert_pin
 
+# Stop and disable OpenWrt's default system stunnel. The stock package
+# ships with a dummy loopback [dummy] section (localhost:6000→6001) that
+# nobody uses but still costs ~7 MB RSS on a 128 MB router. Our VPN
+# stack runs its own stunnel via /etc/init.d/vipin-vpn, so disable the
+# system one to free memory.
+/etc/init.d/stunnel stop 2>/dev/null
+/etc/init.d/stunnel disable 2>/dev/null
+
 exit 0
