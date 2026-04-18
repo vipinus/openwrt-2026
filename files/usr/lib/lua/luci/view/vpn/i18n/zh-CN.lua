@@ -57,7 +57,7 @@ return {
     update_account = "更新账号",
     login_title = "VIP账户登录",
     login_desc = "输入您的账户凭据以连接VPN",
-    login_button = "登录并连接",
+    login_button = "保存账号",
     logout_button = "退出并断开",
     invalid_credentials = "用户名或密码错误",
     account_expired = "账户已过期",

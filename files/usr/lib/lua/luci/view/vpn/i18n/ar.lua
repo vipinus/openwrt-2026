@@ -57,7 +57,7 @@ return {
     update_account = "تحديث الحساب",
     login_title = "تسجيل دخول حساب VIP",
     login_desc = "أدخل بيانات اعتماد حسابك للاتصال بـ VPN",
-    login_button = "تسجيل الدخول والاتصال",
+    login_button = "حفظ الحساب",
     logout_button = "تسجيل الخروج وقطع الاتصال",
     invalid_credentials = "اسم المستخدم أو كلمة المرور غير صحيحة",
     account_expired = "انتهت صلاحية الحساب",

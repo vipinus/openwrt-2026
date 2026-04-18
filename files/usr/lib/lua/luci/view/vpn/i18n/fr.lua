@@ -57,7 +57,7 @@ return {
     update_account = "Mettre à jour le compte",
     login_title = "Connexion au compte VIP",
     login_desc = "Entrez vos identifiants pour vous connecter au VPN",
-    login_button = "Connexion et connexion VPN",
+    login_button = "Enregistrer le compte",
     logout_button = "Deconnexion et arret VPN",
     invalid_credentials = "Nom d'utilisateur ou mot de passe invalide",
     account_expired = "Compte expire",

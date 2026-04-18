@@ -57,7 +57,7 @@ return {
     update_account = "खाता अपडेट करें",
     login_title = "VIP खाता लॉगिन",
     login_desc = "VPN से कनेक्ट करने के लिए अपना क्रेडेंशियल दर्ज करें",
-    login_button = "लॉगिन और कनेक्ट करें",
+    login_button = "खाता सहेजें",
     logout_button = "लॉगआउट और डिस्कनेक्ट करें",
     invalid_credentials = "अमान्य उपयोगकर्ता नाम या पासवर्ड",
     account_expired = "खाते की अवधि समाप्त",

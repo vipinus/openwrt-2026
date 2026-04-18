@@ -57,7 +57,7 @@ return {
     update_account = "Cập nhật tài khoản",
     login_title = "Dang nhap tai khoan VIP",
     login_desc = "Nhap thong tin tai khoan de ket noi VPN",
-    login_button = "Dang nhap va ket noi",
+    login_button = "Lưu tài khoản",
     logout_button = "Dang xuat va ngat ket noi",
     invalid_credentials = "Ten nguoi dung hoac mat khau khong hop le",
     account_expired = "Tai khoan da het han",

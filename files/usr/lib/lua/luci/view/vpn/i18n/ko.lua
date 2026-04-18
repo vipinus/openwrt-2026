@@ -57,7 +57,7 @@ return {
     update_account = "계정 업데이트",
     login_title = "VIP 계정 로그인",
     login_desc = "계정 자격 증명을 입력하여 VPN 연결",
-    login_button = "로그인 및 연결",
+    login_button = "계정 저장",
     logout_button = "로그아웃 및 연결 해제",
     invalid_credentials = "사용자 이름 또는 비밀번호가 올바르지 않습니다",
     account_expired = "계정이 만료되었습니다",

@@ -77,7 +77,7 @@ i18n["en"] = load_i18n("en") or {
         update_account = "Update Account",
         login_title = "VIP Account Login",
         login_desc = "Enter your account credentials to connect VPN",
-        login_button = "Login & Connect",
+        login_button = "Save Account",
         logout_button = "Logout & Disconnect",
         invalid_credentials = "Invalid username or password",
         account_expired = "Account has expired",
@@ -436,8 +436,16 @@ function api_login()
         luci.model.uci:commit("vipin")
         auth_status = "ok"
 
-        -- Kick the VPN init.d. It will POST /api/v1/router-auth source=stunnel,
-        -- render config, and launch stunnel + tun2socks.
+        -- "Save account" semantics: if the VPN stack is already running
+        -- (user hit 更新账号 with an active tunnel), tear it down first so
+        -- stunnel/hev/stubby pick up the new credentials cleanly. Then
+        -- start fresh. Without the stop, stale stunnel keeps the old
+        -- session and LuCI shows connected=no until next watchdog tick.
+        if util.exec("ip link show tun0 2>/dev/null"):find("tun0") or
+           util.exec("pgrep -f /etc/vipin/stunnel-client.conf 2>/dev/null") ~= "" then
+            util.exec("/etc/init.d/vipin-vpn stop >/dev/null 2>&1")
+            nixio.nanosleep(1, 0)  -- 1s for cleanup
+        end
         util.exec("/etc/init.d/vipin-vpn start >/dev/null 2>&1")
         util.exec("/etc/init.d/vipin-auth start >/dev/null 2>&1")
 

@@ -57,7 +57,7 @@ return {
     update_account = "Perbarui Akun",
     login_title = "Login Akun VIP",
     login_desc = "Masukkan kredensial akun Anda untuk menghubungkan VPN",
-    login_button = "Masuk & Hubungkan",
+    login_button = "Simpan Akun",
     logout_button = "Keluar & Putuskan",
     invalid_credentials = "Nama pengguna atau kata sandi tidak valid",
     account_expired = "Akun telah kedaluwarsa",

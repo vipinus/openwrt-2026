@@ -57,7 +57,7 @@ return {
     update_account = "به‌روزرسانی حساب",
     login_title = "ورود به حساب VIP",
     login_desc = "اطلاعات حساب خود را برای اتصال VPN وارد کنید",
-    login_button = "ورود و اتصال",
+    login_button = "ذخیره حساب",
     logout_button = "خروج و قطع اتصال",
     invalid_credentials = "نام کاربری یا رمز عبور اشتباه",
     account_expired = "حساب منقضی شده",

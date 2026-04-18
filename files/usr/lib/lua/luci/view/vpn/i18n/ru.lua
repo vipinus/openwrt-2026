@@ -57,7 +57,7 @@ return {
     update_account = "Обновить аккаунт",
     login_title = "Vxod v аккаунт VIP",
     login_desc = "Vvedite svoi dannye dlya podklyucheniya k VPN",
-    login_button = "Vxod i podklyuchenie",
+    login_button = "Сохранить аккаунт",
     logout_button = "Vyhod i otklyuchenie",
     invalid_credentials = "Nevernoe imya polzovatelya ili parol",
     account_expired = "Srok dejstviya аккаунta istek",

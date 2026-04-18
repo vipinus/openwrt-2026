@@ -57,7 +57,7 @@ return {
     update_account = "Update Account",
     login_title = "VIP Account Login",
     login_desc = "Enter your account credentials to connect VPN",
-    login_button = "Login & Connect",
+    login_button = "Save Account",
     logout_button = "Logout & Disconnect",
     invalid_credentials = "Invalid username or password",
     account_expired = "Account has expired",

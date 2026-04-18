@@ -57,7 +57,7 @@ return {
     update_account = "อัปเดตบัญชี",
     login_title = "เข้าสู่ระบบบัญชี VIP",
     login_desc = "ป้อนข้อมูลประจำตัวเพื่อเชื่อมต่อ VPN",
-    login_button = "เข้าสู่ระบบและเชื่อมต่อ",
+    login_button = "บันทึกบัญชี",
     logout_button = "ออกจากระบบและตัดการเชื่อมต่อ",
     invalid_credentials = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
     account_expired = "บัญชีหมดอายุ",

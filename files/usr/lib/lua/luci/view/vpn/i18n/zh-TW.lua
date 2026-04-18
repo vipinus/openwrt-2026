@@ -57,7 +57,7 @@ return {
     update_account = "更新帳號",
     login_title = "VIP帳戶登入",
     login_desc = "輸入您的帳戶憑證以連線VPN",
-    login_button = "登入並連線",
+    login_button = "保存帳號",
     logout_button = "登出並斷線",
     invalid_credentials = "使用者名稱或密碼錯誤",
     account_expired = "帳戶已過期",

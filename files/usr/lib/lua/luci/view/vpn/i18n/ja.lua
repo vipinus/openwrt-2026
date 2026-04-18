@@ -57,7 +57,7 @@ return {
     update_account = "アカウント更新",
     login_title = "VIPアカウントログイン",
     login_desc = "アカウント資格情報を入力してVPNに接続",
-    login_button = "ログインして接続",
+    login_button = "アカウント保存",
     logout_button = "ログアウトして切断",
     invalid_credentials = "ユーザー名またはパスワードが無効です",
     account_expired = "アカウント有効期限切れ",

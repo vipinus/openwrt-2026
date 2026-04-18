@@ -57,7 +57,7 @@ return {
     update_account = "Hesabı Güncelle",
     login_title = "VIP Hesabi Girisi",
     login_desc = "VPN'e baglanmak için kimlik bilgilerinizi girin",
-    login_button = "Giris yap ve baglan",
+    login_button = "Hesabı Kaydet",
     logout_button = "Çikis yap ve baglantiyi kes",
     invalid_credentials = "Gecersiz kullanici adi veya sifre",
     account_expired = "Hesap süresi doldu",
