@@ -121,6 +121,15 @@ socket = r:SO_KEEPALIVE=1
 client = yes
 accept = 127.0.0.1:1080
 connect = ${connect_host}:${port}
+; Round-robin across every A-record DNS returned for connect_host. stunnel's
+; default is 'prio' which sticks to the first resolved IP and only fails over
+; on socket error — a load-balanced origin (jp/hk have 4-5 A records each)
+; would see all its traffic hit one backend. Verified live on a router: 6
+; parallel tunnels hit 1 IP with prio, 4 distinct IPs with rr. DNS is still
+; cached at stunnel startup (delay=no default), so this requires DNS already
+; ready when start_service runs — which is guaranteed by the time we get
+; here since fetch_auth_params just completed a successful API round-trip.
+failover = rr
 CAfile = ${cfgdir}/stunnel-ca.pem
 verifyChain = yes
 checkHost = ${connect_host}
