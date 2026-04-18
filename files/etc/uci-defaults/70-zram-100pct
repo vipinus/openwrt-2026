@@ -1,0 +1,27 @@
+#!/bin/sh
+# Configure zram-swap to use 100% of physical RAM as zram backing.
+# Default is 50% — on 128 MB MT7628 boxes the extra 60 MB of compressed
+# swap lets stunnel+stubby+dnscrypt-proxy coexist without OOM-kill.
+#
+# zram-swap (OpenWrt package) reads size from UCI `zram.zram.size_mb` when
+# present, otherwise computes 50% of MemTotal. We set it to MemTotal/1024
+# (MB). With LZO 2:1 compression this yields ~2× physical RAM of swap.
+
+total_kb=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null)
+[ -z "$total_kb" ] && exit 0
+
+total_mb=$((total_kb / 1024))
+
+# Seed UCI config only if not already customised by user.
+if ! uci -q get zram.zram >/dev/null 2>&1; then
+    uci -q set zram.zram=zram
+fi
+[ -z "$(uci -q get zram.zram.size_mb)" ] && uci -q set zram.zram.size_mb="$total_mb"
+[ -z "$(uci -q get zram.zram.algo)" ] && uci -q set zram.zram.algo=lzo
+[ -z "$(uci -q get zram.zram.enabled)" ] && uci -q set zram.zram.enabled=1
+uci -q commit zram
+
+# On a live first-boot we could kick zram here, but the zram init.d runs
+# later in boot order and will pick up the UCI config automatically.
+
+exit 0
