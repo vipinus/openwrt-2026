@@ -161,6 +161,18 @@ if pass_file then pass_file:close() end
                 <div id="expiry-warning" class="alert-message warning" style="display:none;">
                     <span id="expiry-warning-text"></span>
                 </div>
+                <div class="cbi-value" id="server-progress-row" style="display:none;">
+                    <label class="cbi-value-title">&nbsp;</label>
+                    <div class="cbi-value-field">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span>⏳</span>
+                            <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
+                                <div id="server-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
+                            </div>
+                            <span id="server-progress-text" style="font-size:12px;color:#666;">0%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </fieldset>
@@ -733,16 +745,21 @@ function saveServerSelection(server) {
 
 function serverChange(newServer) {
     if (!newServer) return;
+    if (uiBusy) return;
+    uiBusy = true;
+    // Same 35s window the stack needs to teardown stunnel+hev, reconnect,
+    // rebring tun0, and reinstall routing rules — mirrors setSplitMode UX.
+    runTimedProgress('server-progress-row', 'server-progress-bar', 'server-progress-text', 35000, function() {
+        uiBusy = false;
+        loadStatus();
+    });
     fetch('<%=luci.dispatcher.build_url("admin/services/vpn/api_set_server")%>', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'server=' + encodeURIComponent(newServer)
     }).then(function(r) { return r.json(); }).then(function(d) {
-        if (d && d.success) {
-            // Reload status so the UI reflects the new session.
-            loadStatus();
-        } else {
+        if (!d || !d.success) {
             alert(vpnData.t.server_change_fail || 'Server change failed');
         }
     }).catch(function() {
