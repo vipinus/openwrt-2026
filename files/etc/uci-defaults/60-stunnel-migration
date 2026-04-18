@@ -25,4 +25,10 @@ rm -f /etc/vipin/cert_pin
 /etc/init.d/stunnel stop 2>/dev/null
 /etc/init.d/stunnel disable 2>/dev/null
 
+# Same deal with system stubby: package auto-starts its own daemon on
+# 127.0.0.1:53 bound to cloudflare/quad9 DoT. Our vipin-vpn manages a
+# different stubby instance via procd when overseas-to-CN DNS is needed.
+/etc/init.d/stubby stop 2>/dev/null
+/etc/init.d/stubby disable 2>/dev/null
+
 exit 0
