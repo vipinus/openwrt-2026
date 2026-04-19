@@ -58,6 +58,21 @@ if [ "$rc" = "0" ]; then
         fi
     fi
 
+    # First-boot split-mode default: reverse if router is overseas.
+    # Reverse = @vipin_domestic (CN IPs) go via VPN, everything else
+    # WAN direct — the "watch CN content abroad" canonical config.
+    # Only runs when UCI has no explicit user choice; user's later
+    # LuCI toggle wins.
+    if [ -z "$(uci -q get vipin.vpn.split_mode)" ]; then
+        /usr/sbin/vipin-detect auto >/dev/null 2>&1
+        router_cc=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
+        if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
+            uci set vipin.vpn.split_mode='reverse'
+            uci commit vipin
+            log "router country=$router_cc — default split_mode=reverse"
+        fi
+    fi
+
     # Kick vipin-vpn immediately. Otherwise start_service at boot
     # already check_auth-failed and exited; without this, we wait up
     # to RESTART_MIN_INTERVAL (45s) for vipin-auth-check watchdog to
