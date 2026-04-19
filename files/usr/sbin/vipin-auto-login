@@ -51,8 +51,13 @@ if [ "$rc" = "0" ]; then
     [ -z "$(uci -q get vipin.vpn.split_mode)" ] && need_mode=1
 
     if [ -n "$need_server$need_mode" ]; then
+        # vipin-detect auto writes /etc/vipin/country-ips/current_country
+        # on success. vipin-country-ips get-country returns "cn" as a
+        # literal fallback when the file is missing — we need the real
+        # detection result, so read current_country ourselves. Empty →
+        # truly unknown; don't guess, let the user pick via LuCI.
         /usr/sbin/vipin-detect auto >/dev/null 2>&1
-        router_cc=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
+        router_cc=$(cat /etc/vipin/country-ips/current_country 2>/dev/null)
         base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
 
         if [ "$need_server" = "1" ]; then
@@ -72,16 +77,24 @@ if [ "$rc" = "0" ]; then
         fi
 
         if [ "$need_mode" = "1" ]; then
-            # Overseas (detected) → reverse: CN IPs via VPN, rest direct.
-            # CN / unknown → forward: domestic direct, rest via VPN.
-            if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
-                default_mode="reverse"
+            # Only set a default if detection actually succeeded. Empty
+            # router_cc means the detect-auto HTTP call failed (network
+            # down, ip-api rate-limited) — guessing here would silently
+            # mis-route an overseas user onto forward or a CN user onto
+            # reverse. Leave unset; LuCI surfaces the "smart-split"
+            # button so the user can pick explicitly, and the next WAN
+            # ifup hotplug retries detection.
+            if [ -z "$router_cc" ]; then
+                log "country detect failed — split_mode left unset"
+            elif [ "$router_cc" != "cn" ]; then
+                uci set vipin.vpn.split_mode='reverse'
+                uci commit vipin
+                log "router_cc=$router_cc — default split_mode=reverse"
             else
-                default_mode="forward"
+                uci set vipin.vpn.split_mode='forward'
+                uci commit vipin
+                log "router_cc=$router_cc — default split_mode=forward"
             fi
-            uci set vipin.vpn.split_mode="$default_mode"
-            uci commit vipin
-            log "router_cc=${router_cc:-unknown} — default split_mode=$default_mode"
         fi
     fi
 
