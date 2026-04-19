@@ -52,49 +52,35 @@ if [ "$rc" = "0" ]; then
 
     if [ -n "$need_server$need_mode" ]; then
         # vipin-detect auto writes /etc/vipin/country-ips/current_country
-        # on success. vipin-country-ips get-country returns "cn" as a
-        # literal fallback when the file is missing — we need the real
-        # detection result, so read current_country ourselves. Empty →
-        # truly unknown; don't guess, let the user pick via LuCI.
+        # on success. Read the file directly (not get-country, which hides
+        # detection failure behind a literal "cn" fallback).
         /usr/sbin/vipin-detect auto >/dev/null 2>&1
         router_cc=$(cat /etc/vipin/country-ips/current_country 2>/dev/null)
         base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
 
-        if [ "$need_server" = "1" ]; then
-            # Overseas router → default CN server (geo-unlock case).
-            # CN/unknown router → use account type from login response.
-            if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
-                default_server="cn.${base_domain}"
-            else
-                srv_type=$(/usr/sbin/vipin-auth status 2>/dev/null | \
-                           grep -o '"type": *"[^"]*"' | cut -d'"' -f4)
-                [ -z "$srv_type" ] && srv_type=jp
-                default_server="${srv_type}.${base_domain}"
-            fi
-            uci set vipin.vpn.server="$default_server"
-            uci commit vipin
-            log "default server set to $default_server (router_cc=${router_cc:-unknown})"
+        # Rule (first-boot only, respected later by user's LuCI edit):
+        #   detected overseas (router_cc non-empty, != cn) → cn server + reverse
+        #   detected CN / detection failed                 → jp server + forward
+        # Detection failure is deliberately bucketed with CN — the geo-unlock
+        # use case fails closed to "normal VPN out of CN" which is safe for
+        # both a real CN user and a transient-network overseas user.
+        if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
+            default_server="cn.${base_domain}"
+            default_mode="reverse"
+        else
+            default_server="jp.${base_domain}"
+            default_mode="forward"
         fi
 
+        if [ "$need_server" = "1" ]; then
+            uci set vipin.vpn.server="$default_server"
+            uci commit vipin
+            log "router_cc=${router_cc:-none} — default server=$default_server"
+        fi
         if [ "$need_mode" = "1" ]; then
-            # Only set a default if detection actually succeeded. Empty
-            # router_cc means the detect-auto HTTP call failed (network
-            # down, ip-api rate-limited) — guessing here would silently
-            # mis-route an overseas user onto forward or a CN user onto
-            # reverse. Leave unset; LuCI surfaces the "smart-split"
-            # button so the user can pick explicitly, and the next WAN
-            # ifup hotplug retries detection.
-            if [ -z "$router_cc" ]; then
-                log "country detect failed — split_mode left unset"
-            elif [ "$router_cc" != "cn" ]; then
-                uci set vipin.vpn.split_mode='reverse'
-                uci commit vipin
-                log "router_cc=$router_cc — default split_mode=reverse"
-            else
-                uci set vipin.vpn.split_mode='forward'
-                uci commit vipin
-                log "router_cc=$router_cc — default split_mode=forward"
-            fi
+            uci set vipin.vpn.split_mode="$default_mode"
+            uci commit vipin
+            log "router_cc=${router_cc:-none} — default split_mode=$default_mode"
         fi
     fi
 
