@@ -71,13 +71,17 @@ get_server_country() {
 populate_domestic_set() {
     local src_file="$1"
     local force_file="${VIPIN_CONFIG_DIR:-/etc/vipin}/force-cn-cidrs.txt"
-    local batch="/tmp/vipin_nft_batch.nft"
+    local merged="/tmp/vipin_nft_cidrs.txt"
     local err_log="/tmp/vipin_nft_batch.err"
 
-    echo "flush set inet fw4 vipin_domestic" > "$batch"
-    grep -v "^#" "$src_file" | grep -v "^$" | while read -r cidr; do
-        echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
-    done
+    # Collect all CIDRs to load into a single dedup list first, then feed
+    # nft in fixed-size chunks. On MT7628-class routers a 6k+ line single
+    # `nft -f` batch silently truncates partway through (netlink buffer /
+    # transaction size limits) — we were seeing 2327/6264 loaded. Splitting
+    # into ~500-line transactions keeps each well under the kernel cap and
+    # uses add-element semantics so no accidental flush mid-chunk.
+    grep -v "^#" "$src_file" | grep -v "^$" > "$merged"
+
     # Append supplementary force-cn CIDRs (Tencent overseas BGP etc.)
     # — BUT only in the "overseas router + CN server" scenario. For a CN
     # router the CIDRs are irrelevant (traffic already exits from CN). For
@@ -96,18 +100,35 @@ populate_domestic_set() {
     _sc=$(echo "$_srv" | cut -d. -f1)
     [ "$_sc" = "un" ] && _sc="cn"
     if [ "$_rc" != "cn" ] && [ "$_sc" = "cn" ] && [ -r "$force_file" ]; then
-        grep -v "^#" "$force_file" | grep -v "^$" | while read -r cidr; do
-            echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
-        done
+        grep -v "^#" "$force_file" | grep -v "^$" >> "$merged"
     fi
 
-    if ! nft -f "$batch" 2>"$err_log"; then
-        local err=$(head -3 "$err_log" 2>/dev/null | tr '\n' ' ')
-        logger -t vipin-routing "nft batch failed: $err"
-        rm -f "$batch" "$err_log"
+    # Flush once, then load in 500-line chunks.
+    if ! nft flush set inet fw4 vipin_domestic 2>"$err_log"; then
+        logger -t vipin-routing "nft flush failed: $(head -1 $err_log)"
+        rm -f "$merged" "$err_log"
         return 1
     fi
-    rm -f "$batch" "$err_log"
+
+    local total=$(wc -l < "$merged")
+    local loaded=0
+    local chunk=500
+    local offset=0
+    while [ "$offset" -lt "$total" ]; do
+        local batch="/tmp/vipin_nft_chunk.nft"
+        sed -n "$((offset + 1)),$((offset + chunk))p" "$merged" | \
+            sed 's|^|add element inet fw4 vipin_domestic { |;s|$| }|' > "$batch"
+        if nft -f "$batch" 2>>"$err_log"; then
+            loaded=$((loaded + $(wc -l < "$batch")))
+        else
+            logger -t vipin-routing "nft chunk at offset $offset failed: $(tail -1 $err_log)"
+        fi
+        rm -f "$batch"
+        offset=$((offset + chunk))
+    done
+    rm -f "$merged" "$err_log"
+
+    logger -t vipin-routing "vipin_domestic loaded $loaded/$total CIDRs"
 
     # Post-check: first CIDR from source must hit a set element.
     # Catches silent partial-load scenarios where nft accepted some rules
