@@ -187,14 +187,13 @@ dns_transport_list:
 tls_authentication: GETDNS_AUTHENTICATION_REQUIRED
 tls_query_padding_blocksize: 128
 edns_client_subnet_private: 1
-# 60s idle — stubby's default inherited from stock OpenWrt (9s) was tuned
-# for public DoT providers (Cloudflare/Quad9) where short connections help
-# load-balancing. We point at our own cn.fanq.in:994 with only one client
-# (this router) so there's no server-side reason to churn. A bursty browse
-# (page load → 20 queries, pause → click next) pays a full TLS reconnect
-# every time the pause exceeds the timeout; bumping 10s → 60s cuts cold
-# reconnects ~6× on typical traffic. Cloudflare's published guidance is 30s.
-idle_timeout: 60000
+# 30min idle — our un DoT frontend is single-tenant (just this router
+# fleet), so there's zero server-side reason to churn TLS. A browsing
+# pause of up to half an hour still finds a hot tunnel on the next click.
+# Previous 60s value paid a full TLS reconnect (~1 RTT + handshake CPU)
+# every time the user paused to read an article. Stock OpenWrt default
+# (9s) was tuned for public Cloudflare/Quad9 where LB churn matters.
+idle_timeout: 1800000
 listen_addresses:
   - 127.0.0.1@5356
 round_robin_upstreams: 1
@@ -215,32 +214,42 @@ EOF
 configure_dns() {
     # Decide which dnsmasq upstream to use and (in non-MOCK mode) write it.
     # Prints the chosen upstream server string to stdout either way.
-    local router_country uci_server base_domain server_country
+    #
+    # 3-way decision matrix (VPN is assumed UP when this is called):
+    #   router in CN                              → dnscrypt     (127.0.0.1#5353)
+    #   router overseas + CN srv + stubby.yml ok  → stubby DoT   (127.0.0.1#5356)
+    #   everything else (overseas + non-CN srv,
+    #                    or overseas + CN srv
+    #                    but auth didn't hand us
+    #                    a DoT endpoint)          → WAN DNS      (ISP-assigned)
+    #
+    # When VPN is down, teardown_dns() runs and also picks WAN DNS.
+    local router_country uci_server base_domain server_country upstream wan_dns
     if [ "$VIPIN_VPN_MOCK" = "1" ]; then
         router_country="$VIPIN_VPN_ROUTER_COUNTRY"
         uci_server="$VIPIN_VPN_UCI_SERVER"
         base_domain="$VIPIN_VPN_BASE_DOMAIN"
+        wan_dns="${VIPIN_VPN_WAN_DNS:-1.1.1.1}"
     else
         router_country=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
         [ -z "$router_country" ] && router_country="$(uci -q get vipin.vpn.country || echo cn)"
         uci_server=$(uci -q get vipin.vpn.server)
         base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
+        wan_dns=$(/usr/sbin/vipin-wan-dns-ip 2>/dev/null | head -1)
+        [ -z "$wan_dns" ] && wan_dns="1.1.1.1"
     fi
 
     # un is a cn alias for split-tunnel and DNS purposes.
     server_country=$(echo "$uci_server" | cut -d. -f1)
     [ "$server_country" = "un" ] && server_country="cn"
 
-    # 4-matrix decision:
-    #   overseas router + cn server → stubby DoT sidecar at 127.0.0.1:5356
-    #     (→ cn.fanq.in:994 DoT → cn2 dnsmasq → 223.5.5.5). Returns CN-
-    #     perspective answers so baidu resolves to mainland IPs.
-    #   everything else → dnscrypt-proxy on 127.0.0.1:5353.
-    # Sidecar active only when render_stubby_conf produced /etc/vipin/stubby.yml.
-    local upstream="127.0.0.1#5353"
-    if [ "$router_country" != "cn" ] && [ "$server_country" = "cn" ] && \
-       [ -s "${VIPIN_CONFIG_DIR:-/etc/vipin}/stubby.yml" ]; then
+    if [ "$router_country" = "cn" ]; then
+        upstream="127.0.0.1#5353"
+    elif [ "$server_country" = "cn" ] && \
+         [ -s "${VIPIN_CONFIG_DIR:-/etc/vipin}/stubby.yml" ]; then
         upstream="127.0.0.1#5356"
+    else
+        upstream="$wan_dns"
     fi
 
     if [ "$VIPIN_VPN_MOCK" != "1" ]; then
@@ -254,10 +263,14 @@ configure_dns() {
 }
 
 teardown_dns() {
-    # Revert to dnscrypt-only upstream when VPN is stopped.
+    # VPN stopped: fall back to WAN DNS (ISP DHCP-assigned). Always
+    # available, doesn't depend on stunnel/stubby/dnscrypt being up.
+    local wan_dns
     if [ "$VIPIN_VPN_MOCK" != "1" ]; then
+        wan_dns=$(/usr/sbin/vipin-wan-dns-ip 2>/dev/null | head -1)
+        [ -z "$wan_dns" ] && wan_dns="1.1.1.1"
         uci -q delete dhcp.@dnsmasq[0].server
-        uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
+        uci add_list dhcp.@dnsmasq[0].server="$wan_dns"
         uci set dhcp.@dnsmasq[0].noresolv='1'
         uci commit dhcp
         /etc/init.d/dnsmasq restart >/dev/null 2>&1

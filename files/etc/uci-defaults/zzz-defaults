@@ -11,8 +11,11 @@ echo -e "${SITE_DOMAIN}\n${SITE_DOMAIN}" | passwd root
 # Set LAN IP
 uci set network.lan.ipaddr='192.168.11.1'
 uci set network.lan.netmask='255.255.255.0'
-# Never accept DNS from WAN DHCP (LAN must not resolve via ISP DNS)
-uci set network.wan.peerdns='0'
+# peerdns=1 so netifd writes ISP-provided DNS into /tmp/resolv.conf*.auto.
+# dnsmasq still stays noresolv=1 (configure_dns is single source of truth
+# for the LAN upstream); this just makes ISP DNS *available* for scenarios
+# that need it (VPN-down fallback, overseas-router + non-CN-server).
+uci set network.wan.peerdns='1'
 uci -q delete network.wan.dns
 uci commit network
 

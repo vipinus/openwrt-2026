@@ -1,0 +1,37 @@
+#!/bin/sh
+# Print the ISP-assigned WAN DNS servers, one per line.
+# Used by configure_dns when the decision matrix says "local WAN DNS":
+# in both overseas-router and CN-router modes, some or all domains
+# should be resolved via whatever the local ISP's DHCP handed out.
+#
+# Source priority:
+#   1. /tmp/resolv.conf.d/resolv.conf.auto (netifd, modern OpenWrt)
+#   2. /tmp/resolv.conf.auto                (netifd, legacy path)
+#   3. ubus net.interface.wan → dns-server  (runtime if peerdns populated it)
+#
+# Skips loopback and link-local; prints IPv4 only (we force v4 everywhere
+# else in the stack). Empty output = no WAN DNS known yet.
+
+set -eu
+
+extract() {
+    awk '/^nameserver[[:space:]]/ {
+        ip=$2
+        # IPv4 only, no loopback
+        if (ip ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && ip !~ /^127\./) print ip
+    }' "$1" 2>/dev/null
+}
+
+for f in /tmp/resolv.conf.d/resolv.conf.auto /tmp/resolv.conf.auto; do
+    [ -r "$f" ] || continue
+    out=$(extract "$f")
+    [ -n "$out" ] && { printf '%s\n' "$out"; exit 0; }
+done
+
+# Last-resort: ubus query (lets us survive a netifd that wrote elsewhere)
+if command -v ubus >/dev/null 2>&1; then
+    ubus call network.interface.wan status 2>/dev/null | \
+        awk -F'"' '/"dns-server"/,/]/{
+            for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ && $i !~ /^127\./) print $i
+        }'
+fi
