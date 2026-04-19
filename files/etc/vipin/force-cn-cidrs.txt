@@ -52,3 +52,14 @@
 210.180.74.0/23
 211.152.128.0/19
 211.159.96.0/19
+
+# ===== Third-party CDN used by Tencent Video overseas (observed 2026-04-18) =====
+# Fastly anycast: Tencent Video OTT region endpoints fall back to Fastly
+# when primary Tencent Cloud edges are unreachable or for specific CDN
+# sharding. 151.101.0.0/16 is Fastly's global anycast range.
+#
+# Trade-off: other Fastly-hosted sites (HN, Reddit, GitHub Pages, etc.)
+# will also route via CN tunnel when accessed from this router. For our
+# reverse-mode use case that's acceptable — most of those still work
+# (content-agnostic to source IP).
+151.101.0.0/16
