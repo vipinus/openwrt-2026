@@ -71,11 +71,17 @@ if [ "$rc" = "0" ]; then
             log "default server set to $default_server (router_cc=${router_cc:-unknown})"
         fi
 
-        if [ "$need_mode" = "1" ] && [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
-            # Overseas: reverse routes CN IPs via VPN, rest direct.
-            uci set vipin.vpn.split_mode='reverse'
+        if [ "$need_mode" = "1" ]; then
+            # Overseas (detected) → reverse: CN IPs via VPN, rest direct.
+            # CN / unknown → forward: domestic direct, rest via VPN.
+            if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
+                default_mode="reverse"
+            else
+                default_mode="forward"
+            fi
+            uci set vipin.vpn.split_mode="$default_mode"
             uci commit vipin
-            log "router country=$router_cc — default split_mode=reverse"
+            log "router_cc=${router_cc:-unknown} — default split_mode=$default_mode"
         fi
     fi
 
