@@ -187,9 +187,15 @@ if pass_file then pass_file:close() end
             <div class="cbi-value">
                 <label class="cbi-value-title"><%= t.split_tunnel %></label>
                 <div class="cbi-value-field">
-                    <label style="margin-right:16px;"><input type="radio" name="split-mode" value="off" onchange="setSplitMode('off')" /> <%= t.split_off %></label>
-                    <label style="margin-right:16px;"><input type="radio" name="split-mode" value="forward" onchange="setSplitMode('forward')" /> <%= t.split_forward %></label>
-                    <label><input type="radio" name="split-mode" value="reverse" onchange="setSplitMode('reverse')" /> <%= t.split_reverse %></label>
+<%
+local _enabled = luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1"
+local _mode = luci.model.uci:get("vipin", "vpn", "split_mode") or "forward"
+local _init = (_enabled ~= "1") and "off" or _mode
+local function _ck(v) return (_init == v) and ' checked' or '' end
+%>
+                    <label style="margin-right:16px;"><input type="radio" name="split-mode" value="off" onchange="setSplitMode('off')"<%= _ck("off") %> /> <%= t.split_off %></label>
+                    <label style="margin-right:16px;"><input type="radio" name="split-mode" value="forward" onchange="setSplitMode('forward')"<%= _ck("forward") %> /> <%= t.split_forward %></label>
+                    <label><input type="radio" name="split-mode" value="reverse" onchange="setSplitMode('reverse')"<%= _ck("reverse") %> /> <%= t.split_reverse %></label>
                 </div>
             </div>
             <div class="cbi-value" id="split-mode-desc-row">
@@ -278,8 +284,8 @@ if pass_file then pass_file:close() end
 <script>
 var vpnData = {
     connected: false,
-    splitEnabled: false,
-    splitMode: 'forward',
+    splitEnabled: <%= (luci.model.uci:get("vipin", "vpn", "split_tunnel") or "1") == "1" and "true" or "false" %>,
+    splitMode: '<%= luci.model.uci:get("vipin", "vpn", "split_mode") or "forward" %>',
     currentCountry: 'cn',
     currentCountryName: 'China',
     currentCountryFlag: '',
