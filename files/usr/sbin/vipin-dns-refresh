@@ -60,6 +60,22 @@ else
     log "WARN: no default gateway, skipping /32 route install"
 fi
 
+# Idempotent: compare desired list against current UCI before touching it.
+# Every vipin-vpn restart calls this; without the diff check, uci commit +
+# dnsmasq reload fire on every call and LAN clients see cache flushes even
+# when nothing actually changed.
+desired=$(printf '%s\n' $SERVERS | sort)
+current=$(uci -q get dhcp.@dnsmasq[0].server | tr ' ' '\n' | grep -v '^$' | sort)
+cur_allservers=$(uci -q get dhcp.@dnsmasq[0].allservers)
+cur_noresolv=$(uci -q get dhcp.@dnsmasq[0].noresolv)
+
+if [ "$desired" = "$current" ] && \
+   [ "$cur_allservers" = "1" ] && \
+   [ "$cur_noresolv" = "1" ]; then
+    log "config unchanged ($(echo "$SERVERS" | wc -l) upstreams), skipping dnsmasq reload"
+    exit 0
+fi
+
 # Rewrite dnsmasq upstream list. all-servers = parallel race so a single
 # per-path failure doesn't block the query. noresolv = dnsmasq doesn't
 # silently fall back to /tmp/resolv.conf.auto if all our servers time out.
