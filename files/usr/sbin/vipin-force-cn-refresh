@@ -1,0 +1,50 @@
+#!/bin/sh
+# Pull the latest force-cn-cidrs.txt (Tencent overseas + Fastly anycast)
+# from the openwrt-2026 main branch. Atomically replace the on-disk copy
+# and trigger a split-tunnel reload so the new CIDRs hit @vipin_domestic.
+#
+# Invoked by cron on the 1st of each month. Upstream refreshes on the
+# last day of each month via .github/workflows/monthly-force-cn-refresh.yml.
+
+set -u
+
+URL="https://raw.githubusercontent.com/vipinus/openwrt-2026/main/files/etc/vipin/force-cn-cidrs.txt"
+TMP="/tmp/force-cn-cidrs.new"
+DST="/etc/vipin/force-cn-cidrs.txt"
+
+log() { logger -t vipin-force-cn "$*"; }
+
+if ! wget -q -O "$TMP" --timeout=30 "$URL"; then
+    log "fetch failed from $URL"
+    rm -f "$TMP"
+    exit 1
+fi
+
+if [ ! -s "$TMP" ]; then
+    log "fetched empty file, keeping existing"
+    rm -f "$TMP"
+    exit 1
+fi
+
+# Sanity: require >= 10 CIDR-looking lines before accepting.
+cidr_count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+' "$TMP")
+if [ "$cidr_count" -lt 10 ]; then
+    log "sanity check failed ($cidr_count CIDRs < 10), keeping existing"
+    rm -f "$TMP"
+    exit 1
+fi
+
+# Idempotent: skip if identical
+if [ -r "$DST" ] && cmp -s "$DST" "$TMP"; then
+    log "no change ($cidr_count CIDRs)"
+    rm -f "$TMP"
+    exit 0
+fi
+
+mv "$TMP" "$DST"
+log "refreshed: $cidr_count CIDRs"
+
+# Rebuild @vipin_domestic so the new entries take effect. reload is a no-op
+# if split tunnel is disabled; scenario gate in populate_domestic_set
+# decides whether force-cn is appended.
+/usr/sbin/vipin-vpn-routing reload >/dev/null 2>&1 || true

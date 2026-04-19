@@ -1,2 +1,3 @@
 0 3 * * 0 /etc/init.d/dnscrypt-proxy update_servers >/dev/null 2>&1
 0 4 * * 0 /usr/sbin/vipin-video-domains refresh >/dev/null 2>&1
+0 5 1 * * /usr/sbin/vipin-force-cn-refresh >/dev/null 2>&1

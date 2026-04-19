@@ -78,8 +78,24 @@ populate_domestic_set() {
     grep -v "^#" "$src_file" | grep -v "^$" | while read -r cidr; do
         echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
     done
-    # Append supplementary force-cn CIDRs (Tencent overseas etc.)
-    if [ -r "$force_file" ]; then
+    # Append supplementary force-cn CIDRs (Tencent overseas + Fastly etc.)
+    # — BUT only in the "overseas router + CN server" scenario. For a CN
+    # router the CIDRs are irrelevant (traffic already exits from CN). For
+    # an overseas router pointing at a non-CN server (e.g. jp.fanq.in),
+    # forcing Tencent overseas IPs through a non-CN tunnel would worsen
+    # the region check, not fix it.
+    local _rc _sc _srv
+    if [ "${VIPIN_VPN_MOCK:-0}" = "1" ]; then
+        _rc="$VIPIN_VPN_ROUTER_COUNTRY"
+        _srv="$VIPIN_VPN_UCI_SERVER"
+    else
+        _rc=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
+        [ -z "$_rc" ] && _rc="$(uci -q get vipin.vpn.country || echo cn)"
+        _srv=$(uci -q get vipin.vpn.server 2>/dev/null)
+    fi
+    _sc=$(echo "$_srv" | cut -d. -f1)
+    [ "$_sc" = "un" ] && _sc="cn"
+    if [ "$_rc" != "cn" ] && [ "$_sc" = "cn" ] && [ -r "$force_file" ]; then
         grep -v "^#" "$force_file" | grep -v "^$" | while read -r cidr; do
             echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
         done
