@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pull the latest force-cn-cidrs.txt (Tencent overseas + Fastly anycast)
+# Pull the latest force-cn-cidrs.txt (Tencent overseas BGP)
 # from the openwrt-2026 main branch. Atomically replace the on-disk copy
 # and trigger a split-tunnel reload so the new CIDRs hit @vipin_domestic.
 #

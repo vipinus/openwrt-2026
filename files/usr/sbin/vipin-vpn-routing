@@ -78,7 +78,7 @@ populate_domestic_set() {
     grep -v "^#" "$src_file" | grep -v "^$" | while read -r cidr; do
         echo "add element inet fw4 vipin_domestic { $cidr }" >> "$batch"
     done
-    # Append supplementary force-cn CIDRs (Tencent overseas + Fastly etc.)
+    # Append supplementary force-cn CIDRs (Tencent overseas BGP etc.)
     # — BUT only in the "overseas router + CN server" scenario. For a CN
     # router the CIDRs are irrelevant (traffic already exits from CN). For
     # an overseas router pointing at a non-CN server (e.g. jp.fanq.in),

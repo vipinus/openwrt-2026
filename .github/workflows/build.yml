@@ -175,7 +175,7 @@ jobs:
               echo "WARN: dns.txt fetch failed — keeping baked copy"
           fi
 
-          # Force-CN CIDR list (Tencent overseas + Fastly anycast) → /etc/vipin/force-cn-cidrs.txt
+          # Force-CN CIDR list (Tencent overseas BGP) → /etc/vipin/force-cn-cidrs.txt
           # Sanity: require >= 10 CIDR rows, matching vipin-force-cn-refresh's gate
           if curl -fsSL --max-time 20 -o /tmp/force-cn-cidrs.txt "$FORCE_CN_URL"; then
               cidr_count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+' /tmp/force-cn-cidrs.txt || true)
