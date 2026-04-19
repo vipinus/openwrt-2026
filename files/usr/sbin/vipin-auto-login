@@ -1,0 +1,47 @@
+#!/bin/sh
+# Consume /etc/vipin/auto-login (baked by build.yml with caller's VPN
+# creds) and hand them to vipin-auth login. Called from the WAN-ifup
+# hotplug hook so DHCP + DNS are guaranteed ready before we reach out
+# to the auth API.
+
+AUTO_LOGIN=/etc/vipin/auto-login
+AUTH_HOST=$(uci -q get vipin.vpn.site_url | sed 's|https\?://||;s|/.*||')
+[ -z "$AUTH_HOST" ] && AUTH_HOST="www.anyfq.com"
+
+log() { logger -t vipin-auto-login "$*"; }
+
+[ -s "$AUTO_LOGIN" ] || exit 0
+
+# Wait up to 60s for DNS to resolve the auth host. netifd fires ifup
+# before DHCP-learned DNS is necessarily in resolv.conf.auto on every
+# provider, so short-poll until nslookup succeeds.
+for i in $(seq 1 20); do
+    nslookup "$AUTH_HOST" >/dev/null 2>&1 && break
+    sleep 3
+done
+
+if ! nslookup "$AUTH_HOST" >/dev/null 2>&1; then
+    log "DNS still not ready for $AUTH_HOST after 60s — deferring (hotplug will retry next ifup)"
+    exit 1
+fi
+
+USERNAME=$(sed -n '1p' "$AUTO_LOGIN")
+PASSWORD=$(sed -n '2p' "$AUTO_LOGIN")
+
+# Drop the plaintext file BEFORE contacting the API — a crash during the
+# wget mustn't leave credentials readable on disk past this point.
+rm -f "$AUTO_LOGIN"
+
+if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+    log "empty credentials in $AUTO_LOGIN, skipping"
+    exit 0
+fi
+
+/usr/sbin/vipin-auth login "$USERNAME" "$PASSWORD" >/dev/null 2>&1
+rc=$?
+if [ "$rc" = "0" ]; then
+    log "auto-login OK for $USERNAME"
+else
+    log "auto-login failed (rc=$rc); user to retry via LuCI"
+fi
+exit 0

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Trigger the auto-login helper whenever WAN interface comes up. Runs
+# after netifd has provisioned DHCP/DNS, so the call to vipin-auth's
+# wget against the auth API actually has a working resolver.
+#
+# The helper is idempotent: if /etc/vipin/auto-login is missing (already
+# consumed) it exits 0, so re-firing on every WAN flap is safe.
+[ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "wan" ] || exit 0
+[ -s /etc/vipin/auto-login ] || exit 0
+/usr/sbin/vipin-auto-login &
