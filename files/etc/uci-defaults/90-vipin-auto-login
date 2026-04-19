@@ -1,0 +1,39 @@
+#!/bin/sh
+# Auto-login on first boot if credentials were baked into firmware by
+# the GitHub Actions build (triggered from the website with user's creds).
+#
+# /etc/vipin/auto-login is written by build.yml's Setup Custom Files step
+# when inputs.vpn_username + inputs.vpn_password are both provided. Format:
+#   line 1: username
+#   line 2: password
+# File mode 0600; this script deletes it on success regardless of whether
+# vipin-auth succeeds — baked plaintext must not persist past first boot.
+
+AUTO_LOGIN=/etc/vipin/auto-login
+
+[ -f "$AUTO_LOGIN" ] || exit 0
+
+USERNAME=$(sed -n '1p' "$AUTO_LOGIN")
+PASSWORD=$(sed -n '2p' "$AUTO_LOGIN")
+
+# Always remove the credentials file before doing anything else — a crashed
+# vipin-auth run must not leave plaintext on disk.
+rm -f "$AUTO_LOGIN"
+
+if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+    logger -t vipin-auto-login "empty credentials, skipping"
+    exit 0
+fi
+
+# vipin-auth login writes /etc/vipin/auth.conf + /etc/vipin/.vpn_pass on
+# success. Return 0 regardless so uci-defaults removes this script — if
+# login failed (wrong password, API down), user recovers via LuCI login.
+/usr/sbin/vipin-auth login "$USERNAME" "$PASSWORD" >/dev/null 2>&1
+rc=$?
+if [ "$rc" = "0" ]; then
+    logger -t vipin-auto-login "auto-login OK for $USERNAME"
+else
+    logger -t vipin-auto-login "auto-login failed (rc=$rc); user to retry via LuCI"
+fi
+
+exit 0
