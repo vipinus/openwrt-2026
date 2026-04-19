@@ -42,31 +42,37 @@ rc=$?
 if [ "$rc" = "0" ]; then
     log "auto-login OK for $USERNAME"
 
-    # Set a default VPN server if UCI has none, otherwise
-    # resolve_connect_server returns empty and render_stunnel_conf
-    # fails. vipin-auth status exposes "type" (jp/cn/hk/sg…) from the
-    # API response — use ${type}.${base_domain} as the default. User
-    # can override later via LuCI.
-    if [ -z "$(uci -q get vipin.vpn.server)" ]; then
-        srv_type=$(/usr/sbin/vipin-auth status 2>/dev/null | \
-                   grep -o '"type": *"[^"]*"' | cut -d'"' -f4)
-        base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
-        if [ -n "$srv_type" ]; then
-            uci set vipin.vpn.server="${srv_type}.${base_domain}"
-            uci commit vipin
-            log "default server set to ${srv_type}.${base_domain}"
-        fi
-    fi
+    # First-boot defaults for server + split_mode, keyed on router's
+    # detected country. Both are only written when UCI is empty —
+    # any explicit user choice via LuCI wins on subsequent boots.
+    need_server=""
+    need_mode=""
+    [ -z "$(uci -q get vipin.vpn.server)" ] && need_server=1
+    [ -z "$(uci -q get vipin.vpn.split_mode)" ] && need_mode=1
 
-    # First-boot split-mode default: reverse if router is overseas.
-    # Reverse = @vipin_domestic (CN IPs) go via VPN, everything else
-    # WAN direct — the "watch CN content abroad" canonical config.
-    # Only runs when UCI has no explicit user choice; user's later
-    # LuCI toggle wins.
-    if [ -z "$(uci -q get vipin.vpn.split_mode)" ]; then
+    if [ -n "$need_server$need_mode" ]; then
         /usr/sbin/vipin-detect auto >/dev/null 2>&1
         router_cc=$(/usr/sbin/vipin-country-ips get-country 2>/dev/null)
-        if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
+        base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
+
+        if [ "$need_server" = "1" ]; then
+            # Overseas router → default CN server (geo-unlock case).
+            # CN/unknown router → use account type from login response.
+            if [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
+                default_server="cn.${base_domain}"
+            else
+                srv_type=$(/usr/sbin/vipin-auth status 2>/dev/null | \
+                           grep -o '"type": *"[^"]*"' | cut -d'"' -f4)
+                [ -z "$srv_type" ] && srv_type=jp
+                default_server="${srv_type}.${base_domain}"
+            fi
+            uci set vipin.vpn.server="$default_server"
+            uci commit vipin
+            log "default server set to $default_server (router_cc=${router_cc:-unknown})"
+        fi
+
+        if [ "$need_mode" = "1" ] && [ -n "$router_cc" ] && [ "$router_cc" != "cn" ]; then
+            # Overseas: reverse routes CN IPs via VPN, rest direct.
             uci set vipin.vpn.split_mode='reverse'
             uci commit vipin
             log "router country=$router_cc — default split_mode=reverse"
