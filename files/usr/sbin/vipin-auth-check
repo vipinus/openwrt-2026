@@ -85,6 +85,21 @@ handle_auth_tick() {
                 log "auth=ok and stack stopped — auto-recover"
                 /etc/init.d/vipin-vpn start
             fi
+            # Detect backend-pushed config drift (e.g. DNS host/port rotated
+            # server-side). Only the dns.* sub-object is compared — the auth
+            # envelope also includes tunnel.ca_cert and session_expires which
+            # legitimately change each tick and would false-positive. If
+            # changed, overwrite auth-params.json and kick vipin-dns-refresh;
+            # the refresh script is idempotent (diff-based dnsmasq reload),
+            # so a no-op tick costs nothing.
+            new_dns=$(echo "$response" | grep -o '"dns":{[^}]*}')
+            cur_dns=$(grep -o '"dns":{[^}]*}' /etc/vipin/auth-params.json 2>/dev/null)
+            if [ -n "$new_dns" ] && [ "$new_dns" != "$cur_dns" ]; then
+                log "backend dns config drift detected: $cur_dns → $new_dns"
+                echo "$response" > /etc/vipin/auth-params.json
+                /usr/sbin/vipin-dns-refresh >/dev/null 2>&1 && \
+                    log "vipin-dns-refresh applied new dns config"
+            fi
             ;;
         expired|invalid|not_vip)
             log "auth=$status — stopping stack, keeping credentials"
