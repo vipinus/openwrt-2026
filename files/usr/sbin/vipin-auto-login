@@ -41,6 +41,12 @@ fi
 rc=$?
 if [ "$rc" = "0" ]; then
     log "auto-login OK for $USERNAME"
+    # Kick vipin-vpn immediately. Otherwise start_service at boot
+    # already check_auth-failed and exited; without this, we wait up
+    # to RESTART_MIN_INTERVAL (45s) for vipin-auth-check watchdog to
+    # notice the stack is down and retry. Calling start directly is
+    # idempotent — if vipin-vpn is already running it's a no-op.
+    /etc/init.d/vipin-vpn start >/dev/null 2>&1 &
 else
     log "auto-login failed (rc=$rc); user to retry via LuCI"
 fi
