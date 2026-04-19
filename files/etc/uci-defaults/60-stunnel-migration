@@ -9,8 +9,13 @@ uci -q delete vipin.vpn.cert_pin
 # before vipin-auth-check has a chance to run.
 [ -z "$(uci -q get vipin.vpn.auth_status)" ] && uci set vipin.vpn.auth_status='ok'
 
-# Default split_mode to 'forward' on first install (overwrite only if unset).
-[ -z "$(uci -q get vipin.vpn.split_mode)" ] && uci set vipin.vpn.split_mode='forward'
+# DO NOT seed split_mode here. Earlier versions defaulted to 'forward'
+# which preempted vipin-auto-login's country-aware default (overseas →
+# reverse, CN → forward) — this script runs at procd preinit, auto-login
+# fires later on WAN ifup, and auto-login only writes when UCI is empty.
+# Leaving split_mode unset lets auto-login pick, and if the user never
+# runs auto-login (no credentials baked) LuCI still surfaces all three
+# radio options and prompts for a choice.
 
 uci commit vipin
 
