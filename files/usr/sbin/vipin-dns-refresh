@@ -1,54 +1,93 @@
 #!/bin/sh
-# Fetch the CN-view DNS server list from the video-domains repo, install
-# /32 host routes via WAN (bypassing tun0's three-sandwich), and rewrite
-# dnsmasq upstreams with all-servers parallel race.
+# Rebuild CN-view DNS upstreams for dnsmasq.
 #
-# Upstream refreshes monthly via GitHub Actions; the router calls this on
-# every boot so a fresh flash picks up the latest list immediately instead
-# of waiting for the next scheduled refresh.
+# Source-of-truth priority:
+#   1. /etc/vipin/auth-params.json — backend-provided dns.stunnel_host +
+#      dns.stunnel_port from the last vipin-auth login. This is the
+#      authoritative source once the user is logged in: the host resolves
+#      to every CN DNS node the backend wants active, the port is whatever
+#      the backend currently exposes (3333 for the socat relay chain).
+#   2. /etc/vipin/dns.txt — GitHub-maintained fallback list (pre-baked at
+#      build time, auto-refreshed from video-domains repo). Used on first
+#      boot (before auth) or if auth-params is missing/incomplete.
 #
-# Called from /etc/init.d/vipin-vpn configure_dns when the router is
-# overseas and the backend country is CN. Idempotent: safe to rerun; /32
-# routes are only added if missing, and dnsmasq reload is a no-op when
-# the config didn't change.
+# After resolving the server list this script:
+#   - Installs /32 host routes via WAN gateway so queries escape tun0's
+#     0.0.0.0/1 default route (would otherwise sandwich through HK relay
+#     — 1.8 s vs 560 ms).
+#   - Rewrites dnsmasq upstreams with all-servers parallel race.
+#   - Short-circuits (no dnsmasq reload) when the desired config matches
+#     the current UCI — keeps the 10k-entry cache warm across the
+#     vipin-vpn restart cycle.
 
 set -u
 
-URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
-TMP="/tmp/vipin-dns.new"
-DST="/etc/vipin/dns.txt"
+FALLBACK_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
+AUTH_PARAMS="/etc/vipin/auth-params.json"
+DNS_TXT="/etc/vipin/dns.txt"
+TMP_TXT="/tmp/vipin-dns.new"
 
 log() { logger -t vipin-dns-refresh "$*"; }
 
 mkdir -p /etc/vipin
 
-# Fetch upstream — non-fatal: the baked copy stays if we can't reach GitHub
-# (first-boot DNS window, captive portal, GFW on return path, etc).
-if wget -q -O "$TMP" --timeout=20 "$URL" && [ -s "$TMP" ]; then
-    count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$TMP")
-    if [ "$count" -ge 1 ]; then
-        mv "$TMP" "$DST"
-        log "refreshed: $count CN DNS servers"
-    else
-        log "sanity failed ($count valid lines), keeping baked copy"
-        rm -f "$TMP"
+SERVERS=""
+
+# 1. Prefer auth-params.json — freshest, backend-authoritative.
+if [ -s "$AUTH_PARAMS" ]; then
+    dns_host=$(grep -o '"stunnel_host":"[^"]*"' "$AUTH_PARAMS" | cut -d'"' -f4)
+    dns_port=$(grep -o '"stunnel_port":[0-9]*' "$AUTH_PARAMS" | head -1 | cut -d: -f2)
+    if [ -n "${dns_host:-}" ] && [ -n "${dns_port:-}" ]; then
+        # Resolve to every A record. nslookup reads /etc/resolv.conf which
+        # points at 127.0.0.1 (dnsmasq) — the current upstream might still
+        # be the previous one but that's fine for resolving a public host.
+        ips=$(nslookup "$dns_host" 2>/dev/null | \
+              awk '/^Address.*:/ && $NF ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ { print $NF }')
+        if [ -n "$ips" ]; then
+            for ip in $ips; do
+                SERVERS="${SERVERS}${ip}#${dns_port}
+"
+            done
+            SERVERS=$(printf '%s' "$SERVERS" | grep -v '^$')
+            count=$(echo "$SERVERS" | wc -l)
+            log "from auth-params: ${dns_host}:${dns_port} → $count IPs"
+        else
+            log "auth-params has $dns_host:$dns_port but resolve returned 0 IPs"
+        fi
     fi
-else
-    log "fetch failed, keeping baked copy"
-    rm -f "$TMP"
 fi
 
-[ -s "$DST" ] || { log "no DNS list available, bailing"; exit 1; }
+# 2. Fallback — fetch from GitHub if auth-params didn't yield any servers.
+if [ -z "$SERVERS" ]; then
+    if wget -q -O "$TMP_TXT" --timeout=20 "$FALLBACK_URL" && [ -s "$TMP_TXT" ]; then
+        count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$TMP_TXT")
+        if [ "$count" -ge 1 ]; then
+            mv "$TMP_TXT" "$DNS_TXT"
+            log "dns.txt refreshed from GitHub: $count entries"
+        else
+            log "GitHub dns.txt sanity failed ($count lines), keeping baked copy"
+            rm -f "$TMP_TXT"
+        fi
+    else
+        log "GitHub dns.txt fetch failed, keeping baked copy"
+        rm -f "$TMP_TXT"
+    fi
 
-SERVERS=$(grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$DST")
-[ -z "$SERVERS" ] && { log "no valid entries in $DST, bailing"; exit 1; }
+    if [ -s "$DNS_TXT" ]; then
+        SERVERS=$(grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$DNS_TXT")
+        [ -n "$SERVERS" ] && log "using baked dns.txt ($(echo "$SERVERS" | wc -l) entries)"
+    fi
+fi
 
-# /32 host routes via WAN so queries escape the tun0 default route
-# (0.0.0.0/1 + 128.0.0.0/1) and reach CN directly. Without this, queries
-# sandwich through HK relay — 1.8s vs 560ms.
+[ -z "$SERVERS" ] && { log "no DNS list available, bailing"; exit 1; }
+
+# Persist whatever list we ended up with so next boot has a baked copy.
+printf '%s\n' "$SERVERS" > "$DNS_TXT"
+
+# /32 host routes via WAN — idempotent, only adds missing entries.
 GW=$(ip route show default 2>/dev/null | sed -n 's/^default via \([0-9.]*\).*/\1/p' | head -1)
 DEV=$(ip route show default 2>/dev/null | sed -n 's/.*dev \([^ ]*\).*/\1/p' | head -1)
-if [ -n "$GW" ] && [ -n "$DEV" ]; then
+if [ -n "${GW:-}" ] && [ -n "${DEV:-}" ]; then
     for entry in $SERVERS; do
         ip=$(echo "$entry" | cut -d'#' -f1)
         if ! ip route show "$ip/32" 2>/dev/null | grep -q "$ip"; then
@@ -60,10 +99,7 @@ else
     log "WARN: no default gateway, skipping /32 route install"
 fi
 
-# Idempotent: compare desired list against current UCI before touching it.
-# Every vipin-vpn restart calls this; without the diff check, uci commit +
-# dnsmasq reload fire on every call and LAN clients see cache flushes even
-# when nothing actually changed.
+# Idempotent dnsmasq UCI update — diff before commit.
 desired=$(printf '%s\n' $SERVERS | sort)
 current=$(uci -q get dhcp.@dnsmasq[0].server | tr ' ' '\n' | grep -v '^$' | sort)
 cur_allservers=$(uci -q get dhcp.@dnsmasq[0].allservers)
@@ -76,9 +112,6 @@ if [ "$desired" = "$current" ] && \
     exit 0
 fi
 
-# Rewrite dnsmasq upstream list. all-servers = parallel race so a single
-# per-path failure doesn't block the query. noresolv = dnsmasq doesn't
-# silently fall back to /tmp/resolv.conf.auto if all our servers time out.
 uci -q delete dhcp.@dnsmasq[0].server
 for entry in $SERVERS; do
     uci add_list dhcp.@dnsmasq[0].server="$entry"
