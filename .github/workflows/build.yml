@@ -146,15 +146,15 @@ jobs:
           # on downloading them. Non-fatal: if GitHub is rate-limiting or
           # the URL 404s, the cached copy already in files/ is kept.
           echo "=== Refreshing upstream lists ==="
-          VIDEO_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/domains.txt"
+          VIDEO_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/direct.txt"
           FORCE_CN_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/force-cn-cidrs.txt"
           DNS_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
           DNSC_URL_BASE="https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3"
           mkdir -p custom-files/etc/vipin custom-files/etc/dnscrypt-proxy
 
-          # Video-direct domain list → seeds /etc/vipin/video-domains.remote
-          if curl -fsSL --max-time 20 -o /tmp/domains.txt "$VIDEO_URL"; then
-              mv /tmp/domains.txt custom-files/etc/vipin/video-domains.remote
+          # Video-direct domain list (direct.txt) → seeds /etc/vipin/video-domains.remote
+          if curl -fsSL --max-time 20 -o /tmp/direct.txt "$VIDEO_URL"; then
+              mv /tmp/direct.txt custom-files/etc/vipin/video-domains.remote
               echo "video-domains.remote: $(wc -l < custom-files/etc/vipin/video-domains.remote) lines"
           else
               echo "WARN: video-domains fetch failed — keeping baked copy"

@@ -37,7 +37,7 @@ NFT_SET="vipin_video"
 NFT_FAMILY="inet"
 NFT_TABLE="fw4"
 
-DEFAULT_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/domains.txt"
+DEFAULT_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/direct.txt"
 
 usage() {
     cat <<EOF
