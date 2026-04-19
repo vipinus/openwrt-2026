@@ -8,7 +8,7 @@
 
 set -u
 
-URL="https://raw.githubusercontent.com/vipinus/openwrt-2026/main/files/etc/vipin/force-cn-cidrs.txt"
+URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/force-cn-cidrs.txt"
 TMP="/tmp/force-cn-cidrs.new"
 DST="/etc/vipin/force-cn-cidrs.txt"
 
