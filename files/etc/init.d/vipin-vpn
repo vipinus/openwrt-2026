@@ -273,6 +273,27 @@ start_service() {
         teardown_dns
     fi
 
+    # Wait up to 60s for the auth API to be resolvable. On cold boot
+    # netifd may fire ifup on wan before DHCP-learned DNS is in
+    # resolv.conf.auto; vipin-vpn is START=90 and can race ahead of
+    # that. Without this wait, fetch_auth_params's wget returns empty
+    # and start_service exits — watchdog eventually retries 45s later,
+    # but the user sees "VPN down" for 1-2 min post-boot. Polling until
+    # DNS works shortens that to whatever DHCP takes (typically <10s).
+    local api_host
+    api_host=$(uci -q get vipin.vpn.site_url | sed 's|https\?://||;s|/.*||')
+    [ -z "$api_host" ] && api_host="www.anyfq.com"
+    local i=0
+    while [ "$i" -lt 20 ]; do
+        nslookup -timeout=3 "$api_host" >/dev/null 2>&1 && break
+        sleep 3
+        i=$((i + 1))
+    done
+    if [ "$i" -ge 20 ]; then
+        logger -t "$NAME" "DNS not ready for $api_host after 60s — letting watchdog retry"
+        return 1
+    fi
+
     fetch_auth_params "$username" "$password" "$mac"
     case $? in
         0) ;;  # ok — proceed
