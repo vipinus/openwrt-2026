@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set TARGET from event
         id: set_target
@@ -270,7 +270,7 @@ jobs:
           ls -lh ${{ github.workspace }}/firmware/ || echo "No artifacts"
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openwrt-${{ env.TARGET }}-firmware
           path: firmware/
@@ -278,7 +278,7 @@ jobs:
 
       - name: Upload to Release
         if: inputs.release == true
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             firmware/*
