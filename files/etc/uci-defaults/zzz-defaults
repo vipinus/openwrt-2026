@@ -43,6 +43,10 @@ uci set dhcp.@dnsmasq[0].resolvfile='/dev/null'
 # Belt-and-braces: even with LAN IPv6 disabled, don't serve AAAA to clients
 # (a device that enables IPv6 manually still shouldn't get geo-leak AAAA).
 uci set dhcp.@dnsmasq[0].filter_aaaa='1'
+# 10k cache floors first-query-fail impact: with only 150 (OpenWrt default)
+# any DNS-miss burst starves the cache before repeat queries can land.
+# 10k entries ≈ 8 MB extra dnsmasq RSS — acceptable on 128 MB routers.
+uci set dhcp.@dnsmasq[0].cachesize='10000'
 uci -q delete dhcp.@dnsmasq[0].server
 uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
 uci commit dhcp
