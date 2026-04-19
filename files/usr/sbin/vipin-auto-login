@@ -41,6 +41,23 @@ fi
 rc=$?
 if [ "$rc" = "0" ]; then
     log "auto-login OK for $USERNAME"
+
+    # Set a default VPN server if UCI has none, otherwise
+    # resolve_connect_server returns empty and render_stunnel_conf
+    # fails. vipin-auth status exposes "type" (jp/cn/hk/sg…) from the
+    # API response — use ${type}.${base_domain} as the default. User
+    # can override later via LuCI.
+    if [ -z "$(uci -q get vipin.vpn.server)" ]; then
+        srv_type=$(/usr/sbin/vipin-auth status 2>/dev/null | \
+                   grep -o '"type": *"[^"]*"' | cut -d'"' -f4)
+        base_domain=$(uci -q get vipin.vpn.base_domain || echo fanq.in)
+        if [ -n "$srv_type" ]; then
+            uci set vipin.vpn.server="${srv_type}.${base_domain}"
+            uci commit vipin
+            log "default server set to ${srv_type}.${base_domain}"
+        fi
+    fi
+
     # Kick vipin-vpn immediately. Otherwise start_service at boot
     # already check_auth-failed and exited; without this, we wait up
     # to RESTART_MIN_INTERVAL (45s) for vipin-auth-check watchdog to
