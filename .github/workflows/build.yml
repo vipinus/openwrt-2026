@@ -148,6 +148,7 @@ jobs:
           echo "=== Refreshing upstream lists ==="
           VIDEO_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/domains.txt"
           FORCE_CN_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/force-cn-cidrs.txt"
+          DNS_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
           DNSC_URL_BASE="https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3"
           mkdir -p custom-files/etc/vipin custom-files/etc/dnscrypt-proxy
 
@@ -157,6 +158,21 @@ jobs:
               echo "video-domains.remote: $(wc -l < custom-files/etc/vipin/video-domains.remote) lines"
           else
               echo "WARN: video-domains fetch failed — keeping baked copy"
+          fi
+
+          # CN-view DNS server list → /etc/vipin/dns.txt
+          # Sanity: require >=1 IP#PORT line, matching vipin-dns-refresh's gate
+          if curl -fsSL --max-time 20 -o /tmp/dns.txt "$DNS_URL"; then
+              dns_count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' /tmp/dns.txt || true)
+              if [ "${dns_count:-0}" -ge 1 ]; then
+                  mv /tmp/dns.txt custom-files/etc/vipin/dns.txt
+                  echo "dns.txt: $dns_count servers"
+              else
+                  echo "WARN: dns.txt sanity failed ($dns_count servers < 1) — keeping baked copy"
+                  rm -f /tmp/dns.txt
+              fi
+          else
+              echo "WARN: dns.txt fetch failed — keeping baked copy"
           fi
 
           # Force-CN CIDR list (Tencent overseas + Fastly anycast) → /etc/vipin/force-cn-cidrs.txt

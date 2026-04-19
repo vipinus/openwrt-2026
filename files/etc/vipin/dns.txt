@@ -1,0 +1,5 @@
+# CN-view DNS servers — baked copy, overwritten by vipin-dns-refresh on boot.
+# See openwrt-2026-video-domains/dns.txt for format notes.
+123.57.190.43#3333
+59.36.165.181#3333
+106.14.77.162#3333

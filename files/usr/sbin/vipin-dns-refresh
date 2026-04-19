@@ -1,0 +1,76 @@
+#!/bin/sh
+# Fetch the CN-view DNS server list from the video-domains repo, install
+# /32 host routes via WAN (bypassing tun0's three-sandwich), and rewrite
+# dnsmasq upstreams with all-servers parallel race.
+#
+# Upstream refreshes monthly via GitHub Actions; the router calls this on
+# every boot so a fresh flash picks up the latest list immediately instead
+# of waiting for the next scheduled refresh.
+#
+# Called from /etc/init.d/vipin-vpn configure_dns when the router is
+# overseas and the backend country is CN. Idempotent: safe to rerun; /32
+# routes are only added if missing, and dnsmasq reload is a no-op when
+# the config didn't change.
+
+set -u
+
+URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
+TMP="/tmp/vipin-dns.new"
+DST="/etc/vipin/dns.txt"
+
+log() { logger -t vipin-dns-refresh "$*"; }
+
+mkdir -p /etc/vipin
+
+# Fetch upstream — non-fatal: the baked copy stays if we can't reach GitHub
+# (first-boot DNS window, captive portal, GFW on return path, etc).
+if wget -q -O "$TMP" --timeout=20 "$URL" && [ -s "$TMP" ]; then
+    count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$TMP")
+    if [ "$count" -ge 1 ]; then
+        mv "$TMP" "$DST"
+        log "refreshed: $count CN DNS servers"
+    else
+        log "sanity failed ($count valid lines), keeping baked copy"
+        rm -f "$TMP"
+    fi
+else
+    log "fetch failed, keeping baked copy"
+    rm -f "$TMP"
+fi
+
+[ -s "$DST" ] || { log "no DNS list available, bailing"; exit 1; }
+
+SERVERS=$(grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$DST")
+[ -z "$SERVERS" ] && { log "no valid entries in $DST, bailing"; exit 1; }
+
+# /32 host routes via WAN so queries escape the tun0 default route
+# (0.0.0.0/1 + 128.0.0.0/1) and reach CN directly. Without this, queries
+# sandwich through HK relay — 1.8s vs 560ms.
+GW=$(ip route show default 2>/dev/null | sed -n 's/^default via \([0-9.]*\).*/\1/p' | head -1)
+DEV=$(ip route show default 2>/dev/null | sed -n 's/.*dev \([^ ]*\).*/\1/p' | head -1)
+if [ -n "$GW" ] && [ -n "$DEV" ]; then
+    for entry in $SERVERS; do
+        ip=$(echo "$entry" | cut -d'#' -f1)
+        if ! ip route show "$ip/32" 2>/dev/null | grep -q "$ip"; then
+            ip route add "$ip/32" via "$GW" dev "$DEV" 2>/dev/null && \
+                log "route added: $ip via $GW dev $DEV"
+        fi
+    done
+else
+    log "WARN: no default gateway, skipping /32 route install"
+fi
+
+# Rewrite dnsmasq upstream list. all-servers = parallel race so a single
+# per-path failure doesn't block the query. noresolv = dnsmasq doesn't
+# silently fall back to /tmp/resolv.conf.auto if all our servers time out.
+uci -q delete dhcp.@dnsmasq[0].server
+for entry in $SERVERS; do
+    uci add_list dhcp.@dnsmasq[0].server="$entry"
+done
+uci set dhcp.@dnsmasq[0].allservers='1'
+uci set dhcp.@dnsmasq[0].noresolv='1'
+uci commit dhcp
+
+/etc/init.d/dnsmasq reload >/dev/null 2>&1 || \
+    /etc/init.d/dnsmasq restart >/dev/null 2>&1
+log "applied: $(echo "$SERVERS" | wc -l) upstreams + all-servers"
