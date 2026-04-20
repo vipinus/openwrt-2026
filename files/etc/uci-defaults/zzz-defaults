@@ -35,11 +35,20 @@ uci -q delete dhcp.lan.ra_slaac
 uci -q delete dhcp.lan.ra_flags
 uci set dhcp.odhcpd.maindhcp='0'
 
-# DNS policy: dnsmasq never reads resolv.conf.auto (no WAN DNS fallback).
-# Default upstream = dnscrypt-proxy on 127.0.0.1#5353.
-# vipin-vpn start_service writes dnsmasq upstream via configure_dns on connect.
-uci set dhcp.@dnsmasq[0].noresolv='1'
-uci set dhcp.@dnsmasq[0].resolvfile='/dev/null'
+# DNS policy at first-boot: dnscrypt-proxy is the preferred upstream, but
+# dnsmasq IS allowed to read resolv.conf.auto (WAN DHCP-learned DNS) as
+# fallback. This breaks the pre-VPN chicken-and-egg deadlock seen on
+# first-boot when the clock is wrong: dnscrypt TLS fails → no DNS → no
+# NTP → clock stays wrong. With a WAN-DNS fallback, name resolution
+# works even before dnscrypt/NTP recover.
+#
+# VPN is not yet connected at this point, so there is no CN geo-spoof
+# leak to worry about — that only matters once tun0 is up and CN video
+# CDNs are being hit. vipin-vpn start_service's configure_dns() then
+# rewrites the server list + sets noresolv=1 to enforce the final
+# policy (CN DNS for overseas→CN-server, dnscrypt for CN-router, etc.).
+uci -q delete dhcp.@dnsmasq[0].noresolv
+uci -q delete dhcp.@dnsmasq[0].resolvfile
 # Belt-and-braces: even with LAN IPv6 disabled, don't serve AAAA to clients
 # (a device that enables IPv6 manually still shouldn't get geo-leak AAAA).
 uci set dhcp.@dnsmasq[0].filter_aaaa='1'
