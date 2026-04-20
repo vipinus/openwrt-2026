@@ -233,16 +233,22 @@ jobs:
               umask 022
           fi
 
-          # DNSCrypt resolvers list + minisig (pair; fetch both or neither)
-          if curl -fsSL --max-time 30 -o /tmp/public-resolvers.md "$DNSC_URL_BASE/public-resolvers.md" && \
-             curl -fsSL --max-time 10 -o /tmp/public-resolvers.md.minisig "$DNSC_URL_BASE/public-resolvers.md.minisig"; then
-              mv /tmp/public-resolvers.md custom-files/etc/dnscrypt-proxy/public-resolvers.md
-              mv /tmp/public-resolvers.md.minisig custom-files/etc/dnscrypt-proxy/public-resolvers.md.minisig
-              echo "public-resolvers.md: $(wc -c < custom-files/etc/dnscrypt-proxy/public-resolvers.md) bytes"
-          else
-              echo "WARN: dnscrypt-resolvers fetch failed — keeping baked copy"
-              rm -f /tmp/public-resolvers.md /tmp/public-resolvers.md.minisig
-          fi
+          # DNSCrypt resolvers + relays lists + minisigs (each pair: both or neither).
+          # dnscrypt-proxy refresh_delay=73h, so this bake matters mainly for
+          # first-boot: pre-NTP clock skew breaks TLS to download.dnscrypt.info,
+          # so without a current on-disk cache the router has no DNS until the
+          # NTP-bootstrap hotplug fixes the clock AND dnscrypt refetches.
+          for NAME in public-resolvers relays; do
+              if curl -fsSL --max-time 30 -o /tmp/${NAME}.md "$DNSC_URL_BASE/${NAME}.md" && \
+                 curl -fsSL --max-time 10 -o /tmp/${NAME}.md.minisig "$DNSC_URL_BASE/${NAME}.md.minisig"; then
+                  mv /tmp/${NAME}.md custom-files/etc/dnscrypt-proxy/${NAME}.md
+                  mv /tmp/${NAME}.md.minisig custom-files/etc/dnscrypt-proxy/${NAME}.md.minisig
+                  echo "${NAME}.md: $(wc -c < custom-files/etc/dnscrypt-proxy/${NAME}.md) bytes"
+              else
+                  echo "WARN: ${NAME}.md fetch failed — keeping baked copy"
+                  rm -f /tmp/${NAME}.md /tmp/${NAME}.md.minisig
+              fi
+          done
 
           # Map language code
           FINAL_LANG="${LUCI_LANG:-en}"
