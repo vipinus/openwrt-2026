@@ -262,6 +262,22 @@ jobs:
           echo "${VERSION:-20260405}" > custom-files/etc/vipin_version
           echo "${TARGET:-Unknown}" > custom-files/etc/vipin_model
           echo "${FINAL_LANG}" > custom-files/etc/vipin_language
+          # Commit SHA + subject + build timestamp. Baked so field ops can
+          # match a customer's router to the exact source tree and know
+          # which fixes it already has. Step cwd is $IB_DIR (Image Builder),
+          # so git queries must target $GITHUB_WORKSPACE explicitly.
+          GIT_SHA="${GITHUB_SHA:-unknown}"
+          GIT_SHORT=$(echo "$GIT_SHA" | cut -c1-8)
+          GIT_SUBJECT=$(git -C "$GITHUB_WORKSPACE" log -1 --pretty=%s 2>/dev/null || echo unknown)
+          GIT_DATE=$(git -C "$GITHUB_WORKSPACE" log -1 --pretty=%cI 2>/dev/null || echo unknown)
+          {
+              echo "commit=$GIT_SHA"
+              echo "short=$GIT_SHORT"
+              echo "subject=$GIT_SUBJECT"
+              echo "date=$GIT_DATE"
+              echo "built=$(date -u +%FT%TZ)"
+          } > custom-files/etc/vipin_commit
+          echo "baked commit $GIT_SHORT — $GIT_SUBJECT"
           chmod +x custom-files/etc/init.d/* 2>/dev/null || true
           chmod +x custom-files/usr/sbin/* 2>/dev/null || true
           chmod +x custom-files/etc/uci-defaults/* 2>/dev/null || true
