@@ -118,12 +118,50 @@ handle_auth_tick() {
 # previous spawn, which on slow routers made the stack look permanently down.
 RESTART_MIN_INTERVAL=45
 
-# Consecutive DNS-probe failures before we treat the stack as dead even
-# though the processes are all alive. Process-liveness (is_stack_running)
-# alone misses "everything running but packets stuck in a bad route" — DNS
-# is the cheapest canary for end-to-end reachability.
+# Consecutive DNS-probe failures before we restart a DNS daemon. Process-
+# liveness alone misses "alive but hung" — e.g. dnscrypt-proxy listening
+# but unable to finish TLS because the clock is wrong (see 89-vipin-ntp-
+# bootstrap for the first-boot case). procd respawn only triggers on
+# process death, so we need a functional probe with per-layer recovery.
 DNS_FAIL_THRESHOLD=3
 DNS_PROBE_HOST="www.anyfq.com"
+
+# Probe each DNS layer independently and restart the actual faulty daemon.
+# Call once per main-loop tick. Requires `now` to be set by the caller.
+check_and_heal_dns() {
+    # Layer 1: dnscrypt-proxy on 127.0.0.1:5353. If this is hung, the whole
+    # chain is dead and dnsmasq probe is redundant.
+    if nslookup -timeout=3 -port=5353 "$DNS_PROBE_HOST" 127.0.0.1 >/dev/null 2>&1; then
+        dnscrypt_fails=0
+    else
+        dnscrypt_fails=$((dnscrypt_fails + 1))
+        log "dnscrypt probe #$dnscrypt_fails/$DNS_FAIL_THRESHOLD failed"
+        if [ "$dnscrypt_fails" -ge "$DNS_FAIL_THRESHOLD" ] && \
+           [ $((now - last_dnsc_restart)) -ge "$RESTART_MIN_INTERVAL" ]; then
+            log "dnscrypt unresponsive — /etc/init.d/dnscrypt-proxy restart"
+            /etc/init.d/dnscrypt-proxy restart 2>/dev/null
+            last_dnsc_restart=$now
+            dnscrypt_fails=0
+        fi
+        return
+    fi
+
+    # Layer 2: dnsmasq on 127.0.0.1:53. Only reached if dnscrypt answered,
+    # so a failure here is dnsmasq-local (hung after config reload, etc.).
+    if nslookup -timeout=3 "$DNS_PROBE_HOST" 127.0.0.1 >/dev/null 2>&1; then
+        dnsmasq_fails=0
+    else
+        dnsmasq_fails=$((dnsmasq_fails + 1))
+        log "dnsmasq probe #$dnsmasq_fails/$DNS_FAIL_THRESHOLD failed (dnscrypt OK)"
+        if [ "$dnsmasq_fails" -ge "$DNS_FAIL_THRESHOLD" ] && \
+           [ $((now - last_dnsm_restart)) -ge "$RESTART_MIN_INTERVAL" ]; then
+            log "dnsmasq unresponsive — /etc/init.d/dnsmasq restart"
+            /etc/init.d/dnsmasq restart 2>/dev/null
+            last_dnsm_restart=$now
+            dnsmasq_fails=0
+        fi
+    fi
+}
 
 # Path used by both the single-instance lock and the restart-serialisation
 # lock. Concurrent actors (LuCI api_set_server, user-triggered restart) take
@@ -147,34 +185,32 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
     reconnect_fails=0
     last_verify=0
     last_restart=0
-    dns_fails=0
+    last_dnsc_restart=0
+    last_dnsm_restart=0
+    dnscrypt_fails=0
+    dnsmasq_fails=0
 
     while true; do
         now=$(date +%s)
+
+        # DNS self-heal runs unconditionally — pre-login boot, post-logout,
+        # post-credential-failure all depend on DNS to talk to the auth API.
+        # Layered probe: restart the actual faulty daemon, not the VPN stack.
+        check_and_heal_dns
 
         if ! has_auth_file; then
             sleep "$RECONNECT_INTERVAL"
             continue
         fi
 
-        # Process-liveness check is necessary but not sufficient: stunnel /
-        # hev / stubby can all be alive while packets silently loop through
-        # a broken policy route. Pair it with a lightweight DNS probe — if
-        # both fail N times in a row, force a restart to re-establish
-        # clean routing state.
+        # VPN stack watchdog — only triggers on actual process death now.
+        # DNS probe moved to check_and_heal_dns where it can distinguish
+        # dnscrypt-hung vs dnsmasq-hung vs policy-route-broken (the last
+        # one would still fail the check below because is_stack_running is
+        # really "policy-route-complete" once tun0 comes up).
         stack_dead=0
         if ! is_stack_running; then
             stack_dead=1
-        else
-            if nslookup -timeout=3 "$DNS_PROBE_HOST" 127.0.0.1 >/dev/null 2>&1; then
-                dns_fails=0
-            else
-                dns_fails=$((dns_fails + 1))
-                log "DNS probe #$dns_fails/$DNS_FAIL_THRESHOLD failed ($DNS_PROBE_HOST)"
-                if [ "$dns_fails" -ge "$DNS_FAIL_THRESHOLD" ]; then
-                    stack_dead=1
-                fi
-            fi
         fi
 
         if [ "$stack_dead" = "1" ]; then
@@ -182,15 +218,12 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
             if [ "$elapsed_since_restart" -lt "$RESTART_MIN_INTERVAL" ]; then
                 log "stack down but last restart was ${elapsed_since_restart}s ago — waiting"
             else
-                log "stack unhealthy (is_stack_running=$(is_stack_running && echo y || echo n), dns_fails=$dns_fails) — calling vipin-vpn restart"
-                # Serialise restart with any concurrent caller (LuCI
-                # api_set_server / api_connect) via flock.
+                log "VPN stack processes dead — calling vipin-vpn restart"
                 (
                     flock 8
                     /etc/init.d/vipin-vpn restart 2>/dev/null
                 ) 8>"$RESTART_LOCK"
                 last_restart=$now
-                dns_fails=0
             fi
         elif ip link show tun0 >/dev/null 2>&1; then
             # Stack up — ensure tun0 default routes are still in place. They
