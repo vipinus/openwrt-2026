@@ -56,6 +56,11 @@ uci set dhcp.@dnsmasq[0].filter_aaaa='1'
 # any DNS-miss burst starves the cache before repeat queries can land.
 # 10k entries ≈ 8 MB extra dnsmasq RSS — acceptable on 128 MB routers.
 uci set dhcp.@dnsmasq[0].cachesize='10000'
+# Silence per-DHCPACK/REQUEST log lines. Misbehaving clients (Android TV
+# boxes with residential-proxy SDKs) can DHCPREQUEST every 3s; with
+# default logging that's 1200 syslog writes/hour per client and
+# perceptible CPU load on MT7628. DHCP-level errors still log.
+uci set dhcp.@dnsmasq[0].quietdhcp='1'
 uci -q delete dhcp.@dnsmasq[0].server
 uci add_list dhcp.@dnsmasq[0].server='127.0.0.1#5353'
 uci commit dhcp
