@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+# Early bootcount reset for Linksys dual-boot devices.
+#
+# The stock /etc/init.d/bootcount runs at S99 — AFTER every userspace
+# service has finished starting. On Linksys hardware (E5600, EA7300,
+# EA7500, EA8100 etc.) U-boot falls back to the previous firmware slot
+# if bootcount isn't cleared. Our firmware pulls lists from GitHub and
+# calls the auth API during vipin-vpn / vipin-video startup; on a slow
+# connection (especially China with cross-border latency + GFW jitter),
+# those calls can stall for minutes. If the user power-cycles the router
+# before S99 fires — or if a single service blocks forever — bootcount
+# keeps incrementing across attempts → Linksys rolls back to stock
+# firmware.
+#
+# Resolution: reset bootcount AS SOON AS the kernel is alive and the
+# basic init is past S20 (network). At that point we're fully committed
+# to this slot: if anything above S21 hangs later, it's a userspace
+# issue, not a boot failure, and the rollback protection wouldn't have
+# helped anyway. Lower START number than the stock S99 means it wins
+# the race; stock bootcount still runs later as belt-and-braces.
+#
+# Only acts on boards whose stock mapping is `mtd resetbc s_env`.
+
+START=21
+STOP=
+
+boot() {
+    case $(board_name) in
+    linksys,e5600 | \
+    linksys,ea6350-v4 | \
+    linksys,ea7300-v1 | \
+    linksys,ea7300-v2 | \
+    linksys,ea7500-v2 | \
+    linksys,ea8100-v1 | \
+    linksys,ea8100-v2)
+        mtd resetbc s_env 2>/dev/null && \
+            logger -t bootcount-early "early bootcount reset: mtd resetbc s_env OK" || \
+            logger -t bootcount-early "early bootcount reset failed — stock S99 will retry"
+        ;;
+    esac
+}
