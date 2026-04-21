@@ -242,6 +242,18 @@ check_auth() {
 }
 
 start_service() {
+    # Idempotent front-door. Any caller (procd, hotplug, LuCI API,
+    # watchdog) may invoke start — if the stack is healthy we no-op
+    # immediately instead of re-rendering config and respawning
+    # stunnel/hev (which was the root cause of the 2026-04-21 tun0
+    # timeout race on 192.168.2.110).
+    if pgrep stunnel >/dev/null 2>&1 && \
+       pgrep hev-socks5-tunnel >/dev/null 2>&1 && \
+       ip link show tun0 >/dev/null 2>&1; then
+        logger -t "$NAME" "start_service: stack already up, no-op"
+        return 0
+    fi
+
     get_config
 
     check_auth || return 1
@@ -463,11 +475,24 @@ status() {
 }
 
 boot() {
-    # Start in background 30s after boot; gated by presence of auth files.
-    ( sleep 30
-      if [ -f /etc/vipin/auth.conf ] && [ -f /etc/vipin/.vpn_pass ]; then
-          /etc/init.d/vipin-auth start 2>/dev/null
-          start_service
-      fi
+    # Deterministic first-boot ordering — no race with hotplug auto-login.
+    #
+    # If baked credentials are waiting in /etc/vipin/auto-login, the
+    # hotplug handler /etc/hotplug.d/iface/90-vipin-auto-login is the
+    # SOLE authority on first WAN ifup: it does vipin-auth login, writes
+    # UCI (server + split_mode), then calls /etc/init.d/vipin-vpn start.
+    # boot() must NOT run in that window or it races with hotplug.
+    #
+    # Reboot path (no auto-login file, auth.conf + .vpn_pass already
+    # present from a previous login): boot() owns the bringup, with a
+    # 10 s grace for the network to settle.
+    [ -f /etc/vipin/auto-login ] && {
+        logger -t "$NAME" "boot(): deferring to hotplug auto-login (baked creds pending)"
+        return 0
+    }
+    ( sleep 10
+      [ -f /etc/vipin/auth.conf ] && [ -f /etc/vipin/.vpn_pass ] || exit 0
+      /etc/init.d/vipin-auth start 2>/dev/null
+      start_service
     ) &
 }
