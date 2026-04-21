@@ -36,7 +36,15 @@ is_stack_running() {
         [ "$VIPIN_AUTH_CHECK_TUN2SOCKS_RUNNING" = "1" ]
         return
     fi
-    pgrep stunnel >/dev/null && pgrep hev-socks5-tunnel >/dev/null
+    # Both processes alive AND tun0 interface actually exists. Without
+    # the tun0 check, hev-socks5-tunnel's startup failure (e.g. 30s
+    # timeout during first-boot concurrency between vipin-auto-login
+    # and vipin-vpn start) would leave the stack "process alive, tun0
+    # missing" forever — watchdog previously didn't trigger a restart
+    # because it only looked at pgrep.
+    pgrep stunnel >/dev/null && \
+        pgrep hev-socks5-tunnel >/dev/null && \
+        ip link show tun0 >/dev/null 2>&1
 }
 
 get_saved_username() {
