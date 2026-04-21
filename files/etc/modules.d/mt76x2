@@ -1,0 +1,12 @@
+# Intentionally empty.
+# The OpenWrt kmod-mt76 umbrella package ships /etc/modules.d/mt76x2
+# containing "mt76x2e", which triggers loading of mt76x2e +
+# mt76x2_common + mt76x02_lib at boot. On MT7628 2.4G-only hardware
+# (GL-MT300N-V2 etc.) there is no 5 GHz radio for those drivers to
+# bind to; empirically they cause sporadic STA disconnects on the
+# 2.4G radio (investigation 2026-04-21, TV-box 12:3e:ad:ac:66:d2
+# dropping every 30–120 min).
+#
+# This overlay file wins over /rom/etc/modules.d/mt76x2 — empty
+# content means no module is auto-loaded, mt7603e still loads via
+# the mt7603e entry under a different file and handles the 2.4G radio.
