@@ -88,12 +88,23 @@ for radio in $(uci show wireless | grep "=wifi-device" | sed 's/.*\.//' | sed 's
     uci set wireless.${radio}.disabled='0'
 done
 
-# Configure all wifi-iface
+# Configure all wifi-iface.
+# Stability tweaks learned the hard way on MT7628 (GL-MT300N-V2) @ ch1:
+# Android TVs + weak 2.4G radios cycled every ~15 min (beacon-loss roam).
+# Applied universally — all safe no-op on healthy setups.
+#  disassoc_low_ack=0    don't kick STA on low ACK (false-positive on weak SNR)
+#  max_inactivity=600    raise hostapd idle timeout from 300s default
+#  skip_inactivity_poll=1  don't send null-data poll (triggers re-auth on some TVs)
+#  wpa_group_rekey=86400 GTK rekey 10min→24h (reduces handshake churn on weak clients)
 for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${iface}.ssid="${SITE_DOMAIN}"
     uci set wireless.${iface}.encryption='psk2'
     uci set wireless.${iface}.key="${SITE_DOMAIN}"
     uci set wireless.${iface}.disabled='0'
+    uci set wireless.${iface}.disassoc_low_ack='0'
+    uci set wireless.${iface}.max_inactivity='600'
+    uci set wireless.${iface}.skip_inactivity_poll='1'
+    uci set wireless.${iface}.wpa_group_rekey='86400'
 done
 
 # Commit and bring up WiFi
