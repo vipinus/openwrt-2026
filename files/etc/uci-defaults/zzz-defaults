@@ -84,14 +84,20 @@ sysctl -p /etc/sysctl.d/99-disable-ipv6.conf >/dev/null 2>&1
 sleep 2
 
 # Enable all radios + per-band tuning.
-#  noscan=1 (2.4G only) skip HT40 coexistence scan on weak SoCs (MT7628 HT20).
-#  On 5G this would skip DFS scan and risk using occupied radar channels —
-#  so apply it ONLY to 2g radios.
+#  noscan=1  (2.4G only) skip HT40 coexistence scan — weak SoCs (MT7628) would
+#            otherwise fall back to HT20 whenever any neighbor AP is seen.
+#  htmode=HT40 (2.4G only) force 40 MHz channel width for 2× throughput.
+#            Without this, wifi-detect on some chipsets defaults to HT20.
+#            On 5G we leave htmode untouched (VHT80 / HE80 defaults are fine).
+#            noscan + HT40 pair cleanly: 40 MHz stays sticky even with noisy
+#            neighbors (our site is single-AP on ch1, DDXS is on ch11 — no
+#            real coexistence to yield to).
 for radio in $(uci show wireless | grep "=wifi-device" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${radio}.disabled='0'
     band=$(uci -q get wireless.${radio}.band)
     if [ "$band" = "2g" ]; then
         uci set wireless.${radio}.noscan='1'
+        uci set wireless.${radio}.htmode='HT40'
     fi
 done
 
