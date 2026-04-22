@@ -83,19 +83,31 @@ sysctl -p /etc/sysctl.d/99-disable-ipv6.conf >/dev/null 2>&1
 # Wait for wireless config to be generated
 sleep 2
 
-# Enable all radios
+# Enable all radios + per-band tuning.
+#  noscan=1 (2.4G only) skip HT40 coexistence scan on weak SoCs (MT7628 HT20).
+#  On 5G this would skip DFS scan and risk using occupied radar channels —
+#  so apply it ONLY to 2g radios.
 for radio in $(uci show wireless | grep "=wifi-device" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${radio}.disabled='0'
+    band=$(uci -q get wireless.${radio}.band)
+    if [ "$band" = "2g" ]; then
+        uci set wireless.${radio}.noscan='1'
+    fi
 done
 
 # Configure all wifi-iface.
 # Stability tweaks learned the hard way on MT7628 (GL-MT300N-V2) @ ch1:
-# Android TVs + weak 2.4G radios cycled every ~15 min (beacon-loss roam).
+# Android TVs + weak 2.4G radios cycled every ~15 min (beacon-loss roam),
+# and channel busy time was dominated by 1 Mbps mgmt/broadcast frames.
 # Applied universally — all safe no-op on healthy setups.
-#  disassoc_low_ack=0    don't kick STA on low ACK (false-positive on weak SNR)
-#  max_inactivity=600    raise hostapd idle timeout from 300s default
+#  disassoc_low_ack=0      don't kick STA on low ACK (false-positive on weak SNR)
+#  max_inactivity=600      raise hostapd idle timeout from 300s default
 #  skip_inactivity_poll=1  don't send null-data poll (triggers re-auth on some TVs)
-#  wpa_group_rekey=86400 GTK rekey 10min→24h (reduces handshake churn on weak clients)
+#  wpa_group_rekey=86400   GTK rekey 10min→24h (reduces handshake churn)
+#  basic_rate 6/12/24 Mbps drop 11b legacy (1/2/5.5/11). Frees ~15% airtime on
+#                          2.4G from management frames; no-op on 5G (no 11b).
+#  mcast_rate=24000        broadcasts/multicasts at 24 Mbps instead of 1 Mbps.
+#                          Every beacon, DHCP ACK, ARP reply saves 24× airtime.
 for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${iface}.ssid="${SITE_DOMAIN}"
     uci set wireless.${iface}.encryption='psk2'
@@ -105,6 +117,11 @@ for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/
     uci set wireless.${iface}.max_inactivity='600'
     uci set wireless.${iface}.skip_inactivity_poll='1'
     uci set wireless.${iface}.wpa_group_rekey='86400'
+    uci -q delete wireless.${iface}.basic_rate
+    uci add_list wireless.${iface}.basic_rate='6000'
+    uci add_list wireless.${iface}.basic_rate='12000'
+    uci add_list wireless.${iface}.basic_rate='24000'
+    uci set wireless.${iface}.mcast_rate='24000'
 done
 
 # Commit and bring up WiFi
