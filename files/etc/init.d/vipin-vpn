@@ -183,8 +183,25 @@ configure_dns() {
     server_country=$(echo "$uci_server" | cut -d. -f1)
     [ "$server_country" = "un" ] && server_country="cn"
 
-    if [ "$router_country" = "cn" ]; then
+    # Probe dnscrypt readiness before committing to it. If it's not
+    # answering (DoH upstream unreachable, bootstrap stuck, etc.), using
+    # 127.0.0.1#5353 as dnsmasq upstream = instant DNS death. Fall back
+    # to WAN DNS; watchdog's reload_dns hook flips back to dnscrypt once
+    # the L1 probe succeeds again.
+    local dnscrypt_ok=0
+    if [ "$VIPIN_VPN_MOCK" = "1" ]; then
+        [ "$VIPIN_VPN_DNSCRYPT_OK" = "1" ] && dnscrypt_ok=1
+    else
+        nslookup -timeout=3 -port=5353 www.anyfq.com 127.0.0.1 \
+            >/dev/null 2>&1 && dnscrypt_ok=1
+    fi
+
+    if [ "$router_country" = "cn" ] && [ "$dnscrypt_ok" = "1" ]; then
         upstream="127.0.0.1#5353"
+    elif [ "$router_country" = "cn" ]; then
+        upstream="$wan_dns"
+        [ "$VIPIN_VPN_MOCK" != "1" ] && logger -t "$NAME" \
+            "configure_dns: dnscrypt not responding on 127.0.0.1:5353 — WAN DNS fallback; watchdog will re-sync"
     elif [ "$server_country" = "cn" ] && [ -s /etc/vipin/dns.txt ]; then
         # vipin-dns-refresh owns the UCI server list + all-servers flag +
         # /32 WAN routes. Sentinel path — skip the single-upstream UCI write
@@ -334,6 +351,23 @@ start_service() {
     local connect_host
     connect_host=$(resolve_connect_server)
     logger -t "$NAME" "Starting stunnel client → ${connect_host}:$(grep -o '"port":[0-9]*' /etc/vipin/auth-params.json | head -1 | cut -d: -f2)"
+
+    # Bypass routes for stunnel's upstream IPs — must ALWAYS go direct via
+    # WAN, never via tun0. Without these, `0.0.0.0/1 dev tun0` (installed
+    # below once tun0 is up) swallows stunnel's own SYNs to its upstream,
+    # and when tun0 goes zombie (hev waiting for handshake that never
+    # completes) stunnel can never reconnect — textbook chicken-and-egg.
+    # replace (not add) so reboot/restart re-applies cleanly.
+    local wan_gw wan_dev
+    wan_gw=$(ip route show default 2>/dev/null | awk '/default/ {print $3; exit}')
+    wan_dev=$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')
+    if [ -n "$wan_gw" ] && [ -n "$wan_dev" ]; then
+        grep -oE 'connect = [0-9.]+:[0-9]+' /etc/vipin/stunnel-client.conf 2>/dev/null | \
+            awk '{split($3,a,":"); print a[1]}' | sort -u | while read ip; do
+                ip route replace "$ip/32" via "$wan_gw" dev "$wan_dev" 2>/dev/null
+            done
+        logger -t "$NAME" "stunnel upstream bypass routes installed via $wan_gw dev $wan_dev"
+    fi
 
     # No procd respawn on stunnel/hev sub-processes: vipin-auth-check
     # owns stack health (is_stack_running + DNS canary, 30s loop with 45s
