@@ -94,6 +94,20 @@ render_stunnel_conf() {
     connect_host=$(resolve_connect_server)
     [ -z "$port" ] || [ -z "$connect_host" ] && return 1
 
+    # Anti-fingerprint: for JP servers, server-side DNATs ports
+    # 45000-49999 → 22, so we can pick a random high port per connect
+    # line. GFW can still SNI-match the TLS ClientHello, but fixed
+    # :22-on-every-reconnect is a stronger signal than randomized high
+    # ports. Applied whenever the server hostname starts with jp (incl.
+    # jp.fanq.in, jp1/jp2 subdomains). Non-JP keeps the API-supplied
+    # port — other regions don't have the port-bank DNAT set up yet.
+    local server_country_prefix
+    server_country_prefix=$(echo "$connect_host" | cut -d. -f1)
+    local randomize_port=0
+    case "$server_country_prefix" in
+        jp|jp[0-9]*) randomize_port=1 ;;
+    esac
+
     # Pull optional DNS sidecar endpoint from the server response. Used when
     # overseas-router + CN-server — see configure_dns decision matrix.
     local dns_host dns_port
@@ -133,7 +147,15 @@ client = yes
 accept = 127.0.0.1:1080
 EOF
     for ip in $ips; do
-        echo "connect = ${ip}:${port}" >> "$cfgdir/stunnel-client.conf"
+        local real_port="$port"
+        if [ "$randomize_port" = "1" ]; then
+            # Random in [45000, 49999]. busybox ash supports $RANDOM
+            # (0-32767 from /dev/urandom-ish source), good enough for
+            # per-connect port dispersion. Server-side DNAT folds the
+            # whole range to :22.
+            real_port=$(( 45000 + RANDOM % 5000 ))
+        fi
+        echo "connect = ${ip}:${real_port}" >> "$cfgdir/stunnel-client.conf"
     done
     cat >> "$cfgdir/stunnel-client.conf" <<EOF
 failover = rr
