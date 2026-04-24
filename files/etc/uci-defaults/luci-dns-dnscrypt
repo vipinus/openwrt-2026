@@ -1,15 +1,19 @@
 #!/bin/sh
-# Enable dnscrypt-proxy service at boot — do NOT set DNS policy here.
+# Intentionally DO NOT enable/start dnscrypt-proxy at boot.
 #
-# Rationale: vipin-vpn's configure_dns() / teardown_dns() is the single
-# authority for dnsmasq upstream selection. Pre-VPN the policy must be
-# WAN DHCP-learned DNS (otherwise VPN can't resolve its server domain
-# and dnscrypt can't reach DoH upstreams — chicken-and-egg deadlock).
-# zzz-defaults leaves dnsmasq with no explicit server so it reads
-# resolv.conf.auto. vipin-vpn flips to 127.0.0.1#5353 when VPN is up.
-
-/etc/init.d/dnscrypt-proxy enable 2>/dev/null
-/etc/init.d/dnscrypt-proxy start 2>/dev/null
+# Rationale: dnscrypt-proxy's DoH upstream is overseas (:443 target).
+# The split-tunnel policy that routes its DoH traffic via tun0 (set
+# @vipin_force_tun0 in vipin-vpn-routing) is installed only AFTER
+# vipin-vpn brings tun0 up and calls vipin-vpn-routing enable. If
+# dnscrypt starts before that, its initial DoH handshakes go via
+# WAN (likely blocked for :443 on restrictive networks), fail, and
+# procd enters a respawn loop that outlives the window where tun0
+# comes up — dnscrypt never recovers cleanly.
+#
+# vipin-vpn's start_service owns dnscrypt lifecycle:
+#   stunnel connects → tun0 up → vipin-vpn-routing enable (split
+#   policy incl. vipin_force_tun0) → /etc/init.d/dnscrypt-proxy start.
+/etc/init.d/dnscrypt-proxy disable 2>/dev/null
 
 rm -f /etc/uci-defaults/luci-dns-dnscrypt
 exit 0

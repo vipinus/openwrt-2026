@@ -433,8 +433,21 @@ YAML
               [ -z "$country" ] && country="$(uci -q get vipin.vpn.country || echo cn)"
               /usr/sbin/vipin-vpn-routing enable "$country" forward
           fi
-          # stack is up — now safe to flip DNS to the 4-matrix decision
-          # (stunnel-dependent bridge only becomes usable at this point).
+          # Split-tunnel policy (incl. @vipin_force_tun0 return rule in
+          # vipin_output) is now loaded. Only at THIS point is it safe
+          # to bring dnscrypt up: its DoH upstream traffic will ride
+          # tun0 per the force-tun0 exception, which is how it reaches
+          # Cloudflare/Google :443 on networks that block direct WAN :443.
+          # Pre-tun0 start would hit the WAN :443 block, go into procd
+          # respawn loop, and never converge.
+          logger -t "$NAME" "split-tunnel policy loaded — starting dnscrypt-proxy"
+          /etc/init.d/dnscrypt-proxy restart >/dev/null 2>&1
+          # Give dnscrypt ~8s to bootstrap (DoH TLS handshake + source
+          # list load) before configure_dns probes it on :5353. Without
+          # this wait the probe races the startup and falls back to
+          # WAN DNS unnecessarily; watchdog would recover but LAN users
+          # see a brief DNS blip.
+          sleep 8
           dns_upstream=$(configure_dns)
           logger -t "$NAME" "DNS upstream set to $dns_upstream"
           logger -t "$NAME" "VPN started"
@@ -446,6 +459,12 @@ YAML
 
 stop_service() {
     get_config
+
+    # dnscrypt's DoH path rides tun0 (see force-tun0 exception in
+    # vipin-vpn-routing). Once tun0 + split policy go away dnscrypt
+    # can't reach its upstream and procd would respawn it in a loop
+    # burning CPU — stop it symmetrically with the VPN stack.
+    /etc/init.d/dnscrypt-proxy stop 2>/dev/null
 
     /usr/sbin/vipin-vpn-routing disable 2>/dev/null
 
