@@ -259,6 +259,23 @@ check_auth() {
 }
 
 start_service() {
+    # Single-instance lock. Without this, watchdog's 30s tick +
+    # hotplug's WAN-ifup fire can run two `start` in parallel: first
+    # instance spawns stunnel/hev, second sees "stack already up" in
+    # the idempotent check below and exits — BUT if the second races
+    # in while the first hasn't yet spawned hev, both go into
+    # render-config + spawn path and fight over /etc/vipin/stunnel-
+    # client.conf, /etc/vipin/hev-tun.yaml, tun0 device, and the
+    # procd_open_instance registration. Witnessed 2026-04-24 on a
+    # live router with two stuck `vipin-vpn start` processes and
+    # stunnel never reaching ESTAB. Non-blocking flock: late arrivals
+    # skip quietly instead of queueing.
+    exec 7>/var/lock/vipin-start.lock
+    if ! flock -n 7; then
+        logger -t "$NAME" "start_service: another start in progress, skipping"
+        return 0
+    fi
+
     # Idempotent front-door. Any caller (procd, hotplug, LuCI API,
     # watchdog) may invoke start — if the stack is healthy we no-op
     # immediately instead of re-rendering config and respawning
