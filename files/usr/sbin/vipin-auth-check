@@ -207,6 +207,22 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
         check_and_heal_dns
 
         if ! has_auth_file; then
+            # Fallback for pending auto-login: the WAN-ifup hotplug fires
+            # vipin-auto-login exactly once. If DNS wasn't ready within
+            # its 60s window (e.g. pre-my-DNS-fix firmware, or very slow
+            # DHCP/ISP), the script exits without consuming creds and
+            # nothing re-triggers it — auth.conf is never written and
+            # the watchdog stays in this skip branch forever.
+            #
+            # Tick-level recovery: if baked creds are still waiting AND
+            # DNS now resolves the auth host, kick vipin-auto-login. The
+            # helper is idempotent (rm -f + exit-0 on missing file) so
+            # concurrent invocations during a DHCP flap are safe.
+            if [ -s /etc/vipin/auto-login ] && \
+               nslookup -timeout=3 www.anyfq.com >/dev/null 2>&1; then
+                log "auto-login still pending + DNS now ready — invoking /usr/sbin/vipin-auto-login"
+                /usr/sbin/vipin-auto-login >/dev/null 2>&1 &
+            fi
             sleep "$RECONNECT_INTERVAL"
             continue
         fi
