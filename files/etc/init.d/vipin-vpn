@@ -442,12 +442,24 @@ YAML
           # respawn loop, and never converge.
           logger -t "$NAME" "split-tunnel policy loaded — starting dnscrypt-proxy"
           /etc/init.d/dnscrypt-proxy restart >/dev/null 2>&1
-          # Give dnscrypt ~8s to bootstrap (DoH TLS handshake + source
-          # list load) before configure_dns probes it on :5353. Without
-          # this wait the probe races the startup and falls back to
-          # WAN DNS unnecessarily; watchdog would recover but LAN users
-          # see a brief DNS blip.
-          sleep 8
+          # Poll :5353 for readiness before handing it to dnsmasq. A
+          # fixed sleep races the DoH TLS handshake + source list load
+          # (typically 3-15s over tun0 depending on RTT), so tick every
+          # second up to 60s and break on first successful query. If
+          # dnscrypt never answers, configure_dns's own probe falls
+          # back to WAN DNS and watchdog re-syncs when it recovers.
+          local dc_wait=0
+          while [ "$dc_wait" -lt 60 ]; do
+              nslookup -timeout=2 -port=5353 www.anyfq.com 127.0.0.1 \
+                  >/dev/null 2>&1 && break
+              sleep 1
+              dc_wait=$((dc_wait + 1))
+          done
+          if [ "$dc_wait" -ge 60 ]; then
+              logger -t "$NAME" "dnscrypt not ready after 60s — falling back via configure_dns"
+          else
+              logger -t "$NAME" "dnscrypt ready in ${dc_wait}s"
+          fi
           dns_upstream=$(configure_dns)
           logger -t "$NAME" "DNS upstream set to $dns_upstream"
           logger -t "$NAME" "VPN started"
