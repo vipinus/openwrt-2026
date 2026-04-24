@@ -36,15 +36,18 @@ is_stack_running() {
         [ "$VIPIN_AUTH_CHECK_TUN2SOCKS_RUNNING" = "1" ]
         return
     fi
-    # Both processes alive AND tun0 interface actually exists. Without
-    # the tun0 check, hev-socks5-tunnel's startup failure (e.g. 30s
-    # timeout during first-boot concurrency between vipin-auto-login
-    # and vipin-vpn start) would leave the stack "process alive, tun0
-    # missing" forever — watchdog previously didn't trigger a restart
-    # because it only looked at pgrep.
+    # "Running" = processes alive + tun0 exists + tun0 has an inet
+    # address. The inet check catches zombie stacks: stunnel/hev can
+    # keep running with tun0 present but never configured (upstream
+    # stunnel never completed the handshake, so hev-socks5-tunnel
+    # created tun0 as link/none and stalled). Witnessed 2026-04-24 on
+    # a live router where pgrep/link-show all returned true, tun0 was
+    # UP LOWER_UP, but `ip addr show tun0` showed link/none — no IPv4,
+    # ping -I tun0 100% loss, 1h25m of silent dead stack.
     pgrep stunnel >/dev/null && \
         pgrep hev-socks5-tunnel >/dev/null && \
-        ip link show tun0 >/dev/null 2>&1
+        ip link show tun0 >/dev/null 2>&1 && \
+        ip -4 addr show tun0 2>/dev/null | grep -q "inet "
 }
 
 get_saved_username() {
