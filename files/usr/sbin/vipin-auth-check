@@ -36,18 +36,21 @@ is_stack_running() {
         [ "$VIPIN_AUTH_CHECK_TUN2SOCKS_RUNNING" = "1" ]
         return
     fi
-    # "Running" = processes alive + tun0 exists + tun0 has an inet
-    # address. The inet check catches zombie stacks: stunnel/hev can
-    # keep running with tun0 present but never configured (upstream
-    # stunnel never completed the handshake, so hev-socks5-tunnel
-    # created tun0 as link/none and stalled). Witnessed 2026-04-24 on
-    # a live router where pgrep/link-show all returned true, tun0 was
-    # UP LOWER_UP, but `ip addr show tun0` showed link/none — no IPv4,
-    # ping -I tun0 100% loss, 1h25m of silent dead stack.
+    # "Running" = processes alive + tun0 exists + stunnel has an ESTAB
+    # outbound session to the upstream :22. The ESTAB check is what
+    # distinguishes a healthy stack from a zombie: hev-socks5-tunnel
+    # creates tun0 as link/none POINTOPOINT (no inet assigned — that's
+    # NORMAL for this architecture, hev relays packets through the
+    # socks5 upstream, not through a router-side IP), so checking for
+    # `ip -4 addr show tun0 | grep inet` was a false positive that made
+    # every healthy stack look like a zombie. The real health signal is
+    # whether stunnel actually has an outbound TLS session to :22 — if
+    # yes, the socks5 pipe is alive and hev can do its job. If no
+    # (stunnel hung, upstream unreachable), we're zombie.
     pgrep stunnel >/dev/null && \
         pgrep hev-socks5-tunnel >/dev/null && \
         ip link show tun0 >/dev/null 2>&1 && \
-        ip -4 addr show tun0 2>/dev/null | grep -q "inet "
+        ss -tn state established 2>/dev/null | awk '$5 ~ /:22$/' | grep -q .
 }
 
 get_saved_username() {
