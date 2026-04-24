@@ -1,3 +1,9 @@
 0 3 * * 0 /etc/init.d/dnscrypt-proxy update_servers >/dev/null 2>&1
-0 4 * * 0 /usr/sbin/vipin-video-domains refresh >/dev/null 2>&1
+# Disabled 2026-04-24: upstream direct.txt is curated manually now
+# (googlevideo.com pulled because GFW blocks direct-WAN egress to
+# googlevideo CDN). Weekly auto-fetch would just pull back whatever
+# changed upstream — bake at build time is the single authoritative
+# refresh path; operators can also hit the LuCI "Refresh now" button
+# on demand. No silent background refresh.
+# 0 4 * * 0 /usr/sbin/vipin-video-domains refresh >/dev/null 2>&1
 0 5 1 * * /usr/sbin/vipin-force-cn-refresh >/dev/null 2>&1
