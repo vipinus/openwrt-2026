@@ -36,21 +36,26 @@ is_stack_running() {
         [ "$VIPIN_AUTH_CHECK_TUN2SOCKS_RUNNING" = "1" ]
         return
     fi
-    # "Running" = processes alive + tun0 exists + stunnel has an ESTAB
-    # outbound session to the upstream :22. The ESTAB check is what
-    # distinguishes a healthy stack from a zombie: hev-socks5-tunnel
-    # creates tun0 as link/none POINTOPOINT (no inet assigned — that's
-    # NORMAL for this architecture, hev relays packets through the
-    # socks5 upstream, not through a router-side IP), so checking for
-    # `ip -4 addr show tun0 | grep inet` was a false positive that made
-    # every healthy stack look like a zombie. The real health signal is
-    # whether stunnel actually has an outbound TLS session to :22 — if
-    # yes, the socks5 pipe is alive and hev can do its job. If no
-    # (stunnel hung, upstream unreachable), we're zombie.
+    # "Running" = processes alive + tun0 exists. That's all.
+    #
+    # History: earlier iterations tried to catch "zombie" states more
+    # precisely. e6ff0756 added `ip -4 addr show tun0 | grep inet` —
+    # FALSE POSITIVE: hev-socks5-tunnel creates tun0 as POINTOPOINT
+    # with link/none by design (no router-side IP needed, it's just a
+    # byte pipe to the socks5 upstream). 7dc34ec1 tried ESTAB :22 —
+    # ALSO FALSE POSITIVE: stunnel's outbound connection to upstream
+    # is on-demand, when idle there's no ESTAB session but the stack
+    # is still functional. Both heuristics caused watchdog to thrash
+    # on healthy setups.
+    #
+    # Functional liveness check lives in check_and_heal_dns: if
+    # dnscrypt (layer 1) or dnsmasq (layer 2) can't actually resolve,
+    # that function restarts the responsible daemon. A "processes
+    # alive but stack silently dead" case will still manifest as DNS
+    # failure and get restarted there, just one layer up.
     pgrep stunnel >/dev/null && \
         pgrep hev-socks5-tunnel >/dev/null && \
-        ip link show tun0 >/dev/null 2>&1 && \
-        ss -tn state established 2>/dev/null | awk '$5 ~ /:22$/' | grep -q .
+        ip link show tun0 >/dev/null 2>&1
 }
 
 get_saved_username() {
