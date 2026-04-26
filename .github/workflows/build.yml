@@ -371,7 +371,7 @@ jobs:
         with:
           name: openwrt-${{ env.TARGET }}-firmware
           path: firmware/
-          retention-days: 7
+          retention-days: 1
 
       - name: Upload to Release
         if: inputs.release == true
