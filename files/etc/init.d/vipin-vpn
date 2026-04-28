@@ -515,6 +515,12 @@ stop_service() {
     [ "$VIPIN_VPN_SKIP_TEARDOWN" = "1" ] || teardown_dns
 
     rm -f /var/run/vipin-stunnel.pid
+    # Clear LuCI op-lock + routing lock here as a backstop. A LuCI write
+    # endpoint that triggered restart and crashed mid-call would otherwise
+    # leave /tmp/vipin-luci-busy stuck until OP_LOCK_TIMEOUT expires; same
+    # for vipin-vpn-routing's lock if that script SIGKILL'd. Stop is the
+    # natural quiescence point — no operation should be in flight.
+    rm -f /tmp/vipin-luci-busy /tmp/vipin-routing.lock
 
     logger -t "$NAME" "VPN stopped"
 }

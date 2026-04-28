@@ -2,6 +2,58 @@ module("luci.controller.vpn", package.seeall)
 
 require("luci.model.uci")
 
+-- ---------------------------------------------------------------------------
+-- Operation lock (UI-level mutex for write endpoints).
+--
+-- Single global busy flag at /tmp/vipin-luci-busy (tmpfs — auto-clears on
+-- reboot, deadlock-proof). Each write API (api_set_server,
+-- api_set_split_tunnel, api_login, api_logout) acquires before touching
+-- shared state and releases at end. If a freshly-acquired flag is observed
+-- (mtime < OP_LOCK_TIMEOUT seconds old) the second caller gets HTTP 423
+-- with a structured "operation in progress" payload — frontend disables
+-- buttons accordingly.
+--
+-- Stale recovery: mtime-based timeout is the primary backstop (LuCI Lua
+-- crash mid-op would never get to release_op_lock, but the next call sees
+-- mtime > timeout and proceeds). Defensive cleanup also runs in
+-- /etc/init.d/vipin-vpn start_service+stop_service so a manual
+-- `vipin-vpn restart` always resets the flag.
+--
+-- The vipin-vpn-routing script has its own /tmp/vipin-routing.lock with
+-- equivalent stale-recovery; these two locks layer (LuCI mutex above
+-- routing-script mutex) because LuCI may also restart the entire stack
+-- which involves more than just routing.
+-- ---------------------------------------------------------------------------
+local OP_LOCK_FILE = "/tmp/vipin-luci-busy"
+local OP_LOCK_TIMEOUT = 60  -- seconds
+
+local function acquire_op_lock(op_name)
+    local nixio = require("nixio")
+    local sb = nixio.fs.stat(OP_LOCK_FILE)
+    if sb and (os.time() - sb.mtime < OP_LOCK_TIMEOUT) then
+        local cur = (nixio.fs.readfile(OP_LOCK_FILE) or ""):gsub("%s+$", "")
+        return false, cur
+    end
+    nixio.fs.writefile(OP_LOCK_FILE, op_name)
+    return true
+end
+
+local function release_op_lock()
+    local nixio = require("nixio")
+    nixio.fs.remove(OP_LOCK_FILE)
+end
+
+local function reject_busy(http, json, current_op)
+    http.status(423, "Locked")
+    http.prepare_content("application/json")
+    http.write(json.encode({
+        success = false,
+        busy = true,
+        current_op = current_op,
+        message = "Another operation in progress: " .. current_op
+    }))
+end
+
 -- Load i18n from external files (shared with settings.htm)
 local i18n_dir = "/usr/lib/lua/luci/view/vpn/i18n/"
 local function load_i18n(code)
@@ -313,6 +365,12 @@ function api_set_split_tunnel()
     local json = require("cjson")
     local util = require("luci.util")
 
+    local ok_lock, cur_op = acquire_op_lock("set_split_tunnel")
+    if not ok_lock then
+        reject_busy(http, json, cur_op)
+        return
+    end
+
     local mode = luci.http.formvalue("mode") or "off"
     local result = {success = false}
 
@@ -338,6 +396,7 @@ function api_set_split_tunnel()
     result.success = true
     result.mode = mode
 
+    release_op_lock()
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
@@ -401,6 +460,12 @@ function api_login()
     local json = require("cjson")
     local util = require("luci.util")
     local nixio = require("nixio")
+
+    local ok_lock, cur_op = acquire_op_lock("login")
+    if not ok_lock then
+        reject_busy(http, json, cur_op)
+        return
+    end
 
     local username = luci.http.formvalue("username") or ""
     local password = luci.http.formvalue("password") or ""
@@ -480,6 +545,7 @@ function api_login()
         auth_status = auth_status
     }
 
+    release_op_lock()
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
@@ -488,6 +554,12 @@ function api_logout()
     local http = require("luci.http")
     local json = require("cjson")
     local util = require("luci.util")
+
+    local ok_lock, cur_op = acquire_op_lock("logout")
+    if not ok_lock then
+        reject_busy(http, json, cur_op)
+        return
+    end
 
     -- Stop services
     util.exec("/etc/init.d/vipin-vpn stop 2>&1")
@@ -498,7 +570,8 @@ function api_logout()
         success = true,
         message = "Logged out successfully"
     }
-    
+
+    release_op_lock()
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
@@ -588,6 +661,12 @@ function api_set_server()
     local json = require("cjson")
     local util = require("luci.util")
 
+    local ok_lock, cur_op = acquire_op_lock("set_server")
+    if not ok_lock then
+        reject_busy(http, json, cur_op)
+        return
+    end
+
     local server = luci.http.formvalue("server") or ""
 
     local success = false
@@ -611,6 +690,7 @@ function api_set_server()
         reconnected = reconnected
     }
 
+    release_op_lock()
     http.prepare_content("application/json")
     http.write(json.encode(result))
 end
