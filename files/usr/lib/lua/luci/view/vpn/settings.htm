@@ -73,9 +73,43 @@ local active_lang = i18n[lang] and lang or "en"
 .server-picker-item { padding:4px 6px; cursor:pointer; white-space:nowrap; font-size:13px; color:var(--text-color-high); border-radius:2px; }
 .server-picker-item:hover { background:var(--background-color-low); }
 .server-picker-item.selected { background:rgba(82,168,236,0.8); color:#fff; }
+
+/* Global busy overlay — grays out the entire settings panel during write
+   ops (server change / split-mode switch / login / logout). pointer-events
+   capture all clicks so even keyboard-driven users can't double-fire. */
+.vpn-busy-overlay {
+    position: absolute; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.18);
+    z-index: 9990;
+    display: none;
+    cursor: progress;
+}
+.vpn-busy-overlay.visible { display: block; }
+.vpn-busy-spinner {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: var(--background-color-high); color: var(--text-color-high);
+    padding: 14px 24px; border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    font-size: 14px; font-weight: 500;
+    border: 1px solid var(--border-color-high);
+}
+.vpn-busy-spinner::before {
+    content: ""; display: inline-block; width: 14px; height: 14px;
+    margin-right: 10px; vertical-align: middle;
+    border: 2px solid var(--border-color-high);
+    border-top-color: rgba(82,168,236,0.9);
+    border-radius: 50%;
+    animation: vpn-busy-spin 0.7s linear infinite;
+}
+@keyframes vpn-busy-spin { to { transform: rotate(360deg); } }
 </style>
 
-<div class="cbi-map">
+<div class="cbi-map" style="position:relative;">
+    <!-- Global busy overlay (covers entire cbi-map). Shown by setBusyOverlay(). -->
+    <div id="vpn-busy-overlay" class="vpn-busy-overlay">
+        <div id="vpn-busy-spinner" class="vpn-busy-spinner"><%= t.busy_processing or "处理中..." %></div>
+    </div>
+
     <h2><%= t.vpn_settings %></h2>
 
     <div id="vpn-auth-banner"
@@ -360,6 +394,23 @@ function updateUI() {
 
 var uiBusy = false;
 
+// Show/hide the global busy overlay. Linked to uiBusy so all existing
+// uiBusy gates (serverChange, setSplitMode, ...) automatically trigger
+// the visual lock. Using a wrapper instead of direct uiBusy assignment
+// would force every callsite update; centralizing here keeps the diff
+// surface small.
+function setBusyOverlay(on, msg) {
+    var ov = document.getElementById('vpn-busy-overlay');
+    var sp = document.getElementById('vpn-busy-spinner');
+    if (!ov) return;
+    if (on) {
+        if (sp && msg) sp.textContent = msg;
+        ov.classList.add('visible');
+    } else {
+        ov.classList.remove('visible');
+    }
+}
+
 function runTimedProgress(rowId, barId, textId, duration, onDone) {
     var row = document.getElementById(rowId);
     var bar = document.getElementById(barId);
@@ -388,8 +439,10 @@ function runTimedProgress(rowId, barId, textId, duration, onDone) {
 function setSplitMode(mode) {
     if (uiBusy) return;
     uiBusy = true;
+    setBusyOverlay(true, vpnData.t.busy_split_switching || '切换分流中...');
     runTimedProgress('split-progress-row', 'split-progress-bar', 'split-progress-text', 10000, function() {
         uiBusy = false;
+        setBusyOverlay(false);
         loadStatus();
     });
     var xhr = new XMLHttpRequest();
@@ -397,6 +450,11 @@ function setSplitMode(mode) {
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         try {
+            if (xhr.status === 423) {
+                var r = JSON.parse(xhr.responseText);
+                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (r.current_op || ''));
+                return;
+            }
             JSON.parse(xhr.responseText);
             vpnData.splitEnabled = (mode !== 'off');
             vpnData.splitMode = (mode === 'off') ? 'forward' : mode;
@@ -506,6 +564,8 @@ function updateAuthUI() {
 var loginProgressTimer = null;
 
 function showLoginProgress() {
+    uiBusy = true;
+    setBusyOverlay(true, vpnData.t.busy_logging_in || '登录中...');
     var btn = document.getElementById('btn-login');
     var progress = document.getElementById('login-progress');
     var bar = document.getElementById('login-progress-bar');
@@ -522,6 +582,8 @@ function showLoginProgress() {
 }
 
 function hideLoginProgress(success) {
+    uiBusy = false;
+    setBusyOverlay(false);
     var btn = document.getElementById('btn-login');
     var progress = document.getElementById('login-progress');
     var bar = document.getElementById('login-progress-bar');
@@ -773,10 +835,12 @@ function serverChange(newServer) {
     if (!newServer) return;
     if (uiBusy) return;
     uiBusy = true;
+    setBusyOverlay(true, vpnData.t.busy_server_switching || '切换服务器中...');
     // 10s matches the split-mode progress window. Routing/stack may still
     // settle after this, but the 5s poller picks up the final state.
     runTimedProgress('server-progress-row', 'server-progress-bar', 'server-progress-text', 10000, function() {
         uiBusy = false;
+        setBusyOverlay(false);
         loadStatus();
     });
     fetch('<%=luci.dispatcher.build_url("admin/services/vpn/api_set_server")%>', {
@@ -784,11 +848,20 @@ function serverChange(newServer) {
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'server=' + encodeURIComponent(newServer)
-    }).then(function(r) { return r.json(); }).then(function(d) {
+    }).then(function(r) {
+        if (r.status === 423) {
+            return r.json().then(function(d) {
+                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (d.current_op || ''));
+                throw new Error('busy');
+            });
+        }
+        return r.json();
+    }).then(function(d) {
         if (!d || !d.success) {
             alert(vpnData.t.server_change_fail || 'Server change failed');
         }
-    }).catch(function() {
+    }).catch(function(e) {
+        if (e && e.message === 'busy') return;
         alert(vpnData.t.server_change_fail || 'Server change failed');
     });
 }
