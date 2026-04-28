@@ -79,7 +79,7 @@ local active_lang = i18n[lang] and lang or "en"
    capture all clicks so even keyboard-driven users can't double-fire. */
 .vpn-busy-overlay {
     position: absolute; top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.30);
     z-index: 9990;
     display: none;
     cursor: progress;
@@ -198,18 +198,6 @@ if pass_file then pass_file:close() end
                 <div id="expiry-warning" class="alert-message warning" style="display:none;">
                     <span id="expiry-warning-text"></span>
                 </div>
-                <div class="cbi-value" id="server-progress-row" style="display:none;">
-                    <label class="cbi-value-title">&nbsp;</label>
-                    <div class="cbi-value-field">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span>⏳</span>
-                            <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
-                                <div id="server-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
-                            </div>
-                            <span id="server-progress-text" style="font-size:12px;color:#666;">0%</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </fieldset>
@@ -250,18 +238,6 @@ local function _ck(v) return (_init == v) and ' checked' or '' end
                 <label class="cbi-value-title"><%= t.count %></label>
                 <div class="cbi-value-field">
                     <span id="info-country">-</span> &mdash; <span id="info-count">-</span>
-                </div>
-            </div>
-            <div class="cbi-value" id="split-progress-row" style="display:none;">
-                <label class="cbi-value-title">&nbsp;</label>
-                <div class="cbi-value-field">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <span>⏳</span>
-                        <div style="flex:1;background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
-                            <div id="split-progress-bar" style="width:0%;height:100%;background:#007bff;border-radius:4px;transition:width 0.5s;"></div>
-                        </div>
-                        <span id="split-progress-text" style="font-size:12px;color:#666;">0%</span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -411,40 +387,15 @@ function setBusyOverlay(on, msg) {
     }
 }
 
-function runTimedProgress(rowId, barId, textId, duration, onDone) {
-    var row = document.getElementById(rowId);
-    var bar = document.getElementById(barId);
-    var text = document.getElementById(textId);
-    if (row) row.style.display = '';
-    if (bar) bar.style.width = '0%';
-    if (text) text.textContent = '0%';
-    var start = Date.now();
-    var timer = setInterval(function() {
-        var pct = Math.min(99, Math.floor((Date.now() - start) / duration * 100));
-        if (bar) bar.style.width = pct + '%';
-        if (text) text.textContent = pct + '%';
-        if (pct >= 99) {
-            clearInterval(timer);
-            if (bar) bar.style.width = '100%';
-            if (text) text.textContent = '100%';
-            setTimeout(function() {
-                if (row) row.style.display = 'none';
-                if (onDone) onDone();
-            }, 500);
-        }
-    }, 200);
-    return timer;
-}
-
 function setSplitMode(mode) {
     if (uiBusy) return;
     uiBusy = true;
     setBusyOverlay(true, vpnData.t.busy_split_switching || '切换分流中...');
-    runTimedProgress('split-progress-row', 'split-progress-bar', 'split-progress-text', 10000, function() {
+    var release = function() {
         uiBusy = false;
         setBusyOverlay(false);
         loadStatus();
-    });
+    };
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/cgi-bin/luci/admin/services/vpn/api_set_split', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -453,14 +404,16 @@ function setSplitMode(mode) {
             if (xhr.status === 423) {
                 var r = JSON.parse(xhr.responseText);
                 alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (r.current_op || ''));
-                return;
+            } else {
+                JSON.parse(xhr.responseText);
+                vpnData.splitEnabled = (mode !== 'off');
+                vpnData.splitMode = (mode === 'off') ? 'forward' : mode;
+                updateUI();
             }
-            JSON.parse(xhr.responseText);
-            vpnData.splitEnabled = (mode !== 'off');
-            vpnData.splitMode = (mode === 'off') ? 'forward' : mode;
-            updateUI();
         } catch (e) { console.error(e); }
+        release();
     };
+    xhr.onerror = release;
     xhr.send('mode=' + encodeURIComponent(mode));
 }
 
@@ -836,13 +789,11 @@ function serverChange(newServer) {
     if (uiBusy) return;
     uiBusy = true;
     setBusyOverlay(true, vpnData.t.busy_server_switching || '切换服务器中...');
-    // 10s matches the split-mode progress window. Routing/stack may still
-    // settle after this, but the 5s poller picks up the final state.
-    runTimedProgress('server-progress-row', 'server-progress-bar', 'server-progress-text', 10000, function() {
+    var release = function() {
         uiBusy = false;
         setBusyOverlay(false);
         loadStatus();
-    });
+    };
     fetch('<%=luci.dispatcher.build_url("admin/services/vpn/api_set_server")%>', {
         method: 'POST',
         credentials: 'same-origin',
@@ -861,9 +812,10 @@ function serverChange(newServer) {
             alert(vpnData.t.server_change_fail || 'Server change failed');
         }
     }).catch(function(e) {
-        if (e && e.message === 'busy') return;
-        alert(vpnData.t.server_change_fail || 'Server change failed');
-    });
+        if (!e || e.message !== 'busy') {
+            alert(vpnData.t.server_change_fail || 'Server change failed');
+        }
+    }).finally(release);
 }
 
 window.addEventListener('DOMContentLoaded', function() {
