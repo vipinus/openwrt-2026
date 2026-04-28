@@ -1,6 +1,6 @@
 #!/bin/sh
-# VIPIN Auth Monitor - background daemon (stunnel+tun2socks architecture)
-# 1. Watchdog: restart VPN stack if stunnel or tun2socks died
+# VIPIN Auth Monitor - background daemon (hysteria2+hev-socks5-tunnel architecture)
+# 1. Watchdog: restart VPN stack if hysteria or hev-socks5-tunnel died
 # 2. Periodically revalidate account via remote API
 # 3. Network error = no-op; explicit expired/invalid/not_vip = stop stack
 # 4. Credentials are never auto-deleted (user must logout); auth_status UCI
@@ -54,7 +54,7 @@ is_stack_running() {
     # "processes alive but stack silently dead" case will still
     # manifest as DNS failure and get restarted there, just one
     # layer up.
-    pgrep stunnel >/dev/null && \
+    pgrep hysteria >/dev/null && \
         pgrep hev-socks5-tunnel >/dev/null && \
         ip link show tun0 >/dev/null 2>&1
 }
@@ -157,6 +157,22 @@ check_and_heal_dns() {
     # there's nothing to "restart" on the un side from here.
     if nslookup -timeout=3 -port=$UN_DNS_PORT "$DNS_PROBE_HOST" $UN_DNS_IP >/dev/null 2>&1; then
         un_dns_fails=0
+        # Reconcile dnsmasq upstream every tick when un:3333 is healthy.
+        # Boot-time fallback (configure_dns ran before tunnel punched through,
+        # picked wan_dns) leaves dnsmasq on ISP DNS — potentially poisoned.
+        # Detection: $UN_DNS_IP#$UN_DNS_PORT in uci.server is the steady-state
+        # signature; absence means we're still on the WAN fallback. Cheap
+        # uci-get + grep on every tick; reconfigure runs at most once per
+        # transition because configure_dns sets the matching upstream.
+        local cur_server
+        cur_server=$(uci -q get dhcp.@dnsmasq[0].server)
+        if ! echo "$cur_server" | grep -q "${UN_DNS_IP}#${UN_DNS_PORT}"; then
+            log "un:3333 healthy but dnsmasq on fallback (server=$cur_server) — re-running configure_dns"
+            # configure_dns lives in /etc/init.d/vipin-vpn — source in a
+            # subshell so its assignments don't leak into our env. Top-level
+            # is just variable assignments (no side effects), confirmed safe.
+            ( . /etc/init.d/vipin-vpn; configure_dns ) >/dev/null 2>&1
+        fi
     else
         un_dns_fails=$((un_dns_fails + 1))
         log "un:3333 DNS probe #$un_dns_fails/$DNS_FAIL_THRESHOLD failed"
@@ -204,7 +220,7 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
         exit 0
     fi
 
-    log "=== VIPIN Auth Monitor Started (stunnel+tun2socks) ==="
+    log "=== VIPIN Auth Monitor Started (hysteria2+hev-socks5-tunnel) ==="
 
     reconnect_fails=0
     last_verify=0

@@ -202,22 +202,34 @@ configure_dns() {
             >/dev/null 2>&1 && un_dns_ok=1
     fi
 
-    if [ "$router_country" = "cn" ] && [ "$un_dns_ok" = "1" ]; then
-        upstream="47.242.64.28#3333"
-    elif [ "$router_country" = "cn" ]; then
-        upstream="$wan_dns"
-        [ "$VIPIN_VPN_MOCK" != "1" ] && logger -t "$NAME" \
-            "configure_dns: un.fanq.in:3333 not responding — WAN DNS fallback; watchdog will re-sync"
-    elif [ "$server_country" = "cn" ] && [ -s /etc/vipin/dns.txt ]; then
-        # vipin-dns-refresh owns the UCI server list + all-servers flag +
-        # /32 WAN routes. Sentinel path — skip the single-upstream UCI write
-        # below so we don't clobber the multi-server config.
+    # Unified path for "any 4×CN#3333 case": both router-in-CN and overseas-
+    # router-with-CN-server now use the same multi-upstream + all-servers
+    # config. Rationale: a single-upstream design (47.242.64.28#3333) was
+    # fragile — if cn4 went down or the tunnel hung mid-recovery, DNS went
+    # dark with 0 backup. The 4-upstream pool with allservers=1 races every
+    # query across cn1/cn2/cn3/cn4 and accepts the first answer; loss of
+    # any 1-3 nodes is invisible to clients. /32 WAN bypass routes installed
+    # by vipin-dns-refresh ensure queries always escape tun0 to direct WAN.
+    # Sentinel: auth-params.json's tunnel block contains stunnel_host+port
+    # (backend pushes this on every login). Empty means we haven't completed
+    # auth yet → no in-tunnel DNS upstream available, fall through to WAN.
+    local auth_has_dns=0
+    [ -s /etc/vipin/auth-params.json ] && \
+        grep -q '"stunnel_host"' /etc/vipin/auth-params.json && auth_has_dns=1
+    [ "$VIPIN_VPN_MOCK" = "1" ] && [ "$VIPIN_VPN_AUTH_HAS_DNS" = "1" ] && auth_has_dns=1
+
+    if { [ "$router_country" = "cn" ] && [ "$un_dns_ok" = "1" ]; } || \
+       { [ "$server_country" = "cn" ] && [ "$auth_has_dns" = "1" ]; }; then
         if [ "$VIPIN_VPN_MOCK" != "1" ]; then
             /usr/sbin/vipin-dns-refresh 2>/dev/null || \
                 logger -t "$NAME" "vipin-dns-refresh failed — dnsmasq config unchanged"
         fi
         echo "dns.txt (multi CN, all-servers)"
         return 0
+    elif [ "$router_country" = "cn" ]; then
+        upstream="$wan_dns"
+        [ "$VIPIN_VPN_MOCK" != "1" ] && logger -t "$NAME" \
+            "configure_dns: cn-pool not responding — WAN DNS fallback; watchdog will re-sync"
     else
         upstream="$wan_dns"
     fi
@@ -534,7 +546,7 @@ status() {
     # With USE_PROCD=1, rc.common overrides this function with procd's own
     # wrapper (which prints just "running"). Keep this for the direct-invoke
     # case and for shells without procd — it's never the LuCI code path.
-    if pgrep stunnel >/dev/null && pgrep hev-socks5-tunnel >/dev/null && \
+    if pgrep hysteria >/dev/null && pgrep hev-socks5-tunnel >/dev/null && \
        ip link show tun0 >/dev/null 2>&1; then
         echo "VPN is running"
         local auth_info username

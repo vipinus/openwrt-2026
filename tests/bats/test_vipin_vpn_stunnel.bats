@@ -141,16 +141,21 @@ JSON
     [ "$output" = "192.0.2.53" ]
 }
 
-@test "configure_dns: cn router + un.fanq.in:3333 reachable -> 47.242.64.28#3333" {
+@test "configure_dns: cn router + cn-pool reachable -> 4xCN#3333 multi" {
+    # Post-2026-04-28 unification: cn-router no longer uses single-upstream
+    # 47.242.64.28#3333; both cn-router and overseas-router-with-cn-server
+    # share the 4-node CN pool with all-servers race. UN_DNS_OK=1 still
+    # gates entry to confirm at least one upstream is alive.
     export VIPIN_VPN_MOCK=1
     export VIPIN_VPN_ROUTER_COUNTRY=cn
     export VIPIN_VPN_UCI_SERVER=cn.fanq.in
     export VIPIN_VPN_BASE_DOMAIN=fanq.in
     export VIPIN_VPN_WAN_DNS=192.0.2.53
     export VIPIN_VPN_UN_DNS_OK=1
+    export VIPIN_VPN_AUTH_HAS_DNS=1
     run /bin/sh -c '. files/etc/init.d/vipin-vpn; configure_dns'
     [ "$status" -eq 0 ]
-    [ "$output" = "47.242.64.28#3333" ]
+    [ "$output" = "dns.txt (multi CN, all-servers)" ]
 }
 
 @test "configure_dns: cn router + un:3333 unreachable -> WAN DNS fallback" {
