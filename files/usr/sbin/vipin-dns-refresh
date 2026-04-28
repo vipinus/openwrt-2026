@@ -1,15 +1,18 @@
 #!/bin/sh
 # Rebuild CN-view DNS upstreams for dnsmasq.
 #
-# Source-of-truth priority:
-#   1. /etc/vipin/auth-params.json — backend-provided dns.stunnel_host +
-#      dns.stunnel_port from the last vipin-auth login. This is the
-#      authoritative source once the user is logged in: the host resolves
-#      to every CN DNS node the backend wants active, the port is whatever
-#      the backend currently exposes (3333 for the socat relay chain).
-#   2. /etc/vipin/dns.txt — GitHub-maintained fallback list (pre-baked at
-#      build time, auto-refreshed from video-domains repo). Used on first
-#      boot (before auth) or if auth-params is missing/incomplete.
+# Source of truth: /etc/vipin/auth-params.json — backend-provided
+# dns.stunnel_host + dns.stunnel_port from the last vipin-auth login.
+# The host resolves to every CN DNS node the backend wants active, the
+# port is whatever the backend currently exposes (3333 for socat relay).
+#
+# Removed 2026-04-28: GitHub /etc/vipin/dns.txt fallback. Rationale:
+# (1) cold-boot scenario (no auth-params) never triggers this script —
+# vipin-vpn::configure_dns only calls it after start_service which only
+# runs after auth-params is populated; (2) the auth-params path has been
+# 100% reliable in production; the dns.txt fallback was speculative and
+# silently wrote stale lists. Single source of truth keeps the data flow
+# auditable.
 #
 # After resolving the server list this script:
 #   - Installs /32 host routes via WAN gateway so queries escape tun0's
@@ -22,10 +25,7 @@
 
 set -u
 
-FALLBACK_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
 AUTH_PARAMS="/etc/vipin/auth-params.json"
-DNS_TXT="/etc/vipin/dns.txt"
-TMP_TXT="/tmp/vipin-dns.new"
 
 log() { logger -t vipin-dns-refresh "$*"; }
 
@@ -57,32 +57,7 @@ if [ -s "$AUTH_PARAMS" ]; then
     fi
 fi
 
-# 2. Fallback — fetch from GitHub if auth-params didn't yield any servers.
-if [ -z "$SERVERS" ]; then
-    if wget -q -O "$TMP_TXT" --timeout=20 "$FALLBACK_URL" && [ -s "$TMP_TXT" ]; then
-        count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$TMP_TXT")
-        if [ "$count" -ge 1 ]; then
-            mv "$TMP_TXT" "$DNS_TXT"
-            log "dns.txt refreshed from GitHub: $count entries"
-        else
-            log "GitHub dns.txt sanity failed ($count lines), keeping baked copy"
-            rm -f "$TMP_TXT"
-        fi
-    else
-        log "GitHub dns.txt fetch failed, keeping baked copy"
-        rm -f "$TMP_TXT"
-    fi
-
-    if [ -s "$DNS_TXT" ]; then
-        SERVERS=$(grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' "$DNS_TXT")
-        [ -n "$SERVERS" ] && log "using baked dns.txt ($(echo "$SERVERS" | wc -l) entries)"
-    fi
-fi
-
-[ -z "$SERVERS" ] && { log "no DNS list available, bailing"; exit 1; }
-
-# Persist whatever list we ended up with so next boot has a baked copy.
-printf '%s\n' "$SERVERS" > "$DNS_TXT"
+[ -z "$SERVERS" ] && { log "auth-params yielded no DNS servers, bailing"; exit 1; }
 
 # /32 host routes via WAN — idempotent, only adds missing entries.
 GW=$(ip route show default 2>/dev/null | sed -n 's/^default via \([0-9.]*\).*/\1/p' | head -1)

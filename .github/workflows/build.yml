@@ -178,7 +178,6 @@ jobs:
           echo "=== Refreshing upstream lists ==="
           VIDEO_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/direct.txt"
           FORCE_CN_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/force-cn-cidrs.txt"
-          DNS_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
           mkdir -p custom-files/etc/vipin custom-files/usr/bin
 
           # Video-direct domain list (direct.txt) → seeds /etc/vipin/video-domains.remote
@@ -189,20 +188,10 @@ jobs:
               echo "WARN: video-domains fetch failed — keeping baked copy"
           fi
 
-          # CN-view DNS server list → /etc/vipin/dns.txt
-          # Sanity: require >=1 IP#PORT line, matching vipin-dns-refresh's gate
-          if curl -fsSL --max-time 20 -o /tmp/dns.txt "$DNS_URL"; then
-              dns_count=$(grep -cE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[0-9]+$' /tmp/dns.txt || true)
-              if [ "${dns_count:-0}" -ge 1 ]; then
-                  mv /tmp/dns.txt custom-files/etc/vipin/dns.txt
-                  echo "dns.txt: $dns_count servers"
-              else
-                  echo "WARN: dns.txt sanity failed ($dns_count servers < 1) — keeping baked copy"
-                  rm -f /tmp/dns.txt
-              fi
-          else
-              echo "WARN: dns.txt fetch failed — keeping baked copy"
-          fi
+          # 2026-04-28: dns.txt removed from build pipeline. The single source
+          # of truth for DNS upstreams is auth-params.json (backend-delivered).
+          # vipin-dns-refresh resolves stunnel_host to all A-records; no static
+          # fallback list needed.
 
           # Force-CN CIDR list (Tencent overseas BGP) → /etc/vipin/force-cn-cidrs.txt
           # Sanity: require >= 10 CIDR rows, matching vipin-force-cn-refresh's gate
@@ -242,9 +231,12 @@ jobs:
           # to ~7 MB and runs from /usr/bin/hysteria. Failure is non-fatal —
           # falls back to baked copy in files/usr/bin/hysteria if present.
           HYSTERIA_VERSION="${HYSTERIA_VERSION:-v2.8.2}"
+          # MT7621/MT7628 (ramips) and most ath79/lantiq SoCs are MIPS24Kc
+          # *soft-float* — the default hardware-FP mipsle build SIGILLs on
+          # them. Use the -sf variant. (Confirmed on GL-MT300N-V2 mt76x8.)
           case "$TARGET_ARCH" in
-              ramips|ath79|lantiq) HY_ARCH="mipsle" ;;
-              ar71xx)              HY_ARCH="mips"   ;;
+              ramips|ath79|lantiq) HY_ARCH="mipsle-sf" ;;
+              ar71xx)              HY_ARCH="mipsle-sf" ;;
               ipq40xx|ipq806x|kirkwood|mvebu|bcm27xx|bcm53xx|sunxi|at91) HY_ARCH="arm" ;;
               x86)                 HY_ARCH="386"    ;;
               x86_64)              HY_ARCH="amd64"  ;;
