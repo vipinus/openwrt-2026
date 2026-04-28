@@ -278,17 +278,45 @@ check_auth() {
 }
 
 start_service() {
+    # Zombie cleanup BEFORE flock acquisition. Witnessed 2026-04-28
+    # during a JP→CN server switch: rapid restart() calls from LuCI
+    # api_set_server + watchdog's stack-dead detection accumulated
+    # multiple `/etc/init.d/vipin-vpn start` callers stuck in their
+    # rc.common pre-flock phase (config_load, get_config). Each was
+    # waiting to grab flock-7, but the holder finished slowly enough
+    # that 2-3 callers piled up before any could proceed — stack
+    # stayed dead for 3 minutes until manual intervention. Reap any
+    # `vipin-vpn start` processes older than 60 s before our own
+    # acquisition: legitimate fast starts complete in <30 s, so a
+    # 60 s+ caller is by definition stuck.
+    local own_pid=$$
+    for pid in $(pgrep -f "vipin-vpn start" 2>/dev/null); do
+        [ "$pid" = "$own_pid" ] && continue
+        # busybox `ps` has no etime; read /proc/<pid>/stat field 22
+        # (start_time in jiffies) and compare to /proc/uptime.
+        local start_jiffies uptime_seconds boot_jiffies process_age
+        start_jiffies=$(awk '{print $22}' "/proc/$pid/stat" 2>/dev/null)
+        uptime_seconds=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        # Hz is hardcoded 100 on OpenWrt MIPS — getconf CLK_TCK not present
+        boot_jiffies=$((uptime_seconds * 100))
+        if [ -n "$start_jiffies" ] && [ -n "$boot_jiffies" ]; then
+            process_age=$(( (boot_jiffies - start_jiffies) / 100 ))
+            if [ "$process_age" -gt 60 ]; then
+                logger -t "$NAME" "start_service: reaping stuck vipin-vpn start pid=$pid age=${process_age}s"
+                kill -9 "$pid" 2>/dev/null
+            fi
+        fi
+    done
+
     # Single-instance lock. Without this, watchdog's 30s tick +
     # hotplug's WAN-ifup fire can run two `start` in parallel: first
-    # instance spawns stunnel/hev, second sees "stack already up" in
+    # instance spawns hysteria/hev, second sees "stack already up" in
     # the idempotent check below and exits — BUT if the second races
     # in while the first hasn't yet spawned hev, both go into
-    # render-config + spawn path and fight over /etc/vipin/stunnel-
-    # client.conf, /etc/vipin/hev-tun.yaml, tun0 device, and the
-    # procd_open_instance registration. Witnessed 2026-04-24 on a
-    # live router with two stuck `vipin-vpn start` processes and
-    # stunnel never reaching ESTAB. Non-blocking flock: late arrivals
-    # skip quietly instead of queueing.
+    # render-config + spawn path and fight over /etc/vipin/hysteria-
+    # client.yaml, /etc/vipin/hev-tun.yaml, tun0 device, and the
+    # procd_open_instance registration. Non-blocking flock: late
+    # arrivals skip quietly instead of queueing.
     exec 7>/var/lock/vipin-start.lock
     if ! flock -n 7; then
         logger -t "$NAME" "start_service: another start in progress, skipping"
