@@ -370,6 +370,14 @@ function updateUI() {
 
 var uiBusy = false;
 
+// Map a backend op_name string ("set_server", etc.) to the user-facing
+// localized label via op_label_* i18n keys. Falls back to the raw op
+// name if no translation exists.
+function opLabel(op) {
+    if (!op) return '';
+    return (vpnData.t['op_label_' + op]) || op;
+}
+
 // Show/hide the global busy overlay. Linked to uiBusy so all existing
 // uiBusy gates (serverChange, setSplitMode, ...) automatically trigger
 // the visual lock. Using a wrapper instead of direct uiBusy assignment
@@ -403,7 +411,7 @@ function setSplitMode(mode) {
         try {
             if (xhr.status === 423) {
                 var r = JSON.parse(xhr.responseText);
-                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (r.current_op || ''));
+                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + opLabel(r.current_op));
             } else {
                 JSON.parse(xhr.responseText);
                 vpnData.splitEnabled = (mode !== 'off');
@@ -802,7 +810,7 @@ function serverChange(newServer) {
     }).then(function(r) {
         if (r.status === 423) {
             return r.json().then(function(d) {
-                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (d.current_op || ''));
+                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + opLabel(d.current_op));
                 throw new Error('busy');
             });
         }
@@ -912,7 +920,7 @@ function videoToggle(enabled) {
     videoPostForm(videoRPC.toggle, { enabled: enabled ? "1" : "0" })
         .then(function(r) {
             if (r && r.busy) {
-                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (r.current_op || ''));
+                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + opLabel(r.current_op));
             }
         })
         .finally(release);

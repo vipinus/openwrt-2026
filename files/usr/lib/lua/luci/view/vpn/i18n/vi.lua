@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Đang chuyển máy chủ...",
     busy_logging_in = "Đang đăng nhập...",
     op_in_progress = "Một thao tác khác đang chạy",
+    op_label_set_server = "Đổi máy chủ",
+    op_label_set_split_tunnel = "Đổi chế độ",
+    op_label_login = "Đăng nhập",
+    op_label_logout = "Đăng xuất",
+    op_label_video_toggle = "Bật/tắt video trực tiếp",
+    op_label_video_refresh = "Làm mới danh sách video",
 }

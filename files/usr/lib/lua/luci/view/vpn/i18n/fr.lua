@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Changement de serveur...",
     busy_logging_in = "Connexion...",
     op_in_progress = "Une autre opération est en cours",
+    op_label_set_server = "Changement de serveur",
+    op_label_set_split_tunnel = "Changement du mode split",
+    op_label_login = "Connexion",
+    op_label_logout = "Déconnexion",
+    op_label_video_toggle = "Bascule vidéo directe",
+    op_label_video_refresh = "Actualiser la liste vidéo",
 }

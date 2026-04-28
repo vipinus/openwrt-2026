@@ -108,4 +108,10 @@ return {
     busy_server_switching = "सर्वर बदल रहा है...",
     busy_logging_in = "लॉग इन हो रहा है...",
     op_in_progress = "एक और ऑपरेशन प्रगति में है",
+    op_label_set_server = "सर्वर बदलना",
+    op_label_set_split_tunnel = "मोड बदलना",
+    op_label_login = "लॉगिन",
+    op_label_logout = "लॉगआउट",
+    op_label_video_toggle = "वीडियो प्रत्यक्ष टॉगल",
+    op_label_video_refresh = "वीडियो सूची ताज़ा करें",
 }

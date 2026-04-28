@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Mengubah server...",
     busy_logging_in = "Masuk...",
     op_in_progress = "Operasi lain sedang berlangsung",
+    op_label_set_server = "Ubah server",
+    op_label_set_split_tunnel = "Ubah mode split",
+    op_label_login = "Masuk",
+    op_label_logout = "Keluar",
+    op_label_video_toggle = "Toggle video langsung",
+    op_label_video_refresh = "Segarkan daftar video",
 }

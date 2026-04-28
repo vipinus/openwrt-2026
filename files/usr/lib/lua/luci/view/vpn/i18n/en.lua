@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Switching server...",
     busy_logging_in = "Logging in...",
     op_in_progress = "Another operation in progress",
+    op_label_set_server = "Server change",
+    op_label_set_split_tunnel = "Split mode switch",
+    op_label_login = "Login",
+    op_label_logout = "Logout",
+    op_label_video_toggle = "Video-direct toggle",
+    op_label_video_refresh = "Video list refresh",
 }

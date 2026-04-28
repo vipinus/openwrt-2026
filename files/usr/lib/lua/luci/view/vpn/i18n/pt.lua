@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Mudando servidor...",
     busy_logging_in = "Entrando...",
     op_in_progress = "Outra operação em andamento",
+    op_label_set_server = "Mudar servidor",
+    op_label_set_split_tunnel = "Mudar modo split",
+    op_label_login = "Entrar",
+    op_label_logout = "Sair",
+    op_label_video_toggle = "Alternar vídeo direto",
+    op_label_video_refresh = "Atualizar lista de vídeo",
 }

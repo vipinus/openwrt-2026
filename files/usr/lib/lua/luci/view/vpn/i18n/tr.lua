@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Sunucu değiştiriliyor...",
     busy_logging_in = "Giriş yapılıyor...",
     op_in_progress = "Başka bir işlem devam ediyor",
+    op_label_set_server = "Sunucu değişimi",
+    op_label_set_split_tunnel = "Mod değişimi",
+    op_label_login = "Giriş",
+    op_label_logout = "Çıkış",
+    op_label_video_toggle = "Video doğrudan aç/kapa",
+    op_label_video_refresh = "Video listesi yenile",
 }

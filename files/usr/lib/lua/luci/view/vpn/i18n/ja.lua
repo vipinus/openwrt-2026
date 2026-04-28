@@ -108,4 +108,10 @@ return {
     busy_server_switching = "サーバー切り替え中...",
     busy_logging_in = "ログイン中...",
     op_in_progress = "別の操作が進行中",
+    op_label_set_server = "サーバー変更",
+    op_label_set_split_tunnel = "分割モード変更",
+    op_label_login = "ログイン",
+    op_label_logout = "ログアウト",
+    op_label_video_toggle = "動画直接切替",
+    op_label_video_refresh = "動画リスト更新",
 }

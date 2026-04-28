@@ -108,4 +108,10 @@ return {
     busy_server_switching = "서버 전환 중...",
     busy_logging_in = "로그인 중...",
     op_in_progress = "다른 작업이 진행 중",
+    op_label_set_server = "서버 변경",
+    op_label_set_split_tunnel = "분할 모드 변경",
+    op_label_login = "로그인",
+    op_label_logout = "로그아웃",
+    op_label_video_toggle = "비디오 직결 전환",
+    op_label_video_refresh = "비디오 목록 새로고침",
 }

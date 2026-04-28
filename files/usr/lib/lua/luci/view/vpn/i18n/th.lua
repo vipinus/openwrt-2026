@@ -108,4 +108,10 @@ return {
     busy_server_switching = "กำลังเปลี่ยนเซิร์ฟเวอร์...",
     busy_logging_in = "กำลังเข้าสู่ระบบ...",
     op_in_progress = "อีกการดำเนินการกำลังทำงาน",
+    op_label_set_server = "เปลี่ยนเซิร์ฟเวอร์",
+    op_label_set_split_tunnel = "เปลี่ยนโหมด",
+    op_label_login = "เข้าสู่ระบบ",
+    op_label_logout = "ออกจากระบบ",
+    op_label_video_toggle = "สลับวิดีโอตรง",
+    op_label_video_refresh = "รีเฟรชรายการวิดีโอ",
 }

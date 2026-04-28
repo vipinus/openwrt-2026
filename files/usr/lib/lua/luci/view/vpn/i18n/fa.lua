@@ -108,4 +108,10 @@ return {
     busy_server_switching = "تعویض سرور...",
     busy_logging_in = "در حال ورود...",
     op_in_progress = "عملیات دیگر در حال اجراست",
+    op_label_set_server = "تغییر سرور",
+    op_label_set_split_tunnel = "تعویض حالت",
+    op_label_login = "ورود",
+    op_label_logout = "خروج",
+    op_label_video_toggle = "تغییر حالت ویدیو",
+    op_label_video_refresh = "به‌روزرسانی لیست ویدیو",
 }

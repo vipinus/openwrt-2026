@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Переключение сервера...",
     busy_logging_in = "Вход...",
     op_in_progress = "Выполняется другая операция",
+    op_label_set_server = "Смена сервера",
+    op_label_set_split_tunnel = "Смена режима",
+    op_label_login = "Вход",
+    op_label_logout = "Выход",
+    op_label_video_toggle = "Переключение видео",
+    op_label_video_refresh = "Обновление списка видео",
 }

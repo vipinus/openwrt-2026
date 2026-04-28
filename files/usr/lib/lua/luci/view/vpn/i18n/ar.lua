@@ -108,4 +108,10 @@ return {
     busy_server_switching = "جاري تبديل الخادم...",
     busy_logging_in = "جاري تسجيل الدخول...",
     op_in_progress = "عملية أخرى قيد التنفيذ",
+    op_label_set_server = "تغيير الخادم",
+    op_label_set_split_tunnel = "تبديل وضع الانقسام",
+    op_label_login = "تسجيل الدخول",
+    op_label_logout = "تسجيل الخروج",
+    op_label_video_toggle = "تبديل تسريع الفيديو",
+    op_label_video_refresh = "تحديث قائمة الفيديو",
 }

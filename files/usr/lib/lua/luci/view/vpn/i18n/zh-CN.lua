@@ -108,4 +108,10 @@ return {
     busy_server_switching = "切换服务器中...",
     busy_logging_in = "登录中...",
     op_in_progress = "另一操作进行中",
+    op_label_set_server = "切换服务器",
+    op_label_set_split_tunnel = "切换分流模式",
+    op_label_login = "登录",
+    op_label_logout = "登出",
+    op_label_video_toggle = "切换视频加速",
+    op_label_video_refresh = "刷新视频列表",
 }

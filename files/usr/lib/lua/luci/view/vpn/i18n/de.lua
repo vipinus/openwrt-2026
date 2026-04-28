@@ -108,4 +108,10 @@ return {
     busy_server_switching = "Wechsle Server...",
     busy_logging_in = "Anmeldung...",
     op_in_progress = "Eine andere Operation läuft",
+    op_label_set_server = "Server wechseln",
+    op_label_set_split_tunnel = "Split-Modus wechseln",
+    op_label_login = "Anmelden",
+    op_label_logout = "Abmelden",
+    op_label_video_toggle = "Video-Direkt umschalten",
+    op_label_video_refresh = "Video-Liste aktualisieren",
 }
