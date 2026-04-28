@@ -895,7 +895,27 @@ function videoLoadStatus() {
 }
 
 function videoToggle(enabled) {
-    videoPostForm(videoRPC.toggle, { enabled: enabled ? "1" : "0" }).then(videoLoadStatus);
+    if (uiBusy) {
+        // Snap checkbox back to its prior state — user clicked while another
+        // op was in flight. The status reload at op-end will repaint it.
+        var cb = document.getElementById('video-toggle');
+        if (cb) cb.checked = !enabled;
+        return;
+    }
+    uiBusy = true;
+    setBusyOverlay(true, vpnData.t.busy_processing || '处理中...');
+    var release = function() {
+        uiBusy = false;
+        setBusyOverlay(false);
+        videoLoadStatus();
+    };
+    videoPostForm(videoRPC.toggle, { enabled: enabled ? "1" : "0" })
+        .then(function(r) {
+            if (r && r.busy) {
+                alert((vpnData.t.op_in_progress || '另一操作进行中') + ': ' + (r.current_op || ''));
+            }
+        })
+        .finally(release);
 }
 
 function videoRefresh() {

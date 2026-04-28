@@ -754,7 +754,14 @@ function api_video_refresh()
     local json = require("cjson")
     local util = require("luci.util")
 
+    local ok_lock, cur_op = acquire_op_lock("video_refresh")
+    if not ok_lock then
+        reject_busy(http, json, cur_op)
+        return
+    end
+
     local rc = os.execute("/usr/sbin/vipin-video-domains refresh >/tmp/vipin-video-refresh.log 2>&1")
+    release_op_lock()
     http.prepare_content("application/json")
     if rc == 0 or rc == true then
         http.write(json.encode({ success = true }))
@@ -768,6 +775,12 @@ function api_video_toggle()
     local http = require("luci.http")
     local json = require("cjson")
 
+    local ok_lock, cur_op = acquire_op_lock("video_toggle")
+    if not ok_lock then
+        reject_busy(http, json, cur_op)
+        return
+    end
+
     local enabled = http.formvalue("enabled")
     local target = (enabled == "1" or enabled == "true") and "1" or "0"
     luci.model.uci:set("vipin", "vpn", "video_direct", target)
@@ -777,6 +790,7 @@ function api_video_toggle()
     else
         os.execute("/usr/sbin/vipin-video-domains disable >/dev/null 2>&1")
     end
+    release_op_lock()
     http.prepare_content("application/json")
     http.write(json.encode({ success = true, enabled = (target == "1") }))
 end
