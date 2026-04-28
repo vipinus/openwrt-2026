@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "驗證失敗，請檢查憑據",
     auth_banner_not_vip = "非 VIP 帳戶",
     auth_banner_fail = "驗證錯誤",
-    server_change_fail = "更換伺服器失敗，請重試"
+    server_change_fail = "更換伺服器失敗，請重試",
+    busy_processing = "處理中...",
+    busy_split_switching = "切換分流模式中...",
+    busy_server_switching = "切換伺服器中...",
+    busy_logging_in = "登入中...",
+    op_in_progress = "另一操作進行中",
 }

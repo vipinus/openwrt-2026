@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "Verification failed — check credentials",
     auth_banner_not_vip = "Not a VIP account",
     auth_banner_fail = "Verification error",
-    server_change_fail = "Failed to change server, please try again"
+    server_change_fail = "Failed to change server, please try again",
+    busy_processing = "प्रसंस्करण...",
+    busy_split_switching = "मोड बदल रहा है...",
+    busy_server_switching = "सर्वर बदल रहा है...",
+    busy_logging_in = "लॉग इन हो रहा है...",
+    op_in_progress = "एक और ऑपरेशन प्रगति में है",
 }

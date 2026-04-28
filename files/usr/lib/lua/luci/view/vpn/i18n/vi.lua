@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "Verification failed — check credentials",
     auth_banner_not_vip = "Not a VIP account",
     auth_banner_fail = "Verification error",
-    server_change_fail = "Failed to change server, please try again"
+    server_change_fail = "Failed to change server, please try again",
+    busy_processing = "Đang xử lý...",
+    busy_split_switching = "Đang chuyển chế độ...",
+    busy_server_switching = "Đang chuyển máy chủ...",
+    busy_logging_in = "Đang đăng nhập...",
+    op_in_progress = "Một thao tác khác đang chạy",
 }

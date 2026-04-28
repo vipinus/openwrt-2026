@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "認証失敗。認証情報を確認してください",
     auth_banner_not_vip = "VIPアカウントではありません",
     auth_banner_fail = "認証エラー",
-    server_change_fail = "サーバー変更失敗。再試行してください"
+    server_change_fail = "サーバー変更失敗。再試行してください",
+    busy_processing = "処理中...",
+    busy_split_switching = "分割モード切り替え中...",
+    busy_server_switching = "サーバー切り替え中...",
+    busy_logging_in = "ログイン中...",
+    op_in_progress = "別の操作が進行中",
 }

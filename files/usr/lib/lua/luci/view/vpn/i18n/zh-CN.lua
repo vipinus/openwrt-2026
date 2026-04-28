@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "验证失败，请检查凭据",
     auth_banner_not_vip = "非 VIP 账户",
     auth_banner_fail = "验证错误",
-    server_change_fail = "更换服务器失败，请重试"
+    server_change_fail = "更换服务器失败，请重试",
+    busy_processing = "处理中...",
+    busy_split_switching = "切换分流模式中...",
+    busy_server_switching = "切换服务器中...",
+    busy_logging_in = "登录中...",
+    op_in_progress = "另一操作进行中",
 }

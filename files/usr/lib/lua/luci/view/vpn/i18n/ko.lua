@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "Verification failed — check credentials",
     auth_banner_not_vip = "Not a VIP account",
     auth_banner_fail = "Verification error",
-    server_change_fail = "Failed to change server, please try again"
+    server_change_fail = "Failed to change server, please try again",
+    busy_processing = "처리 중...",
+    busy_split_switching = "분할 모드 전환 중...",
+    busy_server_switching = "서버 전환 중...",
+    busy_logging_in = "로그인 중...",
+    op_in_progress = "다른 작업이 진행 중",
 }

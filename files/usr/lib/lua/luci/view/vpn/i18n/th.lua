@@ -102,5 +102,10 @@ return {
     auth_banner_invalid = "Verification failed — check credentials",
     auth_banner_not_vip = "Not a VIP account",
     auth_banner_fail = "Verification error",
-    server_change_fail = "Failed to change server, please try again"
+    server_change_fail = "Failed to change server, please try again",
+    busy_processing = "กำลังประมวลผล...",
+    busy_split_switching = "กำลังเปลี่ยนโหมด...",
+    busy_server_switching = "กำลังเปลี่ยนเซิร์ฟเวอร์...",
+    busy_logging_in = "กำลังเข้าสู่ระบบ...",
+    op_in_progress = "อีกการดำเนินการกำลังทำงาน",
 }
