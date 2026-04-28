@@ -86,22 +86,47 @@ EOF
     rm -rf "$VIPIN_CONFIG_DIR"
 }
 
-@test "render_stunnel_conf: uses port from auth + connect_server from resolve" {
+@test "render_hysteria_conf: writes server + auth + obfs from auth-params.json" {
     export VIPIN_VPN_MOCK=1
     export VIPIN_VPN_ROUTER_COUNTRY=ca
     export VIPIN_VPN_UCI_SERVER=cn.fanq.in
     export VIPIN_VPN_BASE_DOMAIN=fanq.in
-    export VIPIN_CONFIG_DIR="$BATS_TMPDIR/vipin-test-$$"
+    export VIPIN_CONFIG_DIR="$BATS_TEST_TMPDIR/cfg"
     mkdir -p "$VIPIN_CONFIG_DIR"
-    cat > "$VIPIN_CONFIG_DIR/auth-params.json" <<EOF
-{"status":"ok","tunnel":{"port":22,"ca_cert":"CERT"}}
-EOF
-    run /bin/sh -c '. files/etc/init.d/vipin-vpn; render_stunnel_conf'
+    cat > "$VIPIN_CONFIG_DIR/auth-params.json" <<'JSON'
+{"status":"ok","tunnel":{"port":8443,"auth_psk":"PSK_TEST","obfs_password":"OBFS_TEST","cert_pin":"AABBCC","bandwidth_up":200,"bandwidth_down":1000}}
+JSON
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; render_hysteria_conf'
     [ "$status" -eq 0 ]
-    [ -f "$VIPIN_CONFIG_DIR/stunnel-client.conf" ]
-    grep -q 'connect = un.fanq.in:22' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
-    grep -q 'accept = 127.0.0.1:1080' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
-    grep -q 'client = yes' "$VIPIN_CONFIG_DIR/stunnel-client.conf"
+    [ -f "$VIPIN_CONFIG_DIR/hysteria-client.yaml" ]
+    grep -q '^server: un.fanq.in:8443' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q '^auth: PSK_TEST' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q 'password: OBFS_TEST' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q 'pinSHA256: AABBCC' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q 'up:   200 mbps' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q 'listen: 127.0.0.1:1080' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    rm -rf "$VIPIN_CONFIG_DIR"
+}
+
+@test "render_hysteria_conf: legacy stunnel-only auth-params.json (no PSK) renders defaults" {
+    export VIPIN_VPN_MOCK=1
+    export VIPIN_VPN_ROUTER_COUNTRY=ca
+    export VIPIN_VPN_UCI_SERVER=cn.fanq.in
+    export VIPIN_VPN_BASE_DOMAIN=fanq.in
+    export VIPIN_CONFIG_DIR="$BATS_TEST_TMPDIR/cfg2"
+    mkdir -p "$VIPIN_CONFIG_DIR"
+    cat > "$VIPIN_CONFIG_DIR/auth-params.json" <<'JSON'
+{"status":"ok","tunnel":{"port":22,"ca_cert":"CERT"}}
+JSON
+    run /bin/sh -c '. files/etc/init.d/vipin-vpn; render_hysteria_conf'
+    [ "$status" -eq 0 ]
+    [ -f "$VIPIN_CONFIG_DIR/hysteria-client.yaml" ]
+    # Falls back: server uses port 22 (from legacy stunnel field), default
+    # bandwidth, and the placeholder PSK so the binary will at least try
+    # to connect (though server-side won't accept until backend migrates).
+    grep -q '^server: un.fanq.in:22' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q 'vipin-default-psk-pending-backend-migration' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
+    grep -q 'listen: 127.0.0.1:1080' "$VIPIN_CONFIG_DIR/hysteria-client.yaml"
     rm -rf "$VIPIN_CONFIG_DIR"
 }
 
