@@ -223,9 +223,9 @@ function api_get_vpn_status()
     -- launched or externally-restarted stack would be invisible to it.
     -- Checking actual state is more reliable.
     local tun0_up = util.exec("ip link show tun0 2>/dev/null"):find("tun0") ~= nil
-    local stunnel_up = util.exec("pgrep -f '/etc/vipin/stunnel-client.conf' 2>/dev/null") ~= ""
+    local hysteria_up = util.exec("pgrep -f '/etc/vipin/hysteria-client.yaml' 2>/dev/null") ~= ""
     local hev_up = util.exec("pgrep -f hev-socks5-tunnel 2>/dev/null") ~= ""
-    local vpn_connected = tun0_up and stunnel_up and hev_up
+    local vpn_connected = tun0_up and hysteria_up and hev_up
     local auth_status = luci.model.uci:get("vipin", "vpn", "auth_status") or "ok"
     
     local detect_info = util.exec("/usr/sbin/vipin-detect info 2>/dev/null")
@@ -439,11 +439,11 @@ function api_login()
 
         -- "Save account" semantics: if the VPN stack is already running
         -- (user hit 更新账号 with an active tunnel), tear it down first so
-        -- stunnel/hev/stubby pick up the new credentials cleanly. Then
-        -- start fresh. Without the stop, stale stunnel keeps the old
+        -- hysteria/hev pick up the new credentials cleanly. Then
+        -- start fresh. Without the stop, stale hysteria keeps the old
         -- session and LuCI shows connected=no until next watchdog tick.
         if util.exec("ip link show tun0 2>/dev/null"):find("tun0") or
-           util.exec("pgrep -f /etc/vipin/stunnel-client.conf 2>/dev/null") ~= "" then
+           util.exec("pgrep -f /etc/vipin/hysteria-client.yaml 2>/dev/null") ~= "" then
             util.exec("/etc/init.d/vipin-vpn stop >/dev/null 2>&1")
             nixio.nanosleep(1, 0)  -- 1s for cleanup
         end
