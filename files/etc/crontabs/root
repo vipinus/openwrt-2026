@@ -1,4 +1,3 @@
-0 3 * * 0 /etc/init.d/dnscrypt-proxy update_servers >/dev/null 2>&1
 # Disabled 2026-04-24: upstream direct.txt is curated manually now
 # (googlevideo.com pulled because GFW blocks direct-WAN egress to
 # googlevideo CDN). Weekly auto-fetch would just pull back whatever

@@ -206,10 +206,10 @@ remote_auth() {
     local enc_mac=$(urlencode "$router_mac")
     local enc_model=$(urlencode "$router_model")
 
-    # Retry up to 3 times: on first boot, dnscrypt-proxy takes ~60s to
-    # bootstrap its resolver list. If user hits "Save Account" within that
-    # window, wget returns empty (DNS unresolvable) and the caller would
-    # treat the account as invalid. Worst case: 3 × (15+3) = 54s.
+    # Retry up to 3 times: on first boot, the hysteria2 tunnel + un.fanq.in:3333
+    # path takes ~30-60s to come up before DNS is reachable. If user hits
+    # "Save Account" within that window, wget returns empty (DNS unresolvable)
+    # and the caller would treat the account as invalid. Worst case: 3 × (15+3) = 54s.
     local response attempt
     for attempt in 1 2 3; do
         response=$(wget -q -O- --timeout=15 \

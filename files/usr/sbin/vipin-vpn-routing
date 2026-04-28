@@ -246,16 +246,15 @@ set vipin_video {
 }
 
 # Router-local traffic that must ride tun0 regardless of the "always WAN"
-# rule below. Exists for networks where the upstream ISP blocks outbound
-# :443 (observed 2026-04-24 on a live router) — dnscrypt-proxy's DoH
-# upstream IPs can't reach Cloudflare/Google via WAN on such networks,
-# so we route them into the VPN tunnel where :443 gets packaged inside
-# stunnel's :22. Populated with dnscrypt's configured DoH / fallback /
-# netprobe targets; keep in sync with files/etc/dnscrypt-proxy/dnscrypt-proxy.toml.
+# rule below. After the dnscrypt → un.fanq.in:3333 migration this set is
+# kept (a) to keep the chain code-path stable (vipin_output references
+# @vipin_force_tun0 in both forward and reverse heredocs) and (b) for
+# any future router-local daemon that needs forced-tunnel egress. Empty
+# by default; populate dynamically if you add a public-DNS or external
+# probe target that must bypass split-tunnel.
 set vipin_force_tun0 {
     type ipv4_addr
     flags interval
-    elements = { 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4, 9.9.9.9, 149.112.112.112 }
 }
 
 chain vipin_prerouting {
@@ -281,8 +280,8 @@ chain vipin_output {
     ip daddr 10.0.0.0/8 return
     ip daddr 172.16.0.0/12 return
     ip daddr 192.168.0.0/16 return
-    # Router-local DoH targets: override the "always WAN" rule so dnscrypt
-    # can reach Cloudflare/Google on networks that block outbound :443.
+    # Router-local forced-tunnel targets: override the "always WAN" rule so
+    # any IP in the set rides tun0 even when "domestic" routing would WAN-direct it.
     # Stays unmarked → main table → 0.0.0.0/1 dev tun0 → tunneled.
     ip daddr @vipin_force_tun0 return
     # stubby DoT must go straight out WAN, not loop back through tun0. The
@@ -320,11 +319,10 @@ set vipin_video {
     size 65536
 }
 
-# See reverse-mode heredoc for rationale — keep in sync with that set.
+# See forward-mode heredoc for rationale — keep in sync with that set.
 set vipin_force_tun0 {
     type ipv4_addr
     flags interval
-    elements = { 1.1.1.1, 1.0.0.1, 8.8.8.8, 8.8.4.4, 9.9.9.9, 149.112.112.112 }
 }
 
 chain vipin_prerouting {
@@ -347,7 +345,7 @@ chain vipin_output {
     # here routes everything via WAN. See reverse-mode note: the original
     # 'oifname "tun0" return' preempted the mark and is removed.
     #
-    # Exception: @vipin_force_tun0 IPs (dnscrypt DoH upstreams). On
+    # Exception: @vipin_force_tun0 IPs. On
     # networks that block outbound :443, WAN path is dead — force these
     # into tun0 where :443 gets packaged inside stunnel :22.
     oifname "lo" return

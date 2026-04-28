@@ -184,11 +184,12 @@ configure_dns() {
     # the config. Prints a summary string to stdout either way.
     #
     # 3-way decision matrix (VPN is assumed UP when this is called):
-    #   router in CN                              → dnscrypt      (127.0.0.1#5353)
+    #   router in CN                              → un.fanq.in:3333  (TCP+UDP socat
+    #                                                → un local dnsmasq, in-tunnel)
     #   router overseas + CN srv + dns.txt ready  → delegate to vipin-dns-refresh
     #                                                (multi CN upstream + all-servers
     #                                                 + /32 WAN routes)
-    #   everything else                           → WAN DNS       (ISP-assigned)
+    #   everything else                           → WAN DNS          (ISP-assigned)
     #
     # When VPN is down, teardown_dns() runs and also picks WAN DNS.
     local router_country uci_server base_domain server_country upstream wan_dns
@@ -210,25 +211,24 @@ configure_dns() {
     server_country=$(echo "$uci_server" | cut -d. -f1)
     [ "$server_country" = "un" ] && server_country="cn"
 
-    # Probe dnscrypt readiness before committing to it. If it's not
-    # answering (DoH upstream unreachable, bootstrap stuck, etc.), using
-    # 127.0.0.1#5353 as dnsmasq upstream = instant DNS death. Fall back
-    # to WAN DNS; watchdog's reload_dns hook flips back to dnscrypt once
-    # the L1 probe succeeds again.
-    local dnscrypt_ok=0
+    # Probe un.fanq.in:3333 reachability before pointing dnsmasq at it.
+    # If the tunnel hasn't punched through yet (or un is down), using
+    # 47.242.64.28#3333 as upstream = instant DNS death. Fall back to
+    # WAN DNS; watchdog reload_dns hook flips back when 3333 recovers.
+    local un_dns_ok=0
     if [ "$VIPIN_VPN_MOCK" = "1" ]; then
-        [ "$VIPIN_VPN_DNSCRYPT_OK" = "1" ] && dnscrypt_ok=1
+        [ "$VIPIN_VPN_UN_DNS_OK" = "1" ] && un_dns_ok=1
     else
-        nslookup -timeout=3 -port=5353 www.anyfq.com 127.0.0.1 \
-            >/dev/null 2>&1 && dnscrypt_ok=1
+        nslookup -timeout=3 -port=3333 www.anyfq.com 47.242.64.28 \
+            >/dev/null 2>&1 && un_dns_ok=1
     fi
 
-    if [ "$router_country" = "cn" ] && [ "$dnscrypt_ok" = "1" ]; then
-        upstream="127.0.0.1#5353"
+    if [ "$router_country" = "cn" ] && [ "$un_dns_ok" = "1" ]; then
+        upstream="47.242.64.28#3333"
     elif [ "$router_country" = "cn" ]; then
         upstream="$wan_dns"
         [ "$VIPIN_VPN_MOCK" != "1" ] && logger -t "$NAME" \
-            "configure_dns: dnscrypt not responding on 127.0.0.1:5353 — WAN DNS fallback; watchdog will re-sync"
+            "configure_dns: un.fanq.in:3333 not responding — WAN DNS fallback; watchdog will re-sync"
     elif [ "$server_country" = "cn" ] && [ -s /etc/vipin/dns.txt ]; then
         # vipin-dns-refresh owns the UCI server list + all-servers flag +
         # /32 WAN routes. Sentinel path — skip the single-upstream UCI write
@@ -255,8 +255,9 @@ configure_dns() {
 }
 
 teardown_dns() {
-    # VPN stopped: fall back to WAN DNS (ISP DHCP-assigned). Always
-    # available, doesn't depend on stunnel/dnscrypt being up.
+    # VPN stopped: fall back to WAN DNS (ISP DHCP-assigned). un.fanq.in:3333
+    # is unreachable without the tunnel, so we MUST have an out-of-tunnel
+    # fallback or the router goes DNS-dark.
     local wan_dns
     if [ "$VIPIN_VPN_MOCK" != "1" ]; then
         wan_dns=$(/usr/sbin/vipin-wan-dns-ip 2>/dev/null | head -1)
@@ -477,35 +478,24 @@ YAML
               [ -z "$country" ] && country="$(uci -q get vipin.vpn.country || echo cn)"
               /usr/sbin/vipin-vpn-routing enable "$country" forward
           fi
-          # Split-tunnel policy (incl. @vipin_force_tun0 return rule in
-          # vipin_output) is now loaded. Only at THIS point is it safe
-          # to bring dnscrypt up: its DoH upstream traffic will ride
-          # tun0 per the force-tun0 exception, which is how it reaches
-          # Cloudflare/Google :443 on networks that block direct WAN :443.
-          # Pre-tun0 start would hit the WAN :443 block, go into procd
-          # respawn loop, and never converge.
-          logger -t "$NAME" "split-tunnel policy loaded — starting dnscrypt-proxy"
-          /etc/init.d/dnscrypt-proxy restart >/dev/null 2>&1
-          # Poll :5353 for readiness before handing it to dnsmasq. A
-          # fixed sleep races the DoH TLS handshake + source list load
-          # (typically 3-15s over tun0 depending on RTT), so tick every
-          # second up to 60s and break on first successful query. If
-          # dnscrypt never answers, configure_dns's own probe falls
-          # back to WAN DNS and watchdog re-syncs when it recovers.
-          local dc_wait=0
-          while [ "$dc_wait" -lt 60 ]; do
-              nslookup -timeout=2 -port=5353 www.anyfq.com 127.0.0.1 \
+          # Split-tunnel policy is loaded. Probe un.fanq.in:3333 reachability
+          # over the tunnel before flipping dnsmasq upstream — if 3333 isn't
+          # answering yet (tunnel still establishing), pointing dnsmasq at it
+          # would DNS-dark the router. Tick every second up to 30s.
+          local dns_wait=0
+          while [ "$dns_wait" -lt 30 ]; do
+              nslookup -timeout=2 -port=3333 www.anyfq.com 47.242.64.28 \
                   >/dev/null 2>&1 && break
               sleep 1
-              dc_wait=$((dc_wait + 1))
+              dns_wait=$((dns_wait + 1))
           done
-          if [ "$dc_wait" -ge 60 ]; then
-              logger -t "$NAME" "dnscrypt not ready after 60s — falling back via configure_dns"
+          if [ "$dns_wait" -ge 30 ]; then
+              logger -t "$NAME" "un.fanq.in:3333 not responding after 30s — DNS stays on WAN; will retry on next watchdog tick"
           else
-              logger -t "$NAME" "dnscrypt ready in ${dc_wait}s"
+              logger -t "$NAME" "un.fanq.in:3333 ready in ${dns_wait}s"
+              dns_upstream=$(configure_dns)
+              logger -t "$NAME" "DNS upstream set to $dns_upstream"
           fi
-          dns_upstream=$(configure_dns)
-          logger -t "$NAME" "DNS upstream set to $dns_upstream"
           logger -t "$NAME" "VPN started"
       else
           logger -t "$NAME" "tun0 did not come up in 30s"
@@ -515,12 +505,6 @@ YAML
 
 stop_service() {
     get_config
-
-    # dnscrypt's DoH path rides tun0 (see force-tun0 exception in
-    # vipin-vpn-routing). Once tun0 + split policy go away dnscrypt
-    # can't reach its upstream and procd would respawn it in a loop
-    # burning CPU — stop it symmetrically with the VPN stack.
-    /etc/init.d/dnscrypt-proxy stop 2>/dev/null
 
     /usr/sbin/vipin-vpn-routing disable 2>/dev/null
 

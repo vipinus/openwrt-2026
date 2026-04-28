@@ -49,10 +49,11 @@ is_stack_running() {
     # on healthy setups.
     #
     # Functional liveness check lives in check_and_heal_dns: if
-    # dnscrypt (layer 1) or dnsmasq (layer 2) can't actually resolve,
-    # that function restarts the responsible daemon. A "processes
-    # alive but stack silently dead" case will still manifest as DNS
-    # failure and get restarted there, just one layer up.
+    # un.fanq.in:3333 (layer 1) or dnsmasq (layer 2) can't actually
+    # resolve, that function restarts the responsible daemon. A
+    # "processes alive but stack silently dead" case will still
+    # manifest as DNS failure and get restarted there, just one
+    # layer up.
     pgrep stunnel >/dev/null && \
         pgrep hev-socks5-tunnel >/dev/null && \
         ip link show tun0 >/dev/null 2>&1
@@ -138,40 +139,44 @@ handle_auth_tick() {
 RESTART_MIN_INTERVAL=45
 
 # Consecutive DNS-probe failures before we restart a DNS daemon. Process-
-# liveness alone misses "alive but hung" — e.g. dnscrypt-proxy listening
-# but unable to finish TLS because the clock is wrong (see 89-vipin-ntp-
-# bootstrap for the first-boot case). procd respawn only triggers on
-# process death, so we need a functional probe with per-layer recovery.
+# liveness alone misses "alive but hung" — e.g. tunnel up but the upstream
+# resolver on the un side is wedged. We need a functional probe with
+# per-layer recovery rather than relying on procd respawn (which only
+# fires on process death).
 DNS_FAIL_THRESHOLD=3
 DNS_PROBE_HOST="www.anyfq.com"
+UN_DNS_IP="47.242.64.28"
+UN_DNS_PORT="3333"
 
 # Probe each DNS layer independently and restart the actual faulty daemon.
 # Call once per main-loop tick. Requires `now` to be set by the caller.
 check_and_heal_dns() {
-    # Layer 1: dnscrypt-proxy on 127.0.0.1:5353. If this is hung, the whole
-    # chain is dead and dnsmasq probe is redundant.
-    if nslookup -timeout=3 -port=5353 "$DNS_PROBE_HOST" 127.0.0.1 >/dev/null 2>&1; then
-        dnscrypt_fails=0
+    # Layer 1: un.fanq.in:3333 over the hysteria2 tunnel. If this is
+    # unreachable, the whole chain is dead and dnsmasq probe is
+    # redundant. Recovery is to restart the tunnel (vipin-vpn), since
+    # there's nothing to "restart" on the un side from here.
+    if nslookup -timeout=3 -port=$UN_DNS_PORT "$DNS_PROBE_HOST" $UN_DNS_IP >/dev/null 2>&1; then
+        un_dns_fails=0
     else
-        dnscrypt_fails=$((dnscrypt_fails + 1))
-        log "dnscrypt probe #$dnscrypt_fails/$DNS_FAIL_THRESHOLD failed"
-        if [ "$dnscrypt_fails" -ge "$DNS_FAIL_THRESHOLD" ] && \
-           [ $((now - last_dnsc_restart)) -ge "$RESTART_MIN_INTERVAL" ]; then
-            log "dnscrypt unresponsive — /etc/init.d/dnscrypt-proxy restart"
-            /etc/init.d/dnscrypt-proxy restart 2>/dev/null
-            last_dnsc_restart=$now
-            dnscrypt_fails=0
+        un_dns_fails=$((un_dns_fails + 1))
+        log "un:3333 DNS probe #$un_dns_fails/$DNS_FAIL_THRESHOLD failed"
+        if [ "$un_dns_fails" -ge "$DNS_FAIL_THRESHOLD" ] && \
+           [ $((now - last_un_dns_restart)) -ge "$RESTART_MIN_INTERVAL" ]; then
+            log "un:3333 unresponsive — /etc/init.d/vipin-vpn restart (likely tunnel issue)"
+            /etc/init.d/vipin-vpn restart 2>/dev/null
+            last_un_dns_restart=$now
+            un_dns_fails=0
         fi
         return
     fi
 
-    # Layer 2: dnsmasq on 127.0.0.1:53. Only reached if dnscrypt answered,
+    # Layer 2: dnsmasq on 127.0.0.1:53. Only reached if upstream answered,
     # so a failure here is dnsmasq-local (hung after config reload, etc.).
     if nslookup -timeout=3 "$DNS_PROBE_HOST" 127.0.0.1 >/dev/null 2>&1; then
         dnsmasq_fails=0
     else
         dnsmasq_fails=$((dnsmasq_fails + 1))
-        log "dnsmasq probe #$dnsmasq_fails/$DNS_FAIL_THRESHOLD failed (dnscrypt OK)"
+        log "dnsmasq probe #$dnsmasq_fails/$DNS_FAIL_THRESHOLD failed (un:3333 OK)"
         if [ "$dnsmasq_fails" -ge "$DNS_FAIL_THRESHOLD" ] && \
            [ $((now - last_dnsm_restart)) -ge "$RESTART_MIN_INTERVAL" ]; then
             log "dnsmasq unresponsive — /etc/init.d/dnsmasq restart"
@@ -204,9 +209,9 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
     reconnect_fails=0
     last_verify=0
     last_restart=0
-    last_dnsc_restart=0
+    last_un_dns_restart=0
     last_dnsm_restart=0
-    dnscrypt_fails=0
+    un_dns_fails=0
     dnsmasq_fails=0
 
     while true; do
@@ -240,7 +245,7 @@ if [ "$VIPIN_AUTH_CHECK_MOCK" != "1" ]; then
 
         # VPN stack watchdog — only triggers on actual process death now.
         # DNS probe moved to check_and_heal_dns where it can distinguish
-        # dnscrypt-hung vs dnsmasq-hung vs policy-route-broken (the last
+        # un:3333-hung vs dnsmasq-hung vs policy-route-broken (the last
         # one would still fail the check below because is_stack_running is
         # really "policy-route-complete" once tun0 comes up).
         stack_dead=0

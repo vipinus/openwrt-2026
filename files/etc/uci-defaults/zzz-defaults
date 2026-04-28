@@ -36,19 +36,19 @@ uci -q delete dhcp.lan.ra_flags
 uci set dhcp.odhcpd.maindhcp='0'
 
 # DNS policy at first-boot: WAN DHCP-learned DNS only. vipin-vpn is the
-# single authority that switches dnsmasq upstream (configure_dns swaps
-# to 127.0.0.1#5353 when VPN is up and geo demands it; teardown_dns
-# pins a single WAN DNS IP when VPN is down).
+# single authority that switches dnsmasq upstream (configure_dns points
+# at un.fanq.in:3333 over the hysteria2 tunnel once VPN is up; teardown
+# falls back to a pinned WAN DNS).
 #
-# Pre-VPN we MUST avoid the dnscrypt-exclusive state: VPN needs DNS to
-# resolve its server hostname, and dnscrypt itself needs network to
-# reach DoH upstreams. Making dnsmasq exclusive-dnscrypt at boot is a
-# chicken-and-egg deadlock — VPN can't resolve, dnscrypt can't bootstrap.
+# Pre-VPN: WAN DHCP DNS resolves vipin-vpn's bootstrap targets. Once
+# hysteria2 tunnel is established, dnsmasq forwards to un.fanq.in:3333
+# (socat → un.fanq.in's local dnsmasq) which terminates on un's
+# in-tunnel DNS resolver, avoiding GFW DNS interception entirely.
 #
 # With noresolv unset + no explicit server here, dnsmasq reads
 # /tmp/resolv.conf.d/resolv.conf.auto (populated by WAN DHCP because
 # peerdns=1 is set above). Name resolution works from the moment the
-# WAN link is up, regardless of dnscrypt/VPN state.
+# WAN link is up, regardless of VPN state.
 uci -q delete dhcp.@dnsmasq[0].noresolv
 uci -q delete dhcp.@dnsmasq[0].resolvfile
 # Belt-and-braces: even with LAN IPv6 disabled, don't serve AAAA to clients
@@ -63,9 +63,10 @@ uci set dhcp.@dnsmasq[0].cachesize='10000'
 # default logging that's 1200 syslog writes/hour per client and
 # perceptible CPU load on MT7628. DHCP-level errors still log.
 uci set dhcp.@dnsmasq[0].quietdhcp='1'
-# DO NOT set dhcp.@dnsmasq[0].server at first-boot — that forces
-# dnscrypt-exclusive upstream and breaks pre-VPN resolution (see DNS
-# policy comment above). vipin-vpn owns the server list.
+# DO NOT set dhcp.@dnsmasq[0].server at first-boot — that would override
+# WAN DHCP DNS before vipin-vpn can swap to un.fanq.in:3333 (which itself
+# requires the tunnel to be up to be reachable). vipin-vpn owns the
+# server list at runtime.
 uci -q delete dhcp.@dnsmasq[0].server
 uci commit dhcp
 
