@@ -179,8 +179,7 @@ jobs:
           VIDEO_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/direct.txt"
           FORCE_CN_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/force-cn-cidrs.txt"
           DNS_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main/dns.txt"
-          DNSC_URL_BASE="https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3"
-          mkdir -p custom-files/etc/vipin custom-files/etc/dnscrypt-proxy
+          mkdir -p custom-files/etc/vipin custom-files/usr/bin
 
           # Video-direct domain list (direct.txt) → seeds /etc/vipin/video-domains.remote
           if curl -fsSL --max-time 20 -o /tmp/direct.txt "$VIDEO_URL"; then
@@ -233,22 +232,45 @@ jobs:
               umask 022
           fi
 
-          # DNSCrypt resolvers + relays lists + minisigs (each pair: both or neither).
-          # dnscrypt-proxy refresh_delay=73h, so this bake matters mainly for
-          # first-boot: pre-NTP clock skew breaks TLS to download.dnscrypt.info,
-          # so without a current on-disk cache the router has no DNS until the
-          # NTP-bootstrap hotplug fixes the clock AND dnscrypt refetches.
-          for NAME in public-resolvers relays; do
-              if curl -fsSL --max-time 30 -o /tmp/${NAME}.md "$DNSC_URL_BASE/${NAME}.md" && \
-                 curl -fsSL --max-time 10 -o /tmp/${NAME}.md.minisig "$DNSC_URL_BASE/${NAME}.md.minisig"; then
-                  mv /tmp/${NAME}.md custom-files/etc/dnscrypt-proxy/${NAME}.md
-                  mv /tmp/${NAME}.md.minisig custom-files/etc/dnscrypt-proxy/${NAME}.md.minisig
-                  echo "${NAME}.md: $(wc -c < custom-files/etc/dnscrypt-proxy/${NAME}.md) bytes"
-              else
-                  echo "WARN: ${NAME}.md fetch failed — keeping baked copy"
-                  rm -f /tmp/${NAME}.md /tmp/${NAME}.md.minisig
+          # Hysteria2 client binary (UPX-compressed) — replaces stunnel as
+          # the cross-border data plane. The binary architecture is picked
+          # from the imagebuilder's TARGET_ARCH; uses the closest mapping
+          # to hysteria2 release naming.
+          #
+          # Without UPX the mipsle binary is 21 MB and won't fit on 16 MB-
+          # flash routers (e.g. GL-MT300N-V2). With --best --lzma it shrinks
+          # to ~7 MB and runs from /usr/bin/hysteria. Failure is non-fatal —
+          # falls back to baked copy in files/usr/bin/hysteria if present.
+          HYSTERIA_VERSION="${HYSTERIA_VERSION:-v2.8.2}"
+          case "$TARGET_ARCH" in
+              ramips|ath79|lantiq) HY_ARCH="mipsle" ;;
+              ar71xx)              HY_ARCH="mips"   ;;
+              ipq40xx|ipq806x|kirkwood|mvebu|bcm27xx|bcm53xx|sunxi|at91) HY_ARCH="arm" ;;
+              x86)                 HY_ARCH="386"    ;;
+              x86_64)              HY_ARCH="amd64"  ;;
+              armsr|rockchip|qualcommax|mediatek|mvebu_cortexa72) HY_ARCH="arm64" ;;
+              *)                   HY_ARCH="mipsle" ;;  # mt76x8 / mt7621 default
+          esac
+          HY_URL="https://github.com/apernet/hysteria/releases/download/app/${HYSTERIA_VERSION#app/}/hysteria-linux-${HY_ARCH}"
+          echo "Hysteria2 ${HYSTERIA_VERSION} arch=${HY_ARCH}"
+          if curl -fsSL --max-time 90 -A "Mozilla/5.0" -o /tmp/hysteria-raw "$HY_URL"; then
+              raw_kb=$(stat -c%s /tmp/hysteria-raw); raw_mb=$((raw_kb / 1024 / 1024))
+              echo "  raw size: ${raw_mb} MB"
+              # UPX compress in-place — apt has upx-ucl on ubuntu-22.04 runners
+              if sudo apt-get install -y -qq upx-ucl 2>&1 | tail -1; then
+                  if upx --best --lzma /tmp/hysteria-raw 2>&1 | grep -E "compressed|already"; then
+                      cmp_kb=$(stat -c%s /tmp/hysteria-raw); cmp_mb=$((cmp_kb * 100 / 1024 / 1024))
+                      echo "  upx compressed: $((cmp_kb / 1024)) KB"
+                  else
+                      echo "  WARN: UPX failed — using uncompressed binary (may exceed 16MB flash)"
+                  fi
               fi
-          done
+              chmod +x /tmp/hysteria-raw
+              mv /tmp/hysteria-raw custom-files/usr/bin/hysteria
+              echo "hysteria binary: $(stat -c%s custom-files/usr/bin/hysteria) bytes"
+          else
+              echo "WARN: hysteria download failed — using baked copy if present"
+          fi
 
           # Map language code
           FINAL_LANG="${LUCI_LANG:-en}"
