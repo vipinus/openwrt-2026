@@ -1,0 +1,103 @@
+#!/bin/sh
+# First-boot safety net: fetch the upstream curated lists from GitHub the
+# first time WAN comes up after a flash. Firmware ships baked-in copies
+# (CI workflow / local-build.sh fetches at build time), but a stale build
+# or a build that ran offline could miss them. This hook fills the gap.
+#
+# Re-added 2026-04-28 after 5abbee1d removed both this hotplug and the
+# weekly cron. Rationale: bake-at-build is the authoritative source
+# (curated changes like the 2026-04-24 googlevideo.com removal stick),
+# but a fall-through fetch on cold flash is cheap insurance — gated to
+# fire ONLY when each file is missing or empty, so a baked image never
+# gets silently overwritten by HEAD-of-main mid-life.
+#
+# Lists pulled (each independently gated on missing-or-empty):
+#   1. direct.txt        → /etc/vipin/video-domains.remote
+#                          (video-direct domain list)
+#   2. force-cn-cidrs.txt → /etc/vipin/force-cn-cidrs.txt
+#                          (Tencent overseas BGP — extends @vipin_domestic
+#                          → forces these CIDRs through VPN in reverse mode,
+#                           or direct in forward mode)
+#
+# Removed 2026-04-28: dns.txt fetch. vipin-dns-refresh now sources DNS
+# upstream list exclusively from auth-params.json's stunnel_host (backend
+# pushes; resolves to all A-records). No static fallback needed.
+#
+# Top-level gating: WAN ifup + /tmp flag for one-shot per boot.
+
+[ "$ACTION" = "ifup" ] && [ "$INTERFACE" = "wan" ] || exit 0
+
+FLAG="/tmp/.vipin-lists-refreshed"
+[ -f "$FLAG" ] && exit 0
+touch "$FLAG"
+
+(
+    BASE_URL="https://raw.githubusercontent.com/vipinus/openwrt-2026-video-domains/main"
+
+    # Wait up to 90s for DNS to resolve the GitHub host. On cold flash
+    # vipin-vpn's stack takes ~30-60s to bring tun0 + un:3333 upstream
+    # online; nslookup raw.githubusercontent.com NXDOMAINs until then.
+    i=0
+    while [ $i -lt 90 ]; do
+        if nslookup raw.githubusercontent.com 127.0.0.1 >/dev/null 2>&1; then
+            break
+        fi
+        sleep 3
+        i=$((i + 3))
+    done
+
+    fetch_if_missing() {
+        local url="$1" dst="$2" sanity_re="$3" sanity_min="$4" desc="$5"
+        if [ -s "$dst" ]; then
+            return 0
+        fi
+        local tmp="/tmp/$(basename "$dst").firstboot"
+        if ! uclient-fetch -q -O "$tmp" --timeout=30 "$url"; then
+            logger -t vipin-firstboot-lists "$desc fetch failed — will retry next boot"
+            rm -f "$tmp"
+            return 1
+        fi
+        if [ -n "$sanity_re" ]; then
+            local n
+            n=$(grep -cE "$sanity_re" "$tmp" 2>/dev/null || echo 0)
+            if [ "${n:-0}" -lt "${sanity_min:-1}" ]; then
+                logger -t vipin-firstboot-lists "$desc sanity failed ($n < $sanity_min) — discarding"
+                rm -f "$tmp"
+                return 1
+            fi
+        elif [ ! -s "$tmp" ]; then
+            logger -t vipin-firstboot-lists "$desc empty — discarding"
+            rm -f "$tmp"
+            return 1
+        fi
+        mv "$tmp" "$dst"
+        logger -t vipin-firstboot-lists "$desc: $(wc -l < "$dst") lines"
+        return 0
+    }
+
+    fetched_any=0
+
+    if fetch_if_missing "$BASE_URL/direct.txt" /etc/vipin/video-domains.remote \
+        "" "" "video-domains.remote"; then
+        fetched_any=1
+        # Re-run the merge so dnsmasq picks up the new domains.
+        /usr/sbin/vipin-video-domains enable >/dev/null 2>&1 && \
+            logger -t vipin-firstboot-lists "vipin-video-domains enable applied"
+    fi
+
+    if fetch_if_missing "$BASE_URL/force-cn-cidrs.txt" /etc/vipin/force-cn-cidrs.txt \
+        '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+' 10 "force-cn-cidrs.txt"; then
+        fetched_any=1
+        # Trigger split-tunnel chain rebuild so new CIDRs land in
+        # @vipin_domestic. Reuse the same path the monthly cron uses.
+        /usr/sbin/vipin-force-cn-refresh >/dev/null 2>&1 && \
+            logger -t vipin-firstboot-lists "vipin-force-cn-refresh applied"
+    fi
+
+    if [ "$fetched_any" = "0" ]; then
+        # All baked copies were already present and non-empty — nothing
+        # was fetched this boot. Leave the flag in place; next boot will
+        # also short-circuit unless a list was wiped.
+        logger -t vipin-firstboot-lists "all baked copies present; no fetch needed"
+    fi
+) &
