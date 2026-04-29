@@ -594,6 +594,26 @@ status() {
 }
 
 boot() {
+    # Pre-VPN DNS unbrick: dnsmasq UCI persists cn-pool :3333 upstreams from
+    # the previous session (vipin-dns-refresh commits them at runtime). On
+    # cold boot the tunnel is not up yet, so cn-pool is unreachable and
+    # noresolv=1 also masks the WAN DHCP DNS — name resolution dies until
+    # configure_dns runs at the end of start_service. Wipe the persisted
+    # upstreams here so dnsmasq falls back to /tmp/resolv.conf.d/resolv.conf.auto
+    # (8.8.8.8 / 114.114.114.114 etc.) until configure_dns promotes back to
+    # cn-pool. configure_dns / vipin-dns-refresh / teardown_dns logic stays
+    # untouched — this is a one-shot boot-time UCI reset, not a policy change.
+    if [ "$VIPIN_VPN_MOCK" != "1" ]; then
+        uci -q delete dhcp.@dnsmasq[0].server
+        uci -q delete dhcp.@dnsmasq[0].allservers
+        uci set dhcp.@dnsmasq[0].noresolv='0'
+        uci set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.d/resolv.conf.auto'
+        uci commit dhcp
+        /etc/init.d/dnsmasq reload >/dev/null 2>&1 || \
+            /etc/init.d/dnsmasq restart >/dev/null 2>&1
+        logger -t "$NAME" "boot(): unbricked dnsmasq → WAN DHCP DNS for pre-VPN window"
+    fi
+
     # Deterministic first-boot ordering — no race with hotplug auto-login.
     #
     # If baked credentials are waiting in /etc/vipin/auto-login, the
