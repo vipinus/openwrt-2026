@@ -1,0 +1,17 @@
+#!/bin/sh
+# Default-uncheck the "Keep settings" checkbox on LuCI's firmware-upgrade page.
+# Upstream luci-mod-system flash.js explicitly sets it to true at runtime
+# (line ~255 in OpenWrt 25.12: `opts.keep[0].checked = true;`). Most users
+# do firmware flashes precisely to drop their config, so the safer default
+# is unchecked; users who want to keep settings can still tick the box.
+# Idempotent: sed no-ops on subsequent runs once the value is already false.
+FLASH_JS=/www/luci-static/resources/view/system/flash.js
+[ -f "$FLASH_JS" ] || {
+    logger -t uci-defaults "40-luci-flash-default-no-keep: $FLASH_JS missing, skipping"
+    exit 0
+}
+if grep -q 'opts\.keep\[0\]\.checked = true;' "$FLASH_JS"; then
+    sed -i 's/opts\.keep\[0\]\.checked = true;/opts.keep[0].checked = false;/' "$FLASH_JS"
+    logger -t uci-defaults "40-luci-flash-default-no-keep: keep_settings default flipped to false"
+fi
+exit 0
