@@ -1,5 +1,13 @@
 #!/bin/sh
 
+# dnsmasq ujail-mount fix: /etc/dnsmasq.conf ships a `conf-dir=/etc/dnsmasq.d/`
+# directive (OpenWrt default), and procd's ujail tries to bind-mount that
+# directory into the dnsmasq jail. If the directory is missing at first boot
+# (sysupgrade or fresh flash with no overlay yet), the mount fails and dnsmasq
+# fatals with "cannot access directory /etc/dnsmasq.d/" → procd crash loop →
+# DHCP/DNS dark. Pre-create the directory so the mount always succeeds.
+mkdir -p /etc/dnsmasq.d
+
 # Set hostname
 uci set system.@system[0].hostname='202604'
 uci commit system
