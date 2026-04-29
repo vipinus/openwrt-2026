@@ -116,15 +116,25 @@ uci_get() {
 }
 
 ensure_dnsmasq_confdir() {
-    # OpenWrt's auto-generated dnsmasq config uses conf-dir=/tmp/dnsmasq.<sec>.d
-    # and does NOT pick up /etc/dnsmasq.d/. But /etc/dnsmasq.conf is sourced via
-    # conf-file=, so adding conf-dir there makes our nftset= rules load. Idempotent.
+    # Inline /etc/dnsmasq.d/vipin-video.conf into /etc/dnsmasq.conf with a
+    # begin/end marker block so dnsmasq picks up our nftset rules without
+    # needing conf-dir=/etc/dnsmasq.d/ — that path lives outside procd's
+    # ujail mount set on OpenWrt 25, causing dnsmasq to crash-loop with
+    # "cannot access directory /etc/dnsmasq.d/" → DHCP/DNS go dark.
+    # Idempotent: each run strips the previous block plus any stale
+    # conf-dir=/etc/dnsmasq.d/ line, then re-emits a fresh block.
     local main_conf="${ROOT}/etc/dnsmasq.conf"
-    [ -f "$main_conf" ] || return 0
-    if ! grep -q '^conf-dir=/etc/dnsmasq.d' "$main_conf"; then
-        echo 'conf-dir=/etc/dnsmasq.d/,*.conf' >> "$main_conf"
-        log "Added conf-dir=/etc/dnsmasq.d/ to $main_conf"
-    fi
+    [ -f "$main_conf" ] && [ -f "$DNSMASQ_CONF" ] || return 0
+    sed -i -e "/^# === vipin-video-domains BEGIN/,/^# === vipin-video-domains END/d" \
+           -e '\|^conf-dir=/etc/dnsmasq.d/|d' \
+           "$main_conf"
+    {
+        echo
+        echo "# === vipin-video-domains BEGIN — managed; do not edit ==="
+        cat "$DNSMASQ_CONF"
+        echo "# === vipin-video-domains END ==="
+    } >> "$main_conf"
+    log "Inlined $DNSMASQ_CONF into $main_conf (marker block)"
 }
 
 cmd_enable() {
