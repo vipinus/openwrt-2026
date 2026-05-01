@@ -129,7 +129,11 @@ done
 #                          Every beacon, DHCP ACK, ARP reply saves 24× airtime.
 for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${iface}.ssid="${SITE_DOMAIN}"
-    uci set wireless.${iface}.encryption='psk2'
+    # WPA2+WPA3 mixed: modern STAs (iPhone 6S+/iOS 13+, Android 10+) negotiate
+    # SAE → forward-secrecy + offline-brute-force immune handshake; old STAs
+    # (TV STBs, iPhone 4/5) fall back to WPA2-PSK CCMP. Same passphrase reused
+    # via sae_password (hostapd derives from wpa_passphrase by default).
+    uci set wireless.${iface}.encryption='sae-mixed'
     uci set wireless.${iface}.key="${SITE_DOMAIN}"
     uci set wireless.${iface}.disabled='0'
     uci set wireless.${iface}.disassoc_low_ack='0'
@@ -146,9 +150,12 @@ for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/
     uci set wireless.${iface}.skip_inactivity_poll='1'
     uci set wireless.${iface}.wpa_group_rekey='0'
     uci set wireless.${iface}.uapsd='0'
-    # PMF (802.11w) off — old Android TV / IPTV STBs predate mac80211 PMF
-    # and silently fail re-auth when PMF is "optional/required".
-    uci set wireless.${iface}.ieee80211w='0'
+    # PMF (802.11w) optional — required by SAE (WPA3); WPA2 STAs ignore.
+    # Old Android TV / IPTV STBs that crashed on PMF=2 are OK with PMF=1
+    # (optional means it's negotiated only if STA advertises support).
+    # If a specific STB still has issues, drop ieee80211w to 0 + use
+    # encryption='psk2' (loses WPA3 but maximally compatible).
+    uci set wireless.${iface}.ieee80211w='1'
     uci set wireless.${iface}.wmm='1'
     # 802.11k/v/r off — old STBs misinterpret BSS-Transition / FT requests
     # and sometimes treat them as forced disconnects.
