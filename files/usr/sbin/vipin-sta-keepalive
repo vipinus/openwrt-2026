@@ -1,0 +1,80 @@
+#!/bin/sh
+# vipin-sta-keepalive — wake stuck WiFi STAs by sending deauth.
+#
+# Field-observed bug on cheap STBs (Android TV / IPTV box): the STA's
+# 802.11 association stays alive (NIC periodically wakes to listen for
+# beacons) but its TCP/IP stack goes into deep power-save and stops
+# answering IP-layer probes. Symptom: hostapd reports authorized=yes,
+# inactive_time tiny, signal good — but ping/DNS/HTTP from the LAN
+# fail 100% until the user manually toggles WiFi on the TV.
+#
+# Root cause is on the STB side; we can't fix the firmware. But we CAN
+# trigger a wake-up: an explicit deauth from the AP forces wpa_supplicant
+# on the STB to drop the link and walk the full reassociation flow,
+# which side-effects the TCP/IP stack out of sleep. Verified live: a
+# stuck TV box (12:3e:..) recovered within 4 s of `ubus call hostapd
+# del_client {"addr":..., "reason":4, "deauth":true}`.
+#
+# This watchdog: every PROBE_INTERVAL seconds, for each leased LAN IP,
+# ping it once. If it fails AND the STA is hostapd-associated AND we
+# haven't deauth'd this MAC in the last DEAUTH_COOLDOWN seconds, send
+# a deauth. STA reassociates, network recovers, no human action needed.
+
+INTERFACE=phy0-ap0
+LEASE_FILE=/tmp/dhcp.leases
+PROBE_INTERVAL=20
+PING_TIMEOUT=2
+DEAUTH_COOLDOWN=300   # 5 min between deauths per MAC
+LOG_TAG=vipin-sta-keepalive
+STATE_DIR=/tmp/vipin-keepalive
+
+mkdir -p "$STATE_DIR"
+log() { logger -t "$LOG_TAG" "$*"; }
+now() { date +%s; }
+
+is_associated() {
+    iw dev "$INTERFACE" station get "$1" >/dev/null 2>&1
+}
+
+deauth_sta() {
+    local mac="$1"
+    ubus call hostapd."$INTERFACE" del_client \
+        "{\"addr\":\"$mac\",\"reason\":4,\"deauth\":true}" 2>/dev/null
+}
+
+cooldown_ok() {
+    local mac="$1"
+    local stamp_file="$STATE_DIR/$(echo "$mac" | tr ':' '-')"
+    if [ -f "$stamp_file" ]; then
+        local last=$(cat "$stamp_file")
+        [ $(( $(now) - last )) -ge "$DEAUTH_COOLDOWN" ]
+    fi
+}
+
+mark_deauth() {
+    echo "$(now)" > "$STATE_DIR/$(echo "$1" | tr ':' '-')"
+}
+
+log "started: probe=${PROBE_INTERVAL}s cooldown=${DEAUTH_COOLDOWN}s"
+
+while :; do
+    [ -f "$LEASE_FILE" ] && while read -r expiry mac ip _rest; do
+        case "$ip" in
+            192.168.*|10.*|172.1[6-9].*|172.2[0-9].*|172.3[0-1].*) ;;
+            *) continue ;;
+        esac
+        if ping -c 1 -W "$PING_TIMEOUT" "$ip" >/dev/null 2>&1; then
+            continue
+        fi
+        if ! is_associated "$mac"; then
+            continue   # STA not on WiFi (might be wired or really gone)
+        fi
+        if ! cooldown_ok "$mac"; then
+            continue
+        fi
+        log "STA $mac ($ip) hostapd-associated but ping fails — sending deauth"
+        deauth_sta "$mac"
+        mark_deauth "$mac"
+    done < "$LEASE_FILE"
+    sleep "$PROBE_INTERVAL"
+done
