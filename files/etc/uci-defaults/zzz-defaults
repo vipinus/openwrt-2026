@@ -133,9 +133,16 @@ for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/
     uci set wireless.${iface}.key="${SITE_DOMAIN}"
     uci set wireless.${iface}.disabled='0'
     uci set wireless.${iface}.disassoc_low_ack='0'
-    uci set wireless.${iface}.max_inactivity='600'
+    uci set wireless.${iface}.max_inactivity='1800'
     uci set wireless.${iface}.skip_inactivity_poll='1'
     uci set wireless.${iface}.wpa_group_rekey='86400'
+    # PMF (802.11w) off — old Android TV / IPTV STBs (e.g. ones whose driver
+    # predates the 2017 mac80211 PMF rollout) silently fail re-auth when PMF
+    # is "optional/required". Symptom: STA disconnects randomly, then sits
+    # there refusing to reconnect until user toggles WiFi on the device.
+    # We trade theoretical mgmt-frame protection for compatibility.
+    uci set wireless.${iface}.ieee80211w='0'
+    uci set wireless.${iface}.wmm='1'
     uci -q delete wireless.${iface}.basic_rate
     uci add_list wireless.${iface}.basic_rate='6000'
     uci add_list wireless.${iface}.basic_rate='12000'
