@@ -190,6 +190,14 @@ check_and_heal_dns() {
     # so a failure here is dnsmasq-local (hung after config reload, etc.).
     if nslookup -timeout=3 "$DNS_PROBE_HOST" 127.0.0.1 >/dev/null 2>&1; then
         dnsmasq_fails=0
+        # Recovery: if we previously emergency-fell-back to WAN DNS but
+        # dnsmasq is now answering with cn-pool restored, clear the flag.
+        # configure_dns will be called by other paths (vipin-vpn restart,
+        # un:3333 reconcile above) to re-establish the cn-pool steady state.
+        [ -f /tmp/vipin-dns-emergency-wan ] && {
+            rm -f /tmp/vipin-dns-emergency-wan
+            log "dnsmasq healthy again — emergency WAN-DNS flag cleared"
+        }
     else
         dnsmasq_fails=$((dnsmasq_fails + 1))
         log "dnsmasq probe #$dnsmasq_fails/$DNS_FAIL_THRESHOLD failed (un:3333 OK)"
@@ -199,6 +207,27 @@ check_and_heal_dns() {
             /etc/init.d/dnsmasq restart 2>/dev/null
             last_dnsm_restart=$now
             dnsmasq_fails=0
+            # Emergency fallback: if dnsmasq has been restarted at least once
+            # already and is STILL unreachable (this branch was hit again),
+            # the restart isn't curing it (config corruption / persistent
+            # ujail mount fail / OOM). Clients are dark, so accept the
+            # tradeoff: temporarily switch to WAN DHCP DNS so LAN at least
+            # resolves names. Domestic-only video features will fail until
+            # cn-pool comes back, but plain browsing keeps working. Layer-2
+            # success branch above clears this flag and the next configure_dns
+            # tick (un:3333 reconcile or vipin-vpn restart) restores cn-pool.
+            if [ -f /tmp/vipin-dns-emergency-prev-fail ] && \
+               [ ! -f /tmp/vipin-dns-emergency-wan ]; then
+                log "dnsmasq still dead after restart — emergency switch to WAN DHCP DNS (degraded mode)"
+                touch /tmp/vipin-dns-emergency-wan
+                uci -q delete dhcp.@dnsmasq[0].server
+                uci -q delete dhcp.@dnsmasq[0].allservers
+                uci set dhcp.@dnsmasq[0].noresolv='0'
+                uci set dhcp.@dnsmasq[0].resolvfile='/tmp/resolv.conf.d/resolv.conf.auto'
+                uci commit dhcp
+                /etc/init.d/dnsmasq restart 2>/dev/null
+            fi
+            touch /tmp/vipin-dns-emergency-prev-fail
         fi
     fi
 }
