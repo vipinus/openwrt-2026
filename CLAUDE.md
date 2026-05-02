@@ -2,7 +2,7 @@
 
 ## 概述
 
-自定义 OpenWrt 路由器固件，集成 VPN 客户端、智能分流、LuCI 管理界面。支持 776 路由器型号 (OpenWrt 25.12.2 同步, ≥16M flash)，通过 GitHub Actions 自动构建。
+自定义 OpenWrt 路由器固件，集成 VPN 客户端、智能分流、LuCI 管理界面。支持 1302 路由器型号 (OpenWrt 25.12.2 同步, ≥16M flash)，通过 GitHub Actions 自动构建。
 
 ## 项目结构
 
@@ -26,7 +26,7 @@ openwrt-2026/
 │       └── lib/lua/luci/
 │           ├── controller/vpn.lua  # LuCI 控制器
 │           └── view/vpn/settings.htm # LuCI 界面 (17 种语言)
-├── configs/                        # 776 路由器型号配置 (OpenWrt 25.12.2)
+├── configs/                        # 1302 路由器型号配置 (OpenWrt 25.12.2)
 │   ├── ASUS-RT-AC68U.config
 │   ├── GLINET-GL-MT300N-V2.config
 │   └── ...
