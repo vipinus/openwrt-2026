@@ -1,0 +1,10 @@
+#!/bin/sh
+# vipin-lan-fix: force gigabit LAN ports to slave mode for autonegotiation
+# Reason: mt7530 (mt7621/mt7628 platform) PHY enters 2-4s Up/Down flap loop
+# when both ends of a 1000baseT link prefer master mode. Forcing slave breaks
+# the deadlock. ethtool returns nonzero on non-supporting PHYs — silenced.
+[ -x /usr/sbin/ethtool ] || exit 0
+for i in lan1 lan2 lan3 lan4; do
+  [ -d "/sys/class/net/$i" ] || continue
+  /usr/sbin/ethtool -s "$i" master-slave forced-slave 2>/dev/null
+done

@@ -351,7 +351,9 @@ jobs:
         run: |
           cd "$IB_DIR"
 
-          ALL_PACKAGES="${IB_PACKAGES} ${LANG_PACKAGES}"
+          # ethtool-full required by /etc/hotplug.d/net/10-vipin-lan-fix
+          # to break mt7530 PHY master-master autoneg flap loop on lan1-4
+          ALL_PACKAGES="${IB_PACKAGES} ${LANG_PACKAGES} ethtool-full"
           echo "=== Building image ==="
           echo "Profile: $IB_PROFILE"
           echo "Packages: $ALL_PACKAGES"

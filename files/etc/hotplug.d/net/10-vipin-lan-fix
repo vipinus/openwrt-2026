@@ -1,0 +1,5 @@
+#!/bin/sh
+[ "$ACTION" = add ] || exit 0
+case "$DEVICENAME" in
+  lan[1-4]) [ -x /usr/sbin/ethtool ] && /usr/sbin/ethtool -s "$DEVICENAME" master-slave forced-slave 2>/dev/null ;;
+esac
