@@ -132,34 +132,23 @@ for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/
     uci set wireless.${iface}.encryption='psk2'
     uci set wireless.${iface}.key="${SITE_DOMAIN}"
     uci set wireless.${iface}.disabled='0'
-    uci set wireless.${iface}.disassoc_low_ack='0'
-    # No-kick suite for fragile STBs (verified: TV box with broken
-    # wpa_supplicant auto-reconnect was getting deauthed ~19×/30h on a
-    # 1800s inactivity setting; user had to manually toggle WiFi every time).
-    # max_inactivity 31536000 (1y) effectively disables hostapd's STA
-    # idle-eviction; wpa_group_rekey=0 disables GTK rotation (each rekey is
-    # a known reauth-bug trigger on old Android TV chipsets); uapsd=0
-    # withdraws the WMM-PS advertisement (some STBs interpret it then sleep
-    # too deep to receive the wake-up). All three are needed together;
-    # adjusting just one didn't stop the disconnects in field testing.
-    uci set wireless.${iface}.max_inactivity='31536000'
-    uci set wireless.${iface}.skip_inactivity_poll='1'
-    uci set wireless.${iface}.wpa_group_rekey='0'
-    uci set wireless.${iface}.uapsd='0'
-    # PMF (802.11w) off — old Android TV / IPTV STBs predate mac80211 PMF
-    # and silently fail re-auth when PMF is "optional/required".
-    uci set wireless.${iface}.ieee80211w='0'
-    uci set wireless.${iface}.wmm='1'
-    # 802.11k/v/r off — old STBs misinterpret BSS-Transition / FT requests
-    # and sometimes treat them as forced disconnects.
-    uci set wireless.${iface}.ieee80211r='0'
-    uci set wireless.${iface}.ieee80211k='0'
-    uci set wireless.${iface}.ieee80211v='0'
-    uci -q delete wireless.${iface}.basic_rate
-    uci add_list wireless.${iface}.basic_rate='6000'
-    uci add_list wireless.${iface}.basic_rate='12000'
-    uci add_list wireless.${iface}.basic_rate='24000'
-    uci set wireless.${iface}.mcast_rate='24000'
+    # IMPORTANT: keep hostapd defaults for everything else.
+    # We previously layered an aggressive "no-kick" suite (uapsd=0,
+    # wpa_group_rekey=0, max_inactivity=31536000, mcast_rate=24M,
+    # basic_rate forced 6/12/24, disassoc_low_ack=0, skip_inactivity_poll=1,
+    # ieee80211r/k/v=0) intending to keep STBs from being kicked. In the
+    # field this CAUSED a TV box to drop into a deep-sleep state from
+    # which deauth, MAC-ban, ARP flush, lease delete, and radio cycle
+    # all failed to wake it. Stock router firmware (with default values)
+    # does not have this problem. Reverting to hostapd defaults restored
+    # the TV to 0% packet loss within seconds.
+    #
+    # Most-likely culprits (root cause not isolated; reverting all):
+    #   uapsd=0              STB couldn't negotiate PS handshake → unilateral sleep
+    #   mcast_rate=24M       STB missed broadcasts (GTK rekey, ARP, beacon)
+    #   wpa_group_rekey=0    PTK/GTK state drift after long sessions
+    #
+    # Do not re-add these knobs without a reproducible bench test.
 done
 
 # Commit and bring up WiFi
