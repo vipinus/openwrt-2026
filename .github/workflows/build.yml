@@ -54,7 +54,7 @@ on:
 
 env:
   DEBIAN_FRONTEND: noninteractive
-  OPENWRT_VERSION: "25.12.1"
+  OPENWRT_VERSION: "25.12.2"
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   LUCI_LANG: ${{ inputs.language }}
 

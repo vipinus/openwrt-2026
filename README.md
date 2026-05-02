@@ -1,6 +1,6 @@
 # ViPiN OpenWRT Firmware
 
-基于 OpenWRT v25.12.1 定制的路由器固件，预装 LuCI web 管理界面、OpenConnect VPN 和 DNSCrypt-proxy。
+基于 OpenWRT v25.12.2 定制的路由器固件，预装 LuCI web 管理界面、OpenConnect VPN 和 DNSCrypt-proxy。
 
 ## 支持的路由器
 
@@ -246,7 +246,7 @@ A: 检查错误日志，常见问题包括：
 A: 可以从 OpenWRT 官方获取配置：
 ```bash
 # 使用 OpenWRT Image Builder
-git clone --depth 1 --branch v25.12.1 https://github.com/openwrt/openwrt.git
+git clone --depth 1 --branch v25.12.2 https://github.com/openwrt/openwrt.git
 cd openwrt
 make menuconfig  # 选择路由器
 make defconfig
