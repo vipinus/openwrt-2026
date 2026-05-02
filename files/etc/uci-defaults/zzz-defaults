@@ -109,8 +109,20 @@ for radio in $(uci show wireless | grep "=wifi-device" | sed 's/.*\.//' | sed 's
     uci set wireless.${radio}.disabled='0'
     band=$(uci -q get wireless.${radio}.band)
     if [ "$band" = "2g" ]; then
-        uci set wireless.${radio}.noscan='1'
-        uci set wireless.${radio}.htmode='HT40'
+        # ch6 + HT20 — verified in field as workaround for an STB that
+        # would associate on ch1 + HT40 but never respond to IP-layer
+        # probes (ping 100% loss while STA appears authorized + signal
+        # good). Switching to ch6 HT20 with no forced noscan recovered
+        # the STB to 0% loss within seconds. Suspect: mt76 driver
+        # behavior on MT7628AN with HT40 secondary channel + this
+        # specific STB chipset; stock router firmware (closed-source
+        # MTK driver) does not have this issue.
+        # ch6 was picked over auto so multi-router rollouts get a
+        # consistent default — if you have neighbor APs on ch6, change
+        # to ch11 manually via LuCI per-site.
+        uci set wireless.${radio}.channel='6'
+        uci set wireless.${radio}.htmode='HT20'
+        uci -q delete wireless.${radio}.noscan
     fi
 done
 
