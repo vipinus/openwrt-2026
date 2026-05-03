@@ -472,7 +472,14 @@ YAML
     # under WAN latency. If the poll expires before tun0 shows up,
     # vipin-auth-check's 30s watchdog reinstates the default routes
     # as soon as the device appears.
-    ( i=0
+    #
+    # 7>&- 8>&- closes inherited start/restart lock fds in this background
+    # subshell. Without these, the 30-60s poll holds /var/lock/vipin-*.lock
+    # open long after start_service returns, blocking subsequent restart()
+    # calls with "restart already in progress, skipping" until the poll
+    # exits — observed as a recovery deadlock on R6100 (2026-05-03).
+    ( exec 7>&- 8>&-
+      i=0
       while [ "$i" -lt 30 ]; do
           ip link show tun0 >/dev/null 2>&1 && break
           sleep 1
