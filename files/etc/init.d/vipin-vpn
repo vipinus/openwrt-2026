@@ -434,13 +434,26 @@ start_service() {
         logger -t "$NAME" "hysteria upstream bypass routes installed via $wan_gw dev $wan_dev"
     fi
 
-    # No procd respawn on hysteria/hev sub-processes: vipin-auth-check
-    # owns stack health (is_stack_running + DNS canary, 30s loop with 45s
-    # min-interval + flock). Letting procd also respawn creates double-restart
-    # churn where procd bounces one process while watchdog is bouncing the
-    # whole stack. Crash recovery still happens — just single-sourced.
+    # procd respawn IS enabled now (was disabled previously to avoid
+    # double-restart churn vs vipin-auth-check). Field repro on R6100
+    # (128 MB RAM, 2026-05-03): hysteria hit OOM-kill 2x in 30 min, but
+    # vipin-auth-check's 30s+45s gates left the stack down for 60-75 s
+    # per kill — long enough for users to see "网络初始化中". With procd
+    # respawn the kill→restart loop closes in <5 s.
+    #
+    # No churn risk: when procd respawns hysteria/hev, vipin-auth-check
+    # sees pgrep returns true → is_stack_running returns true → no
+    # restart triggered. The two recovery paths are level-triggered, not
+    # edge-triggered, so they coexist.
+    #
+    # GOMEMLIMIT=20MiB tells Go's GC to keep heap under 20 MB instead of
+    # the default 75% of physical RAM. On 128 MB devices the default
+    # lets hysteria balloon to 90 MB+ which OOMs everything else first.
+    # 20 MB is generous for hysteria's per-conn buffers + control state.
     procd_open_instance hysteria
     procd_set_param command /usr/bin/hysteria client -c /etc/vipin/hysteria-client.yaml
+    procd_set_param env GOMEMLIMIT=20MiB GOGC=20
+    procd_set_param respawn 5 5 0
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
@@ -463,6 +476,7 @@ YAML
 
     procd_open_instance tun2socks
     procd_set_param command /usr/bin/hev-socks5-tunnel /etc/vipin/hev-tun.yaml
+    procd_set_param respawn 5 5 0
     procd_set_param stdout 1
     procd_set_param stderr 1
     procd_close_instance
