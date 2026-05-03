@@ -231,27 +231,56 @@ jobs:
           # to ~7 MB and runs from /usr/bin/hysteria. Failure is non-fatal —
           # falls back to baked copy in files/usr/bin/hysteria if present.
           HYSTERIA_VERSION="${HYSTERIA_VERSION:-v2.8.2}"
-          # MT7621/MT7628 (ramips) and most ath79/lantiq SoCs are MIPS24Kc
-          # *soft-float* — the default hardware-FP mipsle build SIGILLs on
-          # them. Use the -sf variant. (Confirmed on GL-MT300N-V2 mt76x8.)
+          # MIPS endianness matters: ramips (MT7621/MT7628) is little-endian
+          # (mipsle), but ath79 (AR9xxx/QCA) and lantiq are BIG-endian (mips).
+          # Putting them in the same case → ELF arch mismatch → exec fails with
+          # exit 127 on ath79 boards (Netgear R6100 was the field repro).
+          # Both families are 24Kc soft-float — hardware-FP variant SIGILLs.
+          # Hysteria upstream releases mipsle/mipsle-sf only; the BE variant
+          # is built locally below from source for the ath79/lantiq case.
           case "$TARGET_ARCH" in
-              ramips|ath79|lantiq) HY_ARCH="mipsle-sf" ;;
-              ar71xx)              HY_ARCH="mipsle-sf" ;;
+              ramips|ar71xx)       HY_ARCH="mipsle-sf" ;;       # LE soft-float
+              ath79|lantiq)        HY_ARCH="mips-sf"   ;;       # BE soft-float
               ipq40xx|ipq806x|kirkwood|mvebu|bcm27xx|bcm53xx|sunxi|at91) HY_ARCH="arm" ;;
               x86)                 HY_ARCH="386"    ;;
               x86_64)              HY_ARCH="amd64"  ;;
               armsr|rockchip|qualcommax|mediatek|mvebu_cortexa72) HY_ARCH="arm64" ;;
               *)                   HY_ARCH="mipsle" ;;  # mt76x8 / mt7621 default
           esac
-          HY_URL="https://github.com/apernet/hysteria/releases/download/app/${HYSTERIA_VERSION#app/}/hysteria-linux-${HY_ARCH}"
+          # mips-sf (BE) has no upstream prebuilt — cross-build from source.
+          if [ "$HY_ARCH" = "mips-sf" ]; then
+              echo "Cross-building hysteria for mips BE softfloat (no upstream prebuilt)"
+              HY_SRC=/tmp/hysteria-src
+              git clone --depth 1 --branch "${HYSTERIA_VERSION#app/}" \
+                  https://github.com/apernet/hysteria.git "$HY_SRC" 2>&1 | tail -2
+              ( cd "$HY_SRC/app" && \
+                GOOS=linux GOARCH=mips GOMIPS=softfloat CGO_ENABLED=0 \
+                go build -ldflags="-s -w \
+                    -X github.com/apernet/hysteria/app/v2/cmd.appVersion=${HYSTERIA_VERSION#app/} \
+                    -X github.com/apernet/hysteria/app/v2/cmd.appCommit=ci-cross \
+                    -X github.com/apernet/hysteria/app/v2/cmd.appType=release" \
+                -trimpath -o /tmp/hysteria-raw . )
+              HY_URL=""  # skip download path
+          else
+              HY_URL="https://github.com/apernet/hysteria/releases/download/app/${HYSTERIA_VERSION#app/}/hysteria-linux-${HY_ARCH}"
+          fi
           echo "Hysteria2 ${HYSTERIA_VERSION} arch=${HY_ARCH}"
-          if curl -fsSL --max-time 90 -A "Mozilla/5.0" -o /tmp/hysteria-raw "$HY_URL"; then
+          # Download path (skipped when cross-build above already produced /tmp/hysteria-raw)
+          if [ -n "$HY_URL" ]; then
+              if ! curl -fsSL --max-time 90 -A "Mozilla/5.0" -o /tmp/hysteria-raw "$HY_URL"; then
+                  echo "WARN: hysteria download failed — using baked copy if present"
+                  rm -f /tmp/hysteria-raw
+              fi
+          fi
+          # Common UPX + install path: handles both downloaded prebuilts and
+          # cross-built mips-sf binary. Without this consolidation, mips-sf
+          # ships uncompressed (21 MB) and won't fit on 16 MB ath79 NAND.
+          if [ -s /tmp/hysteria-raw ]; then
               raw_kb=$(stat -c%s /tmp/hysteria-raw); raw_mb=$((raw_kb / 1024 / 1024))
               echo "  raw size: ${raw_mb} MB"
-              # UPX compress in-place — apt has upx-ucl on ubuntu-22.04 runners
               if sudo apt-get install -y -qq upx-ucl 2>&1 | tail -1; then
                   if upx --best --lzma /tmp/hysteria-raw 2>&1 | grep -E "compressed|already"; then
-                      cmp_kb=$(stat -c%s /tmp/hysteria-raw); cmp_mb=$((cmp_kb * 100 / 1024 / 1024))
+                      cmp_kb=$(stat -c%s /tmp/hysteria-raw)
                       echo "  upx compressed: $((cmp_kb / 1024)) KB"
                   else
                       echo "  WARN: UPX failed — using uncompressed binary (may exceed 16MB flash)"
@@ -260,8 +289,6 @@ jobs:
               chmod +x /tmp/hysteria-raw
               mv /tmp/hysteria-raw custom-files/usr/bin/hysteria
               echo "hysteria binary: $(stat -c%s custom-files/usr/bin/hysteria) bytes"
-          else
-              echo "WARN: hysteria download failed — using baked copy if present"
           fi
 
           # Map language code
