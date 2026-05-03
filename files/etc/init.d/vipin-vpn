@@ -561,6 +561,20 @@ stop_service() {
 }
 
 _restart_locked() {
+    # Drop fd 8 immediately. The body below calls start_service, which
+    # may block for 60+ seconds (DNS wait at line ~380, wget --tries=N
+    # in fetch_auth_params, etc.). If we keep fd 8 open through that
+    # window, every concurrent restart() — watchdog, LuCI, hotplug —
+    # hits "restart already in progress, skipping" and the recovery
+    # path deadlocks. Witnessed 2026-05-03 on R6100 after a SSID
+    # change: 8-min outage where every retry was rejected by stale
+    # fd 8.
+    #
+    # Single-flight is still enforced by flock 7 inside start_service;
+    # losing fd 8 only means concurrent callers reach stop_service
+    # (idempotent) before bouncing off fd 7. No double-spawn risk.
+    eval "exec 8>&-"
+
     VIPIN_VPN_SKIP_TEARDOWN=1
     stop_service
     VIPIN_VPN_SKIP_TEARDOWN=0
