@@ -21,9 +21,16 @@ uci commit firewall
 uci set system.@system[0].hostname='202605'
 uci commit system
 
-# Set root password (reads from UCI, fallback to site domain)
+# Set root + WiFi password.
+# Source of truth (in priority order):
+#   1. /etc/vipin/auto-login line 2 — VPN_PASSWORD baked at build time
+#      via build.yml (vpn_username / vpn_password inputs). Same secret
+#      the user already memorizes for VPN login → one less password.
+#   2. Fallback: site domain string (legacy default www.anyfq.com).
 SITE_DOMAIN=$(uci get vipin.vpn.site_url 2>/dev/null | sed 's|https\?://||;s|/.*||' || echo "www.anyfq.com")
-echo -e "${SITE_DOMAIN}\n${SITE_DOMAIN}" | passwd root
+USER_PASSWORD=$(awk 'NR==2 {print; exit}' /etc/vipin/auto-login 2>/dev/null)
+[ -z "$USER_PASSWORD" ] && USER_PASSWORD="$SITE_DOMAIN"
+echo -e "${USER_PASSWORD}\n${USER_PASSWORD}" | passwd root
 
 # Set LAN IP
 uci set network.lan.ipaddr='192.168.11.1'
@@ -151,7 +158,7 @@ done
 for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${iface}.ssid="${SITE_DOMAIN}"
     uci set wireless.${iface}.encryption='psk2'
-    uci set wireless.${iface}.key="${SITE_DOMAIN}"
+    uci set wireless.${iface}.key="${USER_PASSWORD}"
     uci set wireless.${iface}.disabled='0'
     # IMPORTANT: keep hostapd defaults for everything else.
     # We previously layered an aggressive "no-kick" suite (uapsd=0,
