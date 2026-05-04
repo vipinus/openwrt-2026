@@ -18,7 +18,7 @@ uci set firewall.@defaults[0].flow_offloading_hw='1'
 uci commit firewall
 
 # Set hostname
-uci set system.@system[0].hostname='202604'
+uci set system.@system[0].hostname='202605'
 uci commit system
 
 # Set root password (reads from UCI, fallback to site domain)
