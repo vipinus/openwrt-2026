@@ -8,6 +8,15 @@
 # DHCP/DNS dark. Pre-create the directory so the mount always succeeds.
 mkdir -p /etc/dnsmasq.d
 
+# Software + hardware flow offloading. mt7621 has the MTK PPE engine; without
+# this, NAT for LAN→WAN happens entirely in software and CPU saturates around
+# 200 Mbps with 100+ concurrent connections — multi-stream downloads stall the
+# router. flow_offloading_hw is a no-op on non-MTK targets, safe to set globally.
+# Field repro 2026-05-04: E5600 user "多路下载卡死" — fixed by enabling these.
+uci set firewall.@defaults[0].flow_offloading='1'
+uci set firewall.@defaults[0].flow_offloading_hw='1'
+uci commit firewall
+
 # Set hostname
 uci set system.@system[0].hostname='202604'
 uci commit system
