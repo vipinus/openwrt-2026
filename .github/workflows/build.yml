@@ -15,7 +15,7 @@ on:
       version:
         description: 'Firmware Version (YYYYMMDD)'
         required: false
-        default: '20260405'
+        default: '20260504'
         type: string
       release:
         description: 'Create Release'
@@ -300,7 +300,7 @@ jobs:
           esac
           echo "FINAL_LANG=${FINAL_LANG}" >> $GITHUB_ENV
 
-          echo "${VERSION:-20260405}" > custom-files/etc/vipin_version
+          echo "${VERSION:-20260504}" > custom-files/etc/vipin_version
           echo "${TARGET:-Unknown}" > custom-files/etc/vipin_model
           echo "${FINAL_LANG}" > custom-files/etc/vipin_language
           # Commit SHA + subject + build timestamp. Baked so field ops can
