@@ -458,32 +458,16 @@ start_service() {
     procd_set_param stderr 1
     procd_close_instance
 
-    # hev-tun config — tuned for multi-stream stability on mt7621/mt7628.
-    #
-    # mtu 1500: previously 8500 (jumbo) — caused multi-stream stalls, field
-    # repro 2026-05-04 on E5600 ("第二个文件下载就卡死"). 8500-byte tun0 frames
-    # forced PMTU re-discovery for every new flow; under 2+ concurrent streams
-    # the fragment-reassembly path lost packets. 1500 matches wire MTU, no
-    # fragmentation needed, multi-flow PMTU stable.
-    #
-    # multi-queue false: requires CONFIG_TUN_MULTIQUEUE in kernel; not always
-    # enabled in OpenWrt MIPS builds. False is safe-default; single-queue
-    # tun is plenty for sub-100Mbps hysteria throughput.
-    #
-    # udp 'udp' (was 'tcp'): native SOCKS5 UDP ASSOCIATE relay (hysteria
-    # supports it). 'tcp' wraps every UDP packet in TCP framing, serializing
-    # HTTP/3 / QUIC traffic — exactly the opposite of what modern browsers
-    # need for parallel downloads.
     cat > /etc/vipin/hev-tun.yaml << 'YAML'
 tunnel:
   name: tun0
-  mtu: 1500
-  multi-queue: false
+  mtu: 8500
+  multi-queue: true
   ipv4: 192.168.200.1/24
 socks5:
   address: 127.0.0.1
   port: 1080
-  udp: 'udp'
+  udp: 'tcp'
 misc:
   task-stack-size: 20480
   log-file: stderr
