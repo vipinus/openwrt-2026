@@ -505,7 +505,10 @@ function updateAuthUI() {
         loginForm.style.display = 'none';
         userInfo.style.display = 'block';
         document.getElementById('user-name').textContent = vpnData.authUsername;
-        var isExpired = vpnData.authExpiry && new Date(vpnData.authExpiry) < new Date();
+        // RADIUS Expiration is UTC wall-clock without TZ marker ("27 Apr 2026 19:36:00").
+        // Append " UTC" so the browser parses it as UTC instead of router-local TZ —
+        // otherwise users in non-UTC routers see expiry off by their TZ offset.
+        var isExpired = vpnData.authExpiry && new Date(vpnData.authExpiry + ' UTC') < new Date();
         var expiryEl = document.getElementById('user-expiry');
         var warnEl = document.getElementById('expiry-warning');
         if (isExpired) {
