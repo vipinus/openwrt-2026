@@ -27,9 +27,22 @@ uci commit system
 #      via build.yml (vpn_username / vpn_password inputs). Same secret
 #      the user already memorizes for VPN login → one less password.
 #   2. Fallback: site domain string (legacy default www.anyfq.com).
+#
+# WPA2-PSK passphrase MUST be 8..63 ASCII chars (IEEE 802.11i). If the
+# user's VPN password is shorter, hostapd silently rejects the key on
+# load and the SSID either can't be joined or uses no encryption — both
+# are user-visible breakage. Fall back to SITE_DOMAIN in that case.
+# Same for root: passwd accepts anything but a short value still trips
+# hostapd's parallel use as wireless.key. Strip trailing CR to defend
+# against build pipelines that produce CRLF line endings in auto-login.
 SITE_DOMAIN=$(uci get vipin.vpn.site_url 2>/dev/null | sed 's|https\?://||;s|/.*||' || echo "www.anyfq.com")
-USER_PASSWORD=$(awk 'NR==2 {print; exit}' /etc/vipin/auto-login 2>/dev/null)
-[ -z "$USER_PASSWORD" ] && USER_PASSWORD="$SITE_DOMAIN"
+USER_PASSWORD=$(awk 'NR==2 {print; exit}' /etc/vipin/auto-login 2>/dev/null | tr -d '\r\n')
+USER_PASSWORD_LEN=${#USER_PASSWORD}
+if [ "$USER_PASSWORD_LEN" -lt 8 ] || [ "$USER_PASSWORD_LEN" -gt 63 ]; then
+    [ -n "$USER_PASSWORD" ] && \
+        logger -t zzz-defaults "user VPN password length=$USER_PASSWORD_LEN out of 8..63 — falling back to SITE_DOMAIN for WiFi/root"
+    USER_PASSWORD="$SITE_DOMAIN"
+fi
 echo -e "${USER_PASSWORD}\n${USER_PASSWORD}" | passwd root
 
 # Set LAN IP
