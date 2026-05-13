@@ -21,29 +21,13 @@ uci commit firewall
 uci set system.@system[0].hostname='202605'
 uci commit system
 
-# Set root + WiFi password.
-# Source of truth (in priority order):
-#   1. /etc/vipin/auto-login line 2 — VPN_PASSWORD baked at build time
-#      via build.yml (vpn_username / vpn_password inputs). Same secret
-#      the user already memorizes for VPN login → one less password.
-#   2. Fallback: site domain string (legacy default www.anyfq.com).
-#
-# WPA2-PSK passphrase MUST be 8..63 ASCII chars (IEEE 802.11i). If the
-# user's VPN password is shorter, hostapd silently rejects the key on
-# load and the SSID either can't be joined or uses no encryption — both
-# are user-visible breakage. Fall back to SITE_DOMAIN in that case.
-# Same for root: passwd accepts anything but a short value still trips
-# hostapd's parallel use as wireless.key. Strip trailing CR to defend
-# against build pipelines that produce CRLF line endings in auto-login.
+# Set root + WiFi password (固定默认 SITE_DOMAIN, e.g. www.anyfq.com).
+# 之前尝试用 /etc/vipin/auto-login 里的用户 VPN 密码作为 root/WiFi key 以减少
+# 用户记忆负担，但带来支持成本：短密码、特殊字符、用户改 VPN 密码后路由器
+# 不同步等问题反复出现。回滚到固定 SITE_DOMAIN 默认值；如需个性化，用户在
+# Luci 里自行修改。
 SITE_DOMAIN=$(uci get vipin.vpn.site_url 2>/dev/null | sed 's|https\?://||;s|/.*||' || echo "www.anyfq.com")
-USER_PASSWORD=$(awk 'NR==2 {print; exit}' /etc/vipin/auto-login 2>/dev/null | tr -d '\r\n')
-USER_PASSWORD_LEN=${#USER_PASSWORD}
-if [ "$USER_PASSWORD_LEN" -lt 8 ] || [ "$USER_PASSWORD_LEN" -gt 63 ]; then
-    [ -n "$USER_PASSWORD" ] && \
-        logger -t zzz-defaults "user VPN password length=$USER_PASSWORD_LEN out of 8..63 — falling back to SITE_DOMAIN for WiFi/root"
-    USER_PASSWORD="$SITE_DOMAIN"
-fi
-echo -e "${USER_PASSWORD}\n${USER_PASSWORD}" | passwd root
+echo -e "${SITE_DOMAIN}\n${SITE_DOMAIN}" | passwd root
 
 # Set LAN IP
 uci set network.lan.ipaddr='192.168.11.1'
@@ -171,7 +155,7 @@ done
 for iface in $(uci show wireless | grep "=wifi-iface" | sed 's/.*\.//' | sed 's/=.*//'); do
     uci set wireless.${iface}.ssid="${SITE_DOMAIN}"
     uci set wireless.${iface}.encryption='psk2'
-    uci set wireless.${iface}.key="${USER_PASSWORD}"
+    uci set wireless.${iface}.key="${SITE_DOMAIN}"
     uci set wireless.${iface}.disabled='0'
     # IMPORTANT: keep hostapd defaults for everything else.
     # We previously layered an aggressive "no-kick" suite (uapsd=0,
