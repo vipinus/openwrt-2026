@@ -251,12 +251,16 @@ jobs:
           if [ "$HY_ARCH" = "mips-sf" ]; then
               echo "Cross-building hysteria for mips BE softfloat (no upstream prebuilt)"
               HY_SRC=/tmp/hysteria-src
-              git clone --depth 1 --branch "${HYSTERIA_VERSION#app/}" \
+              # apernet/hysteria uses monorepo-style tags: app/v2.8.2, core/v2.8.2,
+              # extras/v2.8.2 — the app binary lives under app/vX.Y.Z. Strip then
+              # re-add the prefix so the var still accepts either form.
+              HY_VER_STRIPPED="${HYSTERIA_VERSION#app/}"
+              git clone --depth 1 --branch "app/${HY_VER_STRIPPED}" \
                   https://github.com/apernet/hysteria.git "$HY_SRC" 2>&1 | tail -2
               ( cd "$HY_SRC/app" && \
                 GOOS=linux GOARCH=mips GOMIPS=softfloat CGO_ENABLED=0 \
                 go build -ldflags="-s -w \
-                    -X github.com/apernet/hysteria/app/v2/cmd.appVersion=${HYSTERIA_VERSION#app/} \
+                    -X github.com/apernet/hysteria/app/v2/cmd.appVersion=${HY_VER_STRIPPED} \
                     -X github.com/apernet/hysteria/app/v2/cmd.appCommit=ci-cross \
                     -X github.com/apernet/hysteria/app/v2/cmd.appType=release" \
                 -trimpath -o /tmp/hysteria-raw . )
