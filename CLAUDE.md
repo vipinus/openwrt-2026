@@ -189,3 +189,35 @@ openconnect 重连前必须先清理旧的 tun 设备:
 killall openconnect 2>/dev/null
 ip link delete vpn_vipin 2>/dev/null
 ```
+
+### ⚠️ flow_offloading 不能开（与 fwmark 分流不兼容）
+
+**症状**：LAN 客户端无法访问任何 CN 站点（TCP 握手成功，TLS ClientHello/HTTP GET 发出后**无任何返程数据**，10s 超时）。同一路由器自己 curl baidu 200ms 200 OK。
+
+**根因**：硬件/软件 flow offload 把已建立的流加进 flowtable 快路径，**跳过 PREROUTING、FORWARD、POSTROUTING 全部 nftables hook**。但我们 vipin 分流依赖：
+1. `vipin_prerouting` 在 PREROUTING mangle 钩子设 fwmark 0x200（CN 目标 IP）
+2. policy routing 根据 mark 走 table 100 (`default via wan`)
+3. POSTROUTING 做 SNAT
+4. conntrack 记录 NAT 翻译，给返程包反向用
+
+flow offload 命中后 conntrack 不更新（`conntrack -L | grep src=192.168.11.` = **0 条**）→ 返程包找不到反向 NAT 记录 → 被吃掉。
+
+**为什么 VPN 没事**：海外流量经 hev-socks5-tunnel（用户态），完全不进 flowtable。
+
+**为什么 router-local curl 没事**：OUTPUT chain 不进 flowtable（`flow add` 只在 FORWARD hook）。
+
+**禁掉**：
+```
+uci set firewall.@defaults[0].flow_offloading='0'
+uci set firewall.@defaults[0].flow_offloading_hw='0'
+```
+
+**绝对不要**在 zzz-defaults 或任何 init 脚本里启用 flow_offloading。已在 zzz-defaults 显式 `=0` 防止重启后被恢复。
+
+历史教训 commit：cb73e602（错开）→ 94585763（修复禁掉）。下次有人写"性能优化"想再开 PPE/flowtable，先回看这条。
+
+### ⚠️ MTU 黑洞 vs MTU 调整
+
+CN PPPoE 链路实测 PMTU=1492。但我们路由器的 `wan MTU 1500 + fw4 mss_clamp=rt_mtu` 已经能正确出包。**不要为了 PMTU 黑洞去改 MTU**——`rt mtu` 在 nft 里不会动态跟接口 MTU 变化，纯改 wan MTU 只会让事情更乱。
+
+真要修就 force-set `network.wan.mtu` 到模拟值（如 1480）并 fw4 reload；如果症状不变，说明根因不是 MTU，先回滚到 1500 再换思路（多半是 flow_offload 或 conntrack 状态问题）。
