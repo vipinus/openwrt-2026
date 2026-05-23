@@ -35,7 +35,7 @@ SERVERS=""
 
 # 1. Prefer auth-params.json — freshest, backend-authoritative.
 if [ -s "$AUTH_PARAMS" ]; then
-    dns_host=$(grep -o '"stunnel_host":"[^"]*"' "$AUTH_PARAMS" | cut -d'"' -f4)
+    dns_host=$(sed -n 's/.*"stunnel_host"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$AUTH_PARAMS" | head -1)
     dns_port=$(grep -o '"stunnel_port":[0-9]*' "$AUTH_PARAMS" | head -1 | cut -d: -f2)
     if [ -n "${dns_host:-}" ] && [ -n "${dns_port:-}" ]; then
         # Resolve to every A record. nslookup reads /etc/resolv.conf which

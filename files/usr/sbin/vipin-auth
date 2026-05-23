@@ -38,7 +38,7 @@ fetch_encryption_key() {
         return 1
     fi
     
-    local key=$(echo "$response" | grep -o '"key":"[^"]*"' | cut -d'"' -f4)
+    local key=$(echo "$response" | sed -n 's/.*"key"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
     
     if [ -z "$key" ]; then
         log "Invalid key response: $response"
@@ -237,12 +237,12 @@ authenticate() {
         return $?
     fi
     
-    local status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    local status=$(echo "$response" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
     
     case "$status" in
         valid)
-            local user_type=$(echo "$response" | grep -o '"type":"[^"]*"' | cut -d'"' -f4)
-            local expiration=$(echo "$response" | grep -o '"expiration":"[^"]*"' | cut -d'"' -f4)
+            local user_type=$(echo "$response" | sed -n 's/.*"type"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+            local expiration=$(echo "$response" | sed -n 's/.*"expiration"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
             log "Remote auth success for $username ($user_type)"
             echo "{\"status\": \"valid\", \"message\": \"Authentication successful\", \"username\": \"$username\", \"type\": \"$user_type\", \"expiration\": \"$expiration\"}"
             return 0
@@ -412,7 +412,7 @@ get_renewal_url() {
         "${API_BASE}/api/v1/router/renewal-url?username=${enc_user}&mac=${mac}" 2>/dev/null)
 
     if [ -n "$response" ]; then
-        local url=$(echo "$response" | grep -o '"url":"[^"]*"' | cut -d'"' -f4)
+        local url=$(echo "$response" | sed -n 's/.*"url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
         if [ -n "$url" ]; then
             log "Got renewal URL for user: $username"
             echo "{\"success\": true, \"username\": \"$username\", \"url\": \"$url\"}"
@@ -475,7 +475,7 @@ case "$1" in
         verify_resp=$(wget -q -O- --timeout=10 \
             --post-data="username=$enc_user&source=verify" \
             "${API_BASE}/api/v1/router-auth" 2>/dev/null)
-        verify_status=$(echo "$verify_resp" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+        verify_status=$(echo "$verify_resp" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
 
         case "$verify_status" in
             valid)

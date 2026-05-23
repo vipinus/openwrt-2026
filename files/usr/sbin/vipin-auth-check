@@ -96,7 +96,7 @@ handle_auth_tick() {
         return 0
     fi
 
-    status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    status=$(echo "$response" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
     case "$status" in
         ok)
             uci set vipin.vpn.auth_status='ok'

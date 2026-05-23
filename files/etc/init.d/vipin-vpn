@@ -61,7 +61,7 @@ fetch_auth_params() {
     fi
 
     echo "$response" > "$cfgdir/auth-params.json"
-    status=$(echo "$response" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    status=$(echo "$response" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
     case "$status" in
         ok) return 0 ;;
         expired|invalid|not_vip) return 1 ;;
@@ -111,9 +111,9 @@ render_hysteria_conf() {
 
     port=$(grep -o '"port":[0-9]*' "$params" | head -1 | cut -d: -f2)
     [ -z "$port" ] && port=8443
-    auth_psk=$(grep -o '"auth_psk":"[^"]*"' "$params" | cut -d'"' -f4)
-    obfs_pwd=$(grep -o '"obfs_password":"[^"]*"' "$params" | cut -d'"' -f4)
-    cert_pin=$(grep -o '"cert_pin":"[^"]*"' "$params" | cut -d'"' -f4)
+    auth_psk=$(sed -n 's/.*"auth_psk"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$params" | head -1)
+    obfs_pwd=$(sed -n 's/.*"obfs_password"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$params" | head -1)
+    cert_pin=$(sed -n 's/.*"cert_pin"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$params" | head -1)
     bw_up=$(grep -o '"bandwidth_up":[0-9]*' "$params" | head -1 | cut -d: -f2)
     bw_down=$(grep -o '"bandwidth_down":[0-9]*' "$params" | head -1 | cut -d: -f2)
     [ -z "$bw_up" ] && bw_up=100
@@ -391,7 +391,7 @@ start_service() {
     case $? in
         0) ;;  # ok — proceed
         1) logger -t "$NAME" "Auth expired/invalid, not starting VPN"
-           uci set vipin.vpn.auth_status="$(grep -o '"status":"[^"]*"' /etc/vipin/auth-params.json | cut -d'"' -f4)"
+           uci set vipin.vpn.auth_status="$(sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /etc/vipin/auth-params.json | head -1)"
            uci commit vipin
            return 1 ;;
         2) logger -t "$NAME" "Auth API unreachable on start, deferring"
