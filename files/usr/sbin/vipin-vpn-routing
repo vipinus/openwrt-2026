@@ -368,8 +368,24 @@ EOF
     mkdir -p /etc/vipin
     cat > /etc/vipin/firewall-include.sh << 'FWEOF'
 #!/bin/sh
-# Insert VPN forwarding and MSS clamp rules into fw4 forward chain
-# This script is called by fw4 on every firewall reload
+# Insert VPN forwarding and MSS clamp rules into fw4 forward chain.
+# fw4 calls this on every reload. `nft insert rule` is NOT idempotent —
+# it appends regardless of an identical rule existing. Without the
+# delete-first pass below, fw4 reload (triggered by UCI commits,
+# wifi reload, upgrades, etc.) duplicated 4 rules every time. Witnessed
+# 2026-05-23 on WRT3200ACM: forward chain had 3× duplicate tun0 blocks.
+#
+# Strategy: walk forward chain with -a (print handles), match our four
+# signatures, delete by handle. Then insert fresh. nft's handle-based
+# delete is the only race-free way to dedupe.
+nft -a list chain inet fw4 forward 2>/dev/null | awk '
+    /iifname "tun0" oifname "br-lan" ct state established,related accept/ ||
+    /iifname "br-lan" oifname "tun0" accept/ ||
+    /(iifname|oifname) "tun0" tcp flags syn tcp option maxseg size set 1260/ {
+        match($0, /handle [0-9]+/); if (RLENGTH > 0) print substr($0, RSTART+7, RLENGTH-7)
+    }' | while read h; do
+        nft delete rule inet fw4 forward handle "$h" 2>/dev/null
+    done
 nft insert rule inet fw4 forward iifname "tun0" oifname "br-lan" ct state established,related accept 2>/dev/null
 nft insert rule inet fw4 forward iifname "br-lan" oifname "tun0" accept 2>/dev/null
 nft insert rule inet fw4 forward oifname "tun0" tcp flags syn tcp option maxseg size set 1260 2>/dev/null
